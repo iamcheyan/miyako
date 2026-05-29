@@ -28,4 +28,26 @@
   - Icons must be RGBA PNG format, not just RGB
   - Use `cargo check` to verify Rust compilation
   - Run `npm run typecheck` and `npm run lint` before committing
+- The `smb` crate (v0.11) requires exactly one runtime feature: `async`, `single_threaded`, or `multi_threaded`; default includes `async`
+- `smb` re-exports `smb_fscc::*` (FileDirectoryInformation, FileAccessMask, etc.) and `smb_dtyp::*` (FileTime)
+- `Directory::query` takes `&Arc<Self>` (not `&self` or `Arc<Self>`) — must use `Directory::query::<T>(&arc, pattern)`
+- `FileTime` has `.date_time()` → `PrimitiveDateTime`, which needs `.assume_utc().unix_timestamp()` for unix timestamps
+- `File::get_len()` requires importing `smb::GetLen` trait
+- `Resource` enum variants (`File`, `Directory`) deref to `ResourceHandle` via `Deref` impl
+- `resource.unwrap_dir()` consumes the resource to get owned `Directory`; `resource.as_dir()` returns `&Directory`
+- `futures-util` is needed for `StreamExt` to iterate async streams
+---
+
+## 2026-05-30 - US-002
+- What was implemented: SMB client Rust backend with Tauri commands
+- Files changed:
+  - src-tauri/Cargo.toml (added futures-util dependency)
+  - src-tauri/src/smb_client.rs (complete rewrite with correct smb crate API)
+- **Learnings for future iterations:**
+  - The `smb` crate's `Directory::query` signature is `fn query<'a, T>(this: &'a Arc<Self>, pattern: &str)` — not a method on `&self`
+  - `FileTime::date_time()` returns `PrimitiveDateTime`; use `.assume_utc().unix_timestamp()` for i64 timestamps
+  - `Resource` enum doesn't implement `Deref` directly — use `as_file()`/`as_dir()` or pattern matching
+  - `smb::GetLen` trait must be imported to call `get_len()` on `File`
+  - Connection manager stores `Client` per connection (each client can hold multiple share connections)
+  - `Client::close()` closes all managed connections/trees/sessions
 ---

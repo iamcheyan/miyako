@@ -1,0 +1,280 @@
+{
+  "project": "NasMusicSync",
+  "branchName": "ralph/nas-music-sync",
+  "description": "Android 离线音乐播放器 - 将 NAS 上的音乐通过 SMB 同步到手机本地，支持离线播放",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "项目脚手架搭建",
+      "description": "作为开发者，我需要初始化 Tauri 2.0 + React + TypeScript 项目，确保开发环境可用。",
+      "acceptanceCriteria": [
+        "使用 create-tauri-app 创建项目，模板选择 React + TypeScript",
+        "配置 Vite 开发服务器，npm run dev 能在浏览器打开空白页面",
+        "配置 Tauri 开发模式，npm run tauri dev 能启动桌面窗口",
+        "项目结构清晰：src/ (React), src-tauri/ (Rust)",
+        "TypeScript 编译无错误",
+        "ESLint + Prettier 配置完成",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "SMB 客户端 Rust 后端",
+      "description": "作为开发者，我需要在 Tauri Rust 后端实现 SMB 连接功能，供前端调用。",
+      "acceptanceCriteria": [
+        "在 src-tauri/Cargo.toml 添加 smb-client 依赖",
+        "实现 Tauri command smb_connect(server, share, username, password) 返回连接结果",
+        "实现 Tauri command smb_list_dir(connection_id, path) 返回目录列表",
+        "实现 Tauri command smb_download_file(connection_id, remote_path, local_path) 下载文件",
+        "实现 Tauri command smb_disconnect(connection_id) 断开连接",
+        "实现 Tauri command smb_get_file_info(connection_id, path) 获取文件大小和修改时间",
+        "错误处理：连接失败、认证失败、路径不存在等场景返回明确错误信息",
+        "cargo check 无错误",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "设置页面 - SMB 服务器配置",
+      "description": "作为用户，我需要一个设置页面来配置 NAS 连接信息。",
+      "acceptanceCriteria": [
+        "页面包含输入框：服务器地址、共享目录、用户名、密码",
+        "密码输入框默认隐藏内容，可切换显示",
+        "测试连接按钮，点击后调用 smb_connect command",
+        "连接成功显示绿色提示，失败显示红色错误信息",
+        "连接信息自动保存到本地存储",
+        "应用启动时自动加载已保存的配置",
+        "页面布局简洁，输入框有清晰的标签",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "远程目录浏览",
+      "description": "作为用户，连接成功后我需要浏览 NAS 上的音乐目录结构。",
+      "acceptanceCriteria": [
+        "显示远程目录的树形结构（文件夹 + 文件）",
+        "点击文件夹可展开/折叠",
+        "显示文件夹内的音乐文件列表（.mp3, .flac, .aac, .wav）",
+        "显示每个文件的文件名和大小",
+        "非音乐文件不显示",
+        "支持返回上级目录",
+        "加载中显示 loading 状态",
+        "目录为空时显示空状态提示",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "同步引擎核心逻辑",
+      "description": "作为开发者，我需要实现同步引擎，支持增量扫描和下载。",
+      "acceptanceCriteria": [
+        "实现 scan_remote_directory(path) - 递归扫描远程目录，返回所有音乐文件列表（路径、大小、修改时间）",
+        "实现 compare_with_local(remote_list, local_dir) - 对比远程和本地文件，返回需要下载的文件列表",
+        "比较逻辑：本地不存在 → 需下载；本地文件大小不同 → 需下载；本地文件修改时间早于远程 → 需下载",
+        "实现 sync_download(file_list, local_dir, callback) - 逐个下载文件，通过 callback 报告进度",
+        "下载过程中记录已下载文件，支持断点续传（跳过已下载完成的文件）",
+        "同步状态保存到本地：{ last_sync_time, synced_files: [{remote_path, local_path, size, checksum}] }",
+        "Rust 单元测试覆盖核心比较逻辑",
+        "cargo check 无错误",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "同步页面 UI",
+      "description": "作为用户，我需要一个界面来查看同步状态并触发同步操作。",
+      "acceptanceCriteria": [
+        "显示当前同步状态（空闲 / 同步中 / 已完成）",
+        "开始同步按钮，点击后开始增量同步",
+        "同步进度条：显示已下载文件数 / 总文件数",
+        "同步日志区域：显示最近的同步操作（下载了哪些文件、跳过了哪些）",
+        "显示上次同步时间",
+        "同步过程中按钮变为同步中...并禁用重复点击",
+        "同步完成后显示摘要：新增 X 个文件，跳过 Y 个文件，总大小 Z MB",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "本地音乐库展示",
+      "description": "作为用户，同步完成后我需要按文件夹结构浏览本地音乐。",
+      "acceptanceCriteria": [
+        "首页显示本地音乐文件夹列表（与 NAS 目录结构一致）",
+        "点击文件夹进入，显示该文件夹下的音乐文件",
+        "显示文件名（去除扩展名）",
+        "显示文件大小",
+        "点击文件开始播放",
+        "空状态：未同步任何音乐时显示提示和引导",
+        "搜索功能：输入关键词过滤文件名",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "音频播放引擎",
+      "description": "作为开发者，我需要实现音频播放引擎，支持离线播放和播放控制。",
+      "acceptanceCriteria": [
+        "创建 AudioPlayer 类，封装 HTML5 Audio API",
+        "支持操作：play, pause, stop, seekTo, setVolume",
+        "支持播放模式：顺序播放、单曲循环、随机播放",
+        "支持播放队列：加载文件夹内所有音乐文件为队列",
+        "播放队列支持：next, previous, currentIndex",
+        "状态回调：onPlay, onPause, onEnded, onTimeUpdate, onLoadedMetadata",
+        "播放本地文件：通过 file:// 协议或 Tauri asset 协议加载",
+        "TypeScript 类型定义完整",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "播放器 UI 界面",
+      "description": "作为用户，我需要一个播放器界面来控制音乐播放。",
+      "acceptanceCriteria": [
+        "底部播放栏：显示当前歌曲名、播放/暂停按钮",
+        "全屏播放页面：歌曲名、播放进度条、播放/暂停、上一首、下一首",
+        "进度条：显示当前时间 / 总时长，可拖动跳转",
+        "播放模式切换按钮：顺序 → 单曲循环 → 随机",
+        "播放列表：显示当前队列歌曲，点击切换",
+        "播放状态实时同步（播放/暂停/进度）",
+        "全屏页面支持返回按钮",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "MediaSession 锁屏/通知栏控制",
+      "description": "作为用户，我需要在锁屏和通知栏控制音乐播放。",
+      "acceptanceCriteria": [
+        "播放时注册 MediaSession，设置元数据（标题、艺术家=文件夹名）",
+        "通知栏显示播放通知：歌曲名、播放/暂停、上一首、下一首",
+        "锁屏界面显示播放控制",
+        "耳机拔出时自动暂停",
+        "音频焦点管理：其他应用播放时暂停本应用",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "本地数据持久化",
+      "description": "作为用户，我需要应用记住我的播放历史和进度。",
+      "acceptanceCriteria": [
+        "记录最近播放列表（最近 50 首），按播放时间排序",
+        "记录播放历史（所有播放过的歌曲和播放时间）",
+        "记录每首歌的播放位置（秒），退出应用前保存",
+        "重新打开应用后，可从上次位置继续播放",
+        "数据存储在 Tauri app data 目录",
+        "数据文件：recent.json, history.json, playback_state.json",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "底部导航和页面路由",
+      "description": "作为用户，我需要在不同功能页面间切换。",
+      "acceptanceCriteria": [
+        "底部导航栏：设置 | 同步 | 音乐库",
+        "点击导航项切换页面，高亮当前选中项",
+        "页面切换有过渡动画",
+        "当前播放歌曲在底部导航栏上方显示迷你播放器",
+        "迷你播放器显示歌曲名和播放/暂停按钮",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "同步状态持久化与冲突处理",
+      "description": "作为开发者，我需要确保同步状态在应用重启后保持一致。",
+      "acceptanceCriteria": [
+        "同步中断（应用被杀）后，重新打开可继续未完成的同步",
+        "本地文件被手动删除后，再次同步时重新下载",
+        "NAS 文件被删除后，本地文件保留（不自动删除）",
+        "同步状态文件包含：sync_manifest.json 记录所有已同步文件的元数据",
+        "增量同步扫描时间 < 5 秒（1000 个文件以内）",
+        "cargo check 无错误",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "错误处理与用户反馈",
+      "description": "作为用户，遇到错误时我需要看到清晰的提示。",
+      "acceptanceCriteria": [
+        "SMB 连接失败：显示具体原因（网络不可达、认证失败、路径不存在）",
+        "下载失败：显示失败文件名，支持重试",
+        "存储空间不足：同步前检查可用空间，不足时警告",
+        "网络中断：暂停同步，恢复后可继续",
+        "所有错误通过 Toast 或对话框通知用户",
+        "错误日志写入本地文件",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "设置管理与数据清理",
+      "description": "作为用户，我需要管理应用设置和清理数据。",
+      "acceptanceCriteria": [
+        "设置页面：编辑 SMB 连接信息",
+        "清除同步数据按钮：删除所有已同步的本地音乐文件",
+        "清除播放历史按钮：删除播放记录和进度",
+        "清除操作前弹出确认对话框",
+        "显示当前已同步文件总大小",
+        "显示当前本地音乐文件数量",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

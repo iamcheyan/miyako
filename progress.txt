@@ -77,3 +77,16 @@
   - Music file detection uses case-insensitive extension matching (.mp3, .flac, .aac, .wav)
   - File comparison checks both size and last_modified timestamp
 ---
+
+## 2026-05-30 - US-006
+- What was implemented: Sync page UI with progress tracking and sync log
+- Files changed:
+  - src/components/SyncPage.tsx (sync management page with start button, progress bar, log)
+  - src/components/SyncPage.css (dark theme styling)
+  - src/App.tsx (added SyncPage component)
+- **Learnings for future iterations:**
+  - Sync state is loaded on component mount and updated after sync completes
+  - Progress bar shows current/total files being downloaded
+  - Sync log shows timestamped messages with color coding (info/success/error)
+  - Button is disabled while syncing or when not connected
+---

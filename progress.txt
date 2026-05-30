@@ -104,3 +104,15 @@
   - Search filters files by name (case-insensitive)
   - Empty state shows guidance to sync first
 ---
+
+## 2026-05-30 - US-008
+- What was implemented: Audio playback engine with play queue and play modes
+- Files changed:
+  - src/lib/audioPlayer.ts (AudioPlayer class with HTML5 Audio API wrapper)
+- **Learnings for future iterations:**
+  - AudioPlayer is a singleton class with event-based architecture
+  - Supports three play modes: sequential, loop, shuffle
+  - Playlist management with next/previous/seekTo controls
+  - Event listeners for play, pause, stop, ended, timeupdate, loadedmetadata, error
+  - Use `getAudioPlayer()` to get singleton instance
+---

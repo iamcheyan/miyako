@@ -93,9 +93,15 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   if [[ "$TOOL" == "amp" ]]; then
     OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
   else
-    # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
+    # Claude Code: use cc wrapper (full path since alias doesn't work in scripts)
     # cd to project root first so relative paths in CLAUDE.md work correctly
-    OUTPUT=$(cd "$PROJECT_ROOT" && claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+    CC_SH="$HOME/dotfiles/bin/cc.sh"
+    if [ ! -x "$CC_SH" ]; then
+      echo "Error: cc.sh not found at $CC_SH"
+      exit 1
+    fi
+    CLAUDE_PROMPT=$(cat "$SCRIPT_DIR/CLAUDE.md")
+    OUTPUT=$(cd "$PROJECT_ROOT" && "$CC_SH" --print "$CLAUDE_PROMPT" 2>&1 | tee /dev/stderr) || true
   fi
   
   # Check for completion signal

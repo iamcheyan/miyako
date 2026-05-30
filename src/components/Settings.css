@@ -1,0 +1,111 @@
+.settings-container {
+  padding: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.settings-container h2 {
+  margin-bottom: 24px;
+  font-size: 1.5rem;
+  color: inherit;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.form-group input {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background-color: #1a1a1a;
+  color: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.form-group input::placeholder {
+  color: #666;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.password-input-container {
+  display: flex;
+  gap: 8px;
+}
+
+.password-input-container input {
+  flex: 1;
+}
+
+.toggle-password {
+  padding: 0.6em 1em;
+  font-size: 0.85rem;
+  background-color: #2a2a2a;
+  border: 1px solid #333;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.toggle-password:hover {
+  background-color: #333;
+  border-color: #646cff;
+}
+
+.test-connection-btn {
+  margin-top: 8px;
+  padding: 10px 16px;
+  background-color: #1a1a1a;
+  color: #fff;
+  border: 1px solid #646cff;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.test-connection-btn:hover:not(:disabled) {
+  background-color: #646cff;
+  color: #fff;
+}
+
+.test-connection-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.test-result {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+
+.test-result.success {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.test-result.error {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}

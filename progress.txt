@@ -116,3 +116,17 @@
   - Event listeners for play, pause, stop, ended, timeupdate, loadedmetadata, error
   - Use `getAudioPlayer()` to get singleton instance
 ---
+
+## 2026-05-30 - US-009
+- What was implemented: Player UI with mini player, expanded view, and playlist
+- Files changed:
+  - src/components/PlayerUI.tsx (player UI with mini/expanded views, controls, playlist)
+  - src/components/PlayerUI.css (dark theme styling)
+  - src/App.tsx (added PlayerUI component)
+- **Learnings for future iterations:**
+  - Mini player shows track name and time, click to expand
+  - Expanded player shows full controls, progress bar, volume, playlist
+  - Play mode cycles through sequential → loop → shuffle
+  - Playlist shows all tracks with active highlight
+  - Player is fixed at bottom of screen
+---

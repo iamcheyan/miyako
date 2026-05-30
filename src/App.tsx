@@ -2,6 +2,7 @@ import Settings from "./components/Settings";
 import RemoteBrowser from "./components/RemoteBrowser";
 import SyncPage from "./components/SyncPage";
 import MusicLibrary from "./components/MusicLibrary";
+import PlayerUI from "./components/PlayerUI";
 import "./App.css";
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
       <SyncPage />
       <MusicLibrary />
       <RemoteBrowser />
+      <PlayerUI />
     </div>
   );
 }

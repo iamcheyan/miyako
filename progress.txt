@@ -157,3 +157,17 @@
   - Recent tracks are sorted by playedAt (newest first)
   - Playback state saves current track, time, volume, play mode
 ---
+
+## 2026-05-30 - US-012
+- What was implemented: Bottom navigation with page routing
+- Files changed:
+  - src/App.tsx (added BrowserRouter, Routes, NavLink for navigation)
+  - src/App.css (updated styles for bottom navigation)
+  - package.json (added react-router-dom dependency)
+- **Learnings for future iterations:**
+  - Use react-router-dom for client-side routing
+  - Bottom navigation has 3 tabs: 音乐库 (/), 同步 (/sync), 设置 (/settings)
+  - NavLink with isActive for active tab highlighting
+  - Player is fixed above bottom navigation
+  - Content area has padding-bottom to avoid overlap with player and nav
+---

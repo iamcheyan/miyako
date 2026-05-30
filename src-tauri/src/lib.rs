@@ -3,6 +3,7 @@ mod sync_engine;
 
 use smb_client::{ConnectResult, DirEntry, DownloadResult, FileInfo};
 use sync_engine::{SyncAction, SyncState};
+use std::fs;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -97,6 +98,32 @@ async fn sync_load_state(state_path: String) -> Result<SyncState, String> {
     sync_engine::load_sync_state(&state_path).await
 }
 
+/// Read JSON file from app data directory
+#[tauri::command]
+async fn storage_read(dir: String, filename: String) -> Result<String, String> {
+    let app_data = dirs::data_dir().ok_or("Failed to get app data directory")?;
+    let file_path = app_data.join("nas-music-sync").join(&dir).join(&filename);
+
+    if !file_path.exists() {
+        return Err(format!("File not found: {}", file_path.display()));
+    }
+
+    fs::read_to_string(&file_path).map_err(|e| format!("Failed to read file: {}", e))
+}
+
+/// Write JSON file to app data directory
+#[tauri::command]
+async fn storage_write(dir: String, filename: String, content: String) -> Result<(), String> {
+    let app_data = dirs::data_dir().ok_or("Failed to get app data directory")?;
+    let dir_path = app_data.join("nas-music-sync").join(&dir);
+    let file_path = dir_path.join(&filename);
+
+    // Create directory if it doesn't exist
+    fs::create_dir_all(&dir_path).map_err(|e| format!("Failed to create directory: {}", e))?;
+
+    fs::write(&file_path, content).map_err(|e| format!("Failed to write file: {}", e))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -111,7 +138,9 @@ pub fn run() {
             sync_scan_remote,
             sync_compare,
             sync_download,
-            sync_load_state
+            sync_load_state,
+            storage_read,
+            storage_write
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -143,3 +143,17 @@
   - Position state syncs with audio playback
   - Initialize MediaSession once on app mount
 ---
+
+## 2026-05-30 - US-011
+- What was implemented: Local data persistence for recent tracks, history, and playback state
+- Files changed:
+  - src/lib/storage.ts (StorageManager class for JSON-based persistence)
+  - src-tauri/src/lib.rs (added storage_read and storage_write commands)
+  - src-tauri/Cargo.toml (added dirs crate for app data directory)
+- **Learnings for future iterations:**
+  - Storage uses Tauri app data directory (~/nas-music-sync/)
+  - Three JSON files: recent.json (last 50), history.json (all), playback_state.json
+  - StorageManager is a singleton with async initialize() method
+  - Recent tracks are sorted by playedAt (newest first)
+  - Playback state saves current track, time, volume, play mode
+---

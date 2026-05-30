@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { ConnectResult, SmbConfig } from "../types/tauri-commands";
+import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
+import { getStorageManager } from "../lib/storage";
 import "./Settings.css";
 
 const STORAGE_KEY = "smb-config";
+const STATE_PATH = "sync_state.json";
 
 function Settings() {
   const [config, setConfig] = useState<SmbConfig>({
@@ -19,8 +21,13 @@ function Settings() {
     success: boolean;
     message: string;
   } | null>(null);
+  const [syncStats, setSyncStats] = useState<{
+    fileCount: number;
+    totalSize: number;
+  }>({ fileCount: 0, totalSize: 0 });
+  const [showConfirmDialog, setShowConfirmDialog] = useState<string | null>(null);
 
-  // Load saved config on mount
+  // Load saved config and sync stats on mount
   useEffect(() => {
     const savedConfig = localStorage.getItem(STORAGE_KEY);
     if (savedConfig) {
@@ -31,7 +38,22 @@ function Settings() {
         console.error("Failed to parse saved config:", e);
       }
     }
+    loadSyncStats();
   }, []);
+
+  const loadSyncStats = async () => {
+    try {
+      const state = await invoke<SyncState>("sync_load_state", {
+        statePath: STATE_PATH,
+      });
+
+      const fileCount = state.synced_files.length;
+      const totalSize = state.synced_files.reduce((sum, file) => sum + file.size, 0);
+      setSyncStats({ fileCount, totalSize });
+    } catch (e) {
+      console.error("Failed to load sync stats:", e);
+    }
+  };
 
   // Save config to localStorage
   const saveConfig = (newConfig: SmbConfig) => {
@@ -72,6 +94,53 @@ function Settings() {
     } finally {
       setIsTesting(false);
     }
+  };
+
+  // Clear sync data
+  const handleClearSyncData = async () => {
+    try {
+      const storage = getStorageManager();
+      await storage.clearRecent();
+      await storage.clearHistory();
+      await storage.clearPlaybackState();
+
+      // Reset sync state by writing empty state
+      await invoke("storage_write", {
+        dir: "app_data",
+        filename: "sync_state.json",
+        content: JSON.stringify({ last_sync_time: null, synced_files: [] }),
+      });
+
+      setSyncStats({ fileCount: 0, totalSize: 0 });
+      setShowConfirmDialog(null);
+      alert("同步数据已清除");
+    } catch (e) {
+      console.error("Failed to clear sync data:", e);
+      alert("清除失败: " + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+  // Clear playback history
+  const handleClearHistory = async () => {
+    try {
+      const storage = getStorageManager();
+      await storage.clearRecent();
+      await storage.clearHistory();
+      await storage.clearPlaybackState();
+      setShowConfirmDialog(null);
+      alert("播放历史已清除");
+    } catch (e) {
+      console.error("Failed to clear history:", e);
+      alert("清除失败: " + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+  const formatSize = (bytes: number): string => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
@@ -146,6 +215,70 @@ function Settings() {
           </div>
         )}
       </div>
+
+      <div className="sync-stats">
+        <h3>同步数据</h3>
+        <div className="stats-grid">
+          <div className="stat-item">
+            <span className="stat-label">已同步文件数:</span>
+            <span className="stat-value">{syncStats.fileCount}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">总大小:</span>
+            <span className="stat-value">{formatSize(syncStats.totalSize)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="danger-zone">
+        <h3>数据管理</h3>
+        <div className="danger-actions">
+          <button
+            className="danger-btn"
+            onClick={() => setShowConfirmDialog("sync")}
+          >
+            清除同步数据
+          </button>
+          <button
+            className="danger-btn"
+            onClick={() => setShowConfirmDialog("history")}
+          >
+            清除播放历史
+          </button>
+        </div>
+      </div>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="confirm-dialog-overlay">
+          <div className="confirm-dialog">
+            <h3>确认操作</h3>
+            <p>
+              {showConfirmDialog === "sync"
+                ? "确定要清除所有同步数据吗？这将删除同步状态和播放记录。"
+                : "确定要清除播放历史吗？这将删除最近播放和播放记录。"}
+            </p>
+            <div className="dialog-buttons">
+              <button
+                className="cancel-btn"
+                onClick={() => setShowConfirmDialog(null)}
+              >
+                取消
+              </button>
+              <button
+                className="confirm-btn"
+                onClick={
+                  showConfirmDialog === "sync"
+                    ? handleClearSyncData
+                    : handleClearHistory
+                }
+              >
+                确认
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

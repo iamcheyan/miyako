@@ -197,3 +197,16 @@
   - Toast container is fixed at top-right corner
   - Animation slides in from right
 ---
+
+## 2026-05-30 - US-015
+- What was implemented: Settings management and data cleanup features
+- Files changed:
+  - src/components/Settings.tsx (added sync stats, clear data buttons, confirmation dialogs)
+  - src/components/Settings.css (added styles for stats, danger zone, dialogs)
+- **Learnings for future iterations:**
+  - Settings page shows sync stats (file count, total size)
+  - Danger zone with clear sync data and clear history buttons
+  - Confirmation dialog before destructive operations
+  - Uses StorageManager for clearing recent, history, playback state
+  - Sync stats are loaded on mount and updated after clearing
+---

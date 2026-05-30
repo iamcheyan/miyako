@@ -1,6 +1,7 @@
 import Settings from "./components/Settings";
 import RemoteBrowser from "./components/RemoteBrowser";
 import SyncPage from "./components/SyncPage";
+import MusicLibrary from "./components/MusicLibrary";
 import "./App.css";
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
     <div className="app">
       <Settings />
       <SyncPage />
+      <MusicLibrary />
       <RemoteBrowser />
     </div>
   );

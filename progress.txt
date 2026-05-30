@@ -90,3 +90,17 @@
   - Sync log shows timestamped messages with color coding (info/success/error)
   - Button is disabled while syncing or when not connected
 ---
+
+## 2026-05-30 - US-007
+- What was implemented: Local music library display with folder navigation and search
+- Files changed:
+  - src/components/MusicLibrary.tsx (music library with folder grid, file list, search)
+  - src/components/MusicLibrary.css (dark theme styling)
+  - src/App.tsx (added MusicLibrary component)
+- **Learnings for future iterations:**
+  - Music files are grouped by folder from sync state
+  - Folder view shows folder name and file count
+  - File list shows formatted name (without extension) and size
+  - Search filters files by name (case-insensitive)
+  - Empty state shows guidance to sync first
+---

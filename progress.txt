@@ -171,3 +171,15 @@
   - Player is fixed above bottom navigation
   - Content area has padding-bottom to avoid overlap with player and nav
 ---
+
+## 2026-05-30 - US-013
+- What was implemented: Sync state persistence and conflict handling
+- Files changed:
+  - src-tauri/src/sync_engine.rs (updated sync_download to get accurate file info)
+- **Learnings for future iterations:**
+  - Sync state persists across app restarts via sync_manifest.json
+  - Local file deletion triggers re-download on next sync
+  - Remote file deletion keeps local files (no auto-delete)
+  - File info is fetched after download for accurate size and timestamp
+  - Incremental sync compares size and last_modified timestamp
+---

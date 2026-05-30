@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::Path;
 use tokio::fs;
 
@@ -223,27 +224,28 @@ pub async fn sync_download(
                 )
                 .await?;
 
-                // Update sync state
-                let remote_file = RemoteFile {
-                    remote_path: action.remote_path.clone(),
-                    size: 0, // Will be updated from file info
-                    last_modified: None,
-                };
+                // Get file info for accurate size
+                let file_info = smb_client::get_file_info(
+                    connection_id.to_string(),
+                    action.remote_path.clone(),
+                )
+                .await?;
 
-                // Check if already in synced_files
+                // Update sync state
                 if let Some(existing) = state
                     .synced_files
                     .iter_mut()
                     .find(|f| f.remote_path == action.remote_path)
                 {
                     existing.local_path = action.local_path.clone();
-                    existing.last_modified = None;
+                    existing.size = file_info.size;
+                    existing.last_modified = file_info.last_modified;
                 } else {
                     state.synced_files.push(SyncedFile {
                         remote_path: action.remote_path.clone(),
                         local_path: action.local_path.clone(),
-                        size: remote_file.size,
-                        last_modified: remote_file.last_modified,
+                        size: file_info.size,
+                        last_modified: file_info.last_modified,
                     });
                 }
             }

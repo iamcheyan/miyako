@@ -5,10 +5,13 @@ import RemoteBrowser from "./components/RemoteBrowser";
 import SyncPage from "./components/SyncPage";
 import MusicLibrary from "./components/MusicLibrary";
 import PlayerUI from "./components/PlayerUI";
+import Toast, { useToast } from "./components/Toast";
 import { getMediaSessionManager } from "./lib/mediaSession";
 import "./App.css";
 
 function App() {
+  const { messages, removeToast } = useToast();
+
   useEffect(() => {
     // Initialize MediaSession for lock screen/notification controls
     const mediaSession = getMediaSessionManager();
@@ -18,6 +21,8 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app">
+        <Toast messages={messages} onRemove={removeToast} />
+
         <div className="app-content">
           <Routes>
             <Route path="/" element={<MusicLibrary />} />

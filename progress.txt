@@ -183,3 +183,17 @@
   - File info is fetched after download for accurate size and timestamp
   - Incremental sync compares size and last_modified timestamp
 ---
+
+## 2026-05-30 - US-014
+- What was implemented: Error handling and user feedback with Toast notifications
+- Files changed:
+  - src/components/Toast.tsx (Toast component with useToast hook)
+  - src/components/Toast.css (dark theme styling)
+  - src/App.tsx (added Toast component)
+- **Learnings for future iterations:**
+  - Toast supports 4 types: success, error, warning, info
+  - Auto-dismiss after 3 seconds (configurable)
+  - useToast hook returns messages, addToast, removeToast
+  - Toast container is fixed at top-right corner
+  - Animation slides in from right
+---

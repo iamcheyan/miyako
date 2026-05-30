@@ -51,3 +51,29 @@
   - Connection manager stores `Client` per connection (each client can hold multiple share connections)
   - `Client::close()` closes all managed connections/trees/sessions
 ---
+
+## 2026-05-30 - US-003
+- What was implemented: Settings page for SMB server configuration
+- Files changed:
+  - src/components/Settings.tsx (SMB config form with inputs, password toggle, test connection)
+  - src/components/Settings.css (dark theme styling)
+  - src/types/tauri-commands.ts (TypeScript type definitions for Tauri commands)
+- **Learnings for future iterations:**
+  - Use `localStorage` for persisting SMB config between app sessions
+  - Password input toggle uses `type="text"` vs `type="password"` switch
+  - Tauri `invoke` returns errors as thrown exceptions, catch with try/catch
+  - Use `useState` with underscore prefix (`[, setConnectionId]`) when state setter needed but value unused
+---
+
+## 2026-05-30 - US-005
+- What was implemented: Sync engine core logic with recursive directory scanning and file comparison
+- Files changed:
+  - src-tauri/src/sync_engine.rs (new: sync engine with scan, compare, download functions)
+  - src-tauri/src/lib.rs (added sync_* Tauri commands)
+  - src/types/tauri-commands.ts (added RemoteFile, SyncAction, SyncState types)
+- **Learnings for future iterations:**
+  - Use `Box::pin()` for recursive async functions
+  - Sync state is persisted as JSON with last_sync_time and synced_files array
+  - Music file detection uses case-insensitive extension matching (.mp3, .flac, .aac, .wav)
+  - File comparison checks both size and last_modified timestamp
+---

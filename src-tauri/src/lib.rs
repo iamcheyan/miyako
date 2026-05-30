@@ -1,6 +1,8 @@
 mod smb_client;
+mod sync_engine;
 
 use smb_client::{ConnectResult, DirEntry, DownloadResult, FileInfo};
+use sync_engine::{SyncAction, SyncState};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -53,6 +55,48 @@ async fn smb_disconnect(connection_id: String) -> Result<DownloadResult, String>
     smb_client::disconnect(connection_id).await
 }
 
+/// Scan remote directory recursively for music files
+#[tauri::command]
+async fn sync_scan_remote(
+    connection_id: String,
+    path: String,
+) -> Result<Vec<sync_engine::RemoteFile>, String> {
+    sync_engine::scan_remote_directory(&connection_id, &path).await
+}
+
+/// Compare remote files with local directory
+#[tauri::command]
+async fn sync_compare(
+    remote_files: Vec<sync_engine::RemoteFile>,
+    local_dir: String,
+) -> Result<Vec<SyncAction>, String> {
+    sync_engine::compare_with_local(&remote_files, &local_dir).await
+}
+
+/// Perform sync download
+#[tauri::command]
+async fn sync_download(
+    connection_id: String,
+    actions: Vec<SyncAction>,
+    local_dir: String,
+    state_path: String,
+) -> Result<SyncState, String> {
+    sync_engine::sync_download(
+        &connection_id,
+        &actions,
+        &local_dir,
+        &state_path,
+        None,
+    )
+    .await
+}
+
+/// Load sync state
+#[tauri::command]
+async fn sync_load_state(state_path: String) -> Result<SyncState, String> {
+    sync_engine::load_sync_state(&state_path).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -63,7 +107,11 @@ pub fn run() {
             smb_list_dir,
             smb_download_file,
             smb_get_file_info,
-            smb_disconnect
+            smb_disconnect,
+            sync_scan_remote,
+            sync_compare,
+            sync_download,
+            sync_load_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

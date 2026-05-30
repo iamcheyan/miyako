@@ -2,8 +2,6 @@
 # Ralph Wiggum - Long-running AI agent loop
 # Usage: ./ralph.sh [--tool amp|claude] [max_iterations]
 
-set -e
-
 # Parse arguments
 TOOL="amp"  # Default to amp for backwards compatibility
 MAX_ITERATIONS=10
@@ -36,6 +34,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Project root is two levels up from scripts/ralph/
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Load nvm so claude command is available
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+nvm use node >/dev/null 2>&1 || true
 PRD_FILE="$PROJECT_ROOT/prd.json"
 PROGRESS_FILE="$PROJECT_ROOT/progress.txt"
 ARCHIVE_DIR="$PROJECT_ROOT/archive"
@@ -93,15 +96,9 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   if [[ "$TOOL" == "amp" ]]; then
     OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
   else
-    # Claude Code: use cc wrapper (full path since alias doesn't work in scripts)
-    # cd to project root first so relative paths in CLAUDE.md work correctly
-    CC_SH="$HOME/dotfiles/bin/cc.sh"
-    if [ ! -x "$CC_SH" ]; then
-      echo "Error: cc.sh not found at $CC_SH"
-      exit 1
-    fi
+    # Claude Code: cd to project root so relative paths in CLAUDE.md work correctly
     CLAUDE_PROMPT=$(cat "$SCRIPT_DIR/CLAUDE.md")
-    OUTPUT=$(cd "$PROJECT_ROOT" && "$CC_SH" --print "$CLAUDE_PROMPT" 2>&1 | tee /dev/stderr) || true
+    OUTPUT=$(cd "$PROJECT_ROOT" && claude --dangerously-skip-permissions --print "$CLAUDE_PROMPT" 2>&1 | tee /dev/stderr) || true
   fi
   
   # Check for completion signal

@@ -35,3 +35,31 @@ export interface ConnectionState {
   connectionId: string | null;
   error: string | null;
 }
+
+// Sync engine types
+export interface RemoteFile {
+  remote_path: string;
+  size: number;
+  last_modified: number | null;
+}
+
+export type SyncActionType = "Download" | "Skip";
+
+export interface SyncAction {
+  remote_path: string;
+  local_path: string;
+  action: SyncActionType;
+  reason: string;
+}
+
+export interface SyncedFile {
+  remote_path: string;
+  local_path: string;
+  size: number;
+  last_modified: number | null;
+}
+
+export interface SyncState {
+  last_sync_time: number | null;
+  synced_files: SyncedFile[];
+}

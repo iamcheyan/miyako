@@ -130,3 +130,16 @@
   - Playlist shows all tracks with active highlight
   - Player is fixed at bottom of screen
 ---
+
+## 2026-05-30 - US-010
+- What was implemented: MediaSession integration for lock screen and notification controls
+- Files changed:
+  - src/lib/mediaSession.ts (MediaSession manager with metadata and action handlers)
+  - src/App.tsx (initialize MediaSession on app start)
+- **Learnings for future iterations:**
+  - MediaSession API provides lock screen and notification bar controls
+  - Set metadata (title, artist) for each track
+  - Action handlers for play, pause, stop, previoustrack, nexttrack, seekto
+  - Position state syncs with audio playback
+  - Initialize MediaSession once on app mount
+---

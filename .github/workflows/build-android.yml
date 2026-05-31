@@ -97,12 +97,25 @@ jobs:
       - name: Find and rename APKs
         id: find-apk
         run: |
-          # Find built APKs
-          ARM64_APK=$(find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -path "*arm64*" | head -1)
-          ARMV7_APK=$(find src-tauri/gen/android/app/build/outputs/apk -name "*.apk" -path "*arm*" | head -1)
+          echo "=== All APK files ==="
+          find src-tauri/gen/android -name "*.apk" 2>/dev/null || true
+          echo "========================"
+          
+          # Find built APKs - search more broadly
+          ARM64_APK=$(find src-tauri/gen/android -name "*.apk" -path "*aarch64*" -o -name "*.apk" -path "*arm64*" | head -1)
+          ARMV7_APK=$(find src-tauri/gen/android -name "*.apk" -path "*armv7*" -o -name "*.apk" -path "*armeabi*" | head -1)
+          
+          # Fallback: if specific arch not found, find any APKs
+          if [ -z "$ARM64_APK" ]; then
+            ARM64_APK=$(find src-tauri/gen/android -name "*.apk" | head -1)
+          fi
+          if [ -z "$ARMV7_APK" ]; then
+            ARMV7_APK=$(find src-tauri/gen/android -name "*.apk" | tail -1)
+          fi
           
           if [ -z "$ARM64_APK" ] || [ -z "$ARMV7_APK" ]; then
             echo "❌ Could not find built APKs"
+            find src-tauri/gen/android -name "*.apk" 2>/dev/null
             exit 1
           fi
           

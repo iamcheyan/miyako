@@ -31,3 +31,18 @@ Started: 2026-05-31 08:29:05
   - Artifact upload steps were already present in workflow from US-001
   - Ensure artifact names match exactly as specified in acceptance criteria
 ---
+
+## 2026-05-31 17:45:00 - US-003
+- Added workflow_dispatch trigger with branch selection input
+- Manual trigger allows selecting branch to build from (main, master, ralph/github-actions-android-apk)
+- Manual trigger initiates same build process as push/PR triggers
+- Branch input defaults to 'main' for backward compatibility
+- Typecheck and lint passed
+- **Files changed:**
+  - `.github/workflows/build-android.yml` - Added workflow_dispatch with branch selection input and updated checkout step
+  - `prd.json` - Set passes: true for US-003
+- **Learnings for future iterations:**
+  - workflow_dispatch requires inputs configuration for branch selection
+  - Use `github.event.inputs.branch || github.ref` to handle both manual and automatic triggers
+  - The workflow now supports three trigger types: push, pull_request, and workflow_dispatch
+---

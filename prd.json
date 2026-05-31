@@ -51,8 +51,8 @@
         "Verify in browser"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added workflow_dispatch with branch selection input (main, master, ralph/github-actions-android-apk). Manual trigger uses same build process as push/PR triggers with branch input defaulting to 'main'."
     },
     {
       "id": "US-004",

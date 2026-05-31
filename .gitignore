@@ -27,5 +27,16 @@ dist-ssr
 # Tauri
 src-tauri/target/
 
+# 同步的音乐文件和状态
+src-tauri/**/Music/
+src-tauri/**/sync_state.json
+src-tauri/**/sync_state*.json
+src-tauri/**/~/
+*.mp3
+*.flac
+*.wav
+*.m4a
+*.aac
+
 # Embedded repos
 ralph/

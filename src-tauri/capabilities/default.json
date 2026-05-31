@@ -7,7 +7,7 @@
     "core:default",
     "shell:default",
     "fs:default",
-    "fs:allow-read-file",
-    "fs:allow-read-dir"
+    "fs:read-all",
+    "fs:scope"
   ]
 }

@@ -60,6 +60,42 @@ function App() {
     };
   }, []);
 
+  // 全局边缘右滑返回手势（模拟安卓/iOS系统侧滑返回）
+  useEffect(() => {
+    let startX = 0;
+    let startY = 0;
+    let isEdgeSwipe = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      // 判定为边缘滑动的阈值：距离屏幕最左侧边缘 24px 以内
+      isEdgeSwipe = startX < 24;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!isEdgeSwipe) return;
+      const touch = e.changedTouches[0];
+      const diffX = touch.clientX - startX;
+      const diffY = touch.clientY - startY;
+
+      // 边缘滑动向右拖拽（从左向右滑动），距离大于 50px，且垂直偏移较小，触发返回
+      if (diffX > 50 && Math.abs(diffY) < 40) {
+        window.history.back();
+      }
+      isEdgeSwipe = false;
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <div className="app">

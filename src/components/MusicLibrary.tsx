@@ -181,6 +181,8 @@ function MusicLibrary() {
   }
   
   // 获取收藏列表（favoritesVersion 用于强制更新）
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  favoritesVersion;
   const favorites = getFavorites();
   
   // 全局搜索结果（用于搜索弹出层）
@@ -251,7 +253,7 @@ function MusicLibrary() {
                   <span className="material-symbols-outlined folder-icon" style={{ fontVariationSettings: "'FILL' 1", filter: "drop-shadow(0 2px 4px rgba(255, 45, 85, 0.4))" }}>favorite</span>
                   <div className="folder-info">
                     <span className="folder-name">{t("musicLibrary.quickActions.favorites")}</span>
-                    <span className="folder-count">{getFavorites().length} {t("musicLibrary.songs")}</span>
+                    <span className="folder-count">{favorites.length} {t("musicLibrary.songs")}</span>
                   </div>
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>

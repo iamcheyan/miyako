@@ -527,3 +527,241 @@
     color: var(--on-surface-variant-dark);
   }
 }
+
+/* 搜索按钮 */
+.search-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.search-btn:hover {
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-btn:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+/* 搜索弹出层 */
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--surface);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  animation: slideInFromTop 0.2s ease-out;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-overlay {
+    background-color: var(--surface-dark);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.search-overlay-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--outline-variant);
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-overlay-header {
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.search-overlay-icon {
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-overlay-icon {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.search-overlay-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 18px;
+  color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-overlay-input {
+    color: var(--on-surface-dark);
+  }
+}
+
+.search-overlay-input::placeholder {
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-overlay-input::placeholder {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.search-overlay-close {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-overlay-close {
+    color: var(--on-surface-dark);
+  }
+}
+
+.search-overlay-close:hover {
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-overlay-close:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.search-overlay-results {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.search-no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-no-results {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--outline-variant);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-result-item {
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.search-result-item:hover {
+  background-color: var(--surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-result-item:hover {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.search-result-item .material-symbols-outlined {
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-result-item .material-symbols-outlined {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.search-result-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-result-name {
+  font-size: 16px;
+  color: var(--on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-result-name {
+    color: var(--on-surface-dark);
+  }
+}
+
+.search-result-path {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-result-path {
+    color: var(--on-surface-variant-dark);
+  }
+}

@@ -19,7 +19,8 @@
     "allSongs": "すべての曲",
     "folders": "フォルダ",
     "songs": "曲",
-    "searchPlaceholder": "音楽を検索...",
+    "loading": "読み込み中...",
+    "searchPlaceholder": "音楽を検索...", 
     "quickActions": {
       "nasSettings": "NAS設定",
       "syncMusic": "音楽を同期",
@@ -39,6 +40,12 @@
     "paused": "一時停止",
     "playlist": "プレイリスト",
     "emptyPlaylist": "プレイリストなし"
+  },
+  "remoteBrowser": {
+    "title": "リモートブラウザ",
+    "emptyDir": "ディレクトリが空です",
+    "musicFiles": "個の音楽ファイル",
+    "folders": "個のフォルダ"
   },
   "settings": {
     "title": "設定",
@@ -86,7 +93,23 @@
     "connectingTo": "NASサーバーに接続中",
     "configureFirst": "まずSMB接続を設定してください",
     "settings": "設定",
+    "browseRemote": "リモート閲覧",
     "syncInfo": "同期情報",
+    "logs": {
+      "connected": "SMBサーバーに接続しました",
+      "connecting": "SMBサーバーに接続中...",
+      "startScan": "リモートディレクトリのスキャンを開始...",
+      "remoteDir": "リモートディレクトリ:",
+      "scanComplete": "スキャン完了、{{count}}個の音楽ファイルを検出",
+      "comparing": "ローカルファイルを比較中...",
+      "localDir": "ローカルディレクトリ:",
+      "needSync": "ダウンロード: {{download}}個、移動: {{move}}個、削除: {{delete}}個、スキップ: {{skip}}個",
+      "allUpToDate": "すべてのファイルは最新です、同期不要",
+      "startSync": "ファイルの同期を開始...",
+      "syncComplete": "同期完了!",
+      "syncFailed": "同期失敗:",
+      "connectFailed": "接続失敗:"
+    },
     "lastSync": "最終同期",
     "syncedFiles": "同期済みファイル",
     "never": "未実行",

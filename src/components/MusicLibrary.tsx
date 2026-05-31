@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -29,7 +29,9 @@ function MusicLibrary() {
   const [currentPath, setCurrentPath] = useState<string | null>(null);
   const [currentFiles, setCurrentFiles] = useState<MusicFile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadMusicLibrary();
@@ -100,11 +102,11 @@ function MusicLibrary() {
     for (const folder of folders) {
       allFiles.push(...folder.files);
     }
-    setCurrentPath("全部歌曲");
+    setCurrentPath(t("musicLibrary.allSongs"));
     setCurrentFiles(allFiles);
     setSearchQuery("");
     // 添加历史记录条目
-    window.history.pushState({ path: "全部歌曲" }, "");
+    window.history.pushState({ path: t("musicLibrary.allSongs") }, "");
   };
 
   const handleBackClick = useCallback(() => {
@@ -158,124 +160,19 @@ function MusicLibrary() {
     file.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // 加载状态
   if (isLoading) {
     return (
       <div className="library-loading">
         <div className="loading-spinner" />
-        <span>加载中...</span>
+        <span>{t("musicLibrary.loading")}</span>
       </div>
     );
   }
 
-  // 显示文件夹列表
-  if (!currentPath) {
-    return (
-      <div className="library-page">
-        {/* 固定头部：搜索栏 + 快捷操作 */}
-        <div className="library-header">
-          <div className="search-bar">
-            <span className="material-symbols-outlined search-icon">search</span>
-            <input
-              type="text"
-              className="search-input"
-              placeholder={t("musicLibrary.searchPlaceholder")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className="quick-actions">
-            <button
-              className="action-card"
-              onClick={() => navigate("/settings")}
-            >
-              <span className="material-symbols-outlined action-icon">settings_input_antenna</span>
-              <span className="action-label">{t("musicLibrary.quickActions.nasSettings")}</span>
-            </button>
-
-            <button
-              className="action-card"
-              onClick={() => navigate("/sync")}
-            >
-              <span className="material-symbols-outlined action-icon">sync</span>
-              <span className="action-label">{t("musicLibrary.quickActions.syncMusic")}</span>
-            </button>
-
-            <button
-              className="action-card"
-              onClick={() => navigate("/remote")}
-            >
-              <span className="material-symbols-outlined action-icon">folder_open</span>
-              <span className="action-label">{t("musicLibrary.quickActions.browseRemote")}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 可滚动内容：文件夹列表 */}
-        <div className="library-scroll">
-          {folders.length === 0 ? (
-            <div className="empty-state">
-              <span className="material-symbols-outlined empty-icon">library_music</span>
-              <h3 className="empty-title">{t("musicLibrary.empty.title")}</h3>
-              <p className="empty-desc">
-                {t("musicLibrary.empty.description")}
-              </p>
-              <div className="empty-actions">
-                <button
-                  className="empty-btn primary"
-                  onClick={() => navigate("/sync")}
-                >
-                  {t("musicLibrary.empty.configureNAS")}
-                </button>
-                <button
-                  className="empty-btn secondary"
-                  onClick={() => navigate("/sync")}
-                >
-                  {t("musicLibrary.empty.startSync")}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="folder-list">
-              {/* 全部歌曲选项 */}
-              <button
-                className="folder-item all-files"
-                onClick={handleAllFilesClick}
-              >
-                <span className="material-symbols-outlined folder-icon">library_music</span>
-                <div className="folder-info">
-                  <span className="folder-name">{t("musicLibrary.allSongs")}</span>
-                  <span className="folder-count">{folders.reduce((sum, f) => sum + f.files.length, 0)} {t("musicLibrary.songs")}</span>
-                </div>
-                <span className="material-symbols-outlined">chevron_right</span>
-              </button>
-              
-              {/* 各个文件夹 */}
-              {folders.map((folder) => (
-                <button
-                  key={folder.path}
-                  className="folder-item"
-                  onClick={() => handleFolderClick(folder)}
-                >
-                  <span className="material-symbols-outlined folder-icon">folder</span>
-                  <div className="folder-info">
-                    <span className="folder-name">{folder.name}</span>
-                    <span className="folder-count">{folder.files.length} {t("musicLibrary.songs")}</span>
-                  </div>
-                  <span className="material-symbols-outlined">chevron_right</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // 显示文件列表
   return (
     <div className="library-page">
-      {/* 固定头部：返回导航 + 搜索栏 */}
+      {/* 固定头部：返回导航 + 搜索按钮 */}
       <div className="library-header">
         <div className="list-header">
           <button className="back-btn-small" onClick={handleBackClick}>
@@ -285,17 +182,9 @@ function MusicLibrary() {
             <h2 className="list-title">{currentPath.split("/").pop()}</h2>
             <span className="list-subtitle">{currentFiles.length} {t("musicLibrary.songs")}</span>
           </div>
-        </div>
-
-        <div className="search-bar">
-          <span className="material-symbols-outlined search-icon">search</span>
-          <input
-            type="text"
-            className="search-input"
-            placeholder={t("musicLibrary.searchPlaceholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <button className="search-btn" onClick={() => setIsSearchOpen(true)}>
+            <span className="material-symbols-outlined">search</span>
+          </button>
         </div>
       </div>
 
@@ -327,6 +216,56 @@ function MusicLibrary() {
           </div>
         )}
       </div>
+
+      {/* 搜索弹出层 */}
+      {isSearchOpen && (
+        <div className="search-overlay">
+          <div className="search-overlay-header">
+            <span className="material-symbols-outlined search-overlay-icon">search</span>
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="search-overlay-input"
+              placeholder={t("musicLibrary.searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+            />
+            <button className="search-overlay-close" onClick={() => {
+              setIsSearchOpen(false);
+              setSearchQuery("");
+            }}>
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div className="search-overlay-results">
+            {searchQuery && filteredFiles.length === 0 ? (
+              <div className="search-no-results">
+                <span className="material-symbols-outlined">search_off</span>
+                <span>{t("musicLibrary.searchNoResults")}</span>
+              </div>
+            ) : (
+              filteredFiles.map((file) => (
+                <button
+                  key={file.remotePath}
+                  className="search-result-item"
+                  onClick={() => {
+                    handleFileClick(file);
+                    setIsSearchOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
+                  <span className="material-symbols-outlined">music_note</span>
+                  <div className="search-result-info">
+                    <span className="search-result-name">{formatFileName(file.name)}</span>
+                    <span className="search-result-path">{file.remotePath}</span>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

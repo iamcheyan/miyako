@@ -20,6 +20,7 @@ pub struct RemoteFile {
 pub struct SyncAction {
     pub remote_path: String,
     pub local_path: String,
+    pub old_local_path: Option<String>, // For LocalMove action
     pub action: Action,
     pub reason: String,
 }
@@ -29,6 +30,7 @@ pub enum Action {
     Download,
     Skip,
     Delete,
+    LocalMove, // New: local file move/rename
 }
 
 /// Sync state persisted to disk
@@ -57,7 +59,9 @@ pub struct SyncProgress {
 /// Progress callback type
 pub type ProgressCallback = Box<dyn Fn(usize, usize, &str) + Send + Sync>;
 
-const MUSIC_EXTENSIONS: &[&str] = &[".mp3", ".flac", ".aac", ".wav"];
+const MUSIC_EXTENSIONS: &[&str] = &[
+    ".mp3", ".flac", ".aac", ".wav", ".m4a", ".ogg", ".ape", ".opus", ".wma", ".aiff", ".alac",
+];
 
 // #region debug-point A:download-debug-reporting
 fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
@@ -250,6 +254,7 @@ pub async fn compare_with_local(
             actions.push(SyncAction {
                 remote_path: remote.remote_path.clone(),
                 local_path: local_path_string,
+                old_local_path: None,
                 action: Action::Download,
                 reason: "文件不存在".to_string(),
             });
@@ -287,6 +292,7 @@ pub async fn compare_with_local(
                 actions.push(SyncAction {
                     remote_path: remote.remote_path.clone(),
                     local_path: local_path_string,
+                    old_local_path: None,
                     action: Action::Download,
                     reason,
                 });
@@ -294,6 +300,7 @@ pub async fn compare_with_local(
                 actions.push(SyncAction {
                     remote_path: remote.remote_path.clone(),
                     local_path: local_path_string,
+                    old_local_path: None,
                     action: Action::Skip,
                     reason: "文件相同，跳过".to_string(),
                 });
@@ -328,6 +335,7 @@ pub async fn compare_with_local(
                 actions.push(SyncAction {
                     remote_path,
                     local_path: local_str,
+                    old_local_path: None,
                     action: Action::Delete,
                     reason: "NAS 上已删除".to_string(),
                 });
@@ -335,7 +343,70 @@ pub async fn compare_with_local(
         }
     }
 
+    // Detect renames and moves using heuristics
+    detect_renames_and_moves(&mut actions);
+
     Ok(actions)
+}
+
+/// Detect file renames and moves using heuristics matching
+/// This converts Download+Delete pairs into LocalMove when files are likely moved
+pub fn detect_renames_and_moves(actions: &mut Vec<SyncAction>) {
+    let mut downloads: Vec<SyncAction> = Vec::new();
+    let mut deletes: Vec<SyncAction> = Vec::new();
+    let mut skips: Vec<SyncAction> = Vec::new();
+
+    // Separate actions into downloads, deletes, and skips
+    for act in actions.drain(..) {
+        match act.action {
+            Action::Download => downloads.push(act),
+            Action::Delete => deletes.push(act),
+            _ => skips.push(act),
+        }
+    }
+
+    let mut final_actions = skips;
+
+    // Matching algorithm: try to match downloads with deletes by filename
+    for dl in downloads {
+        let mut matched_index = None;
+        let mut match_reason = String::new();
+
+        let dl_filename = Path::new(&dl.remote_path)
+            .file_name()
+            .map(|f| f.to_os_string());
+
+        if let Some(ref dl_name) = dl_filename {
+            for (idx, del) in deletes.iter().enumerate() {
+                if let Some(del_name) = Path::new(&del.remote_path).file_name() {
+                    if dl_name == del_name {
+                        matched_index = Some(idx);
+                        match_reason = format!("文件名相同: {}", dl_name.to_string_lossy());
+                        break;
+                    }
+                }
+            }
+        }
+
+        if let Some(idx) = matched_index {
+            let matched_delete = deletes.remove(idx);
+            // Convert to LocalMove action
+            final_actions.push(SyncAction {
+                remote_path: dl.remote_path,
+                local_path: dl.local_path,
+                old_local_path: Some(matched_delete.local_path),
+                action: Action::LocalMove,
+                reason: format!("检测到文件移动: {}", match_reason),
+            });
+        } else {
+            // No match found, keep as download
+            final_actions.push(dl);
+        }
+    }
+
+    // Remaining deletes that weren't matched
+    final_actions.extend(deletes);
+    *actions = final_actions;
 }
 
 /// Load sync state from file
@@ -514,6 +585,87 @@ pub async fn sync_download(
                 state
                     .synced_files
                     .retain(|f| f.local_path != action.local_path);
+            }
+            Action::LocalMove => {
+                if let Some(cb) = callback {
+                    cb(
+                        index + 1,
+                        total,
+                        &format!("移动: {} -> {}", action.old_local_path.as_deref().unwrap_or("?"), action.local_path),
+                    );
+                }
+
+                let old_path_str = action.old_local_path.as_ref().ok_or_else(|| {
+                    format!("LocalMove action missing old_local_path for {}", action.remote_path)
+                })?;
+                let old_path = Path::new(old_path_str);
+                let new_path = Path::new(&action.local_path);
+
+                if old_path.exists() {
+                    // 1. Ensure new directory exists
+                    if let Some(parent) = new_path.parent() {
+                        fs::create_dir_all(parent)
+                            .await
+                            .map_err(|e| format!("Failed to create directory {}: {}", parent.display(), e))?;
+                    }
+                    // 2. Move/rename the file locally (millisecond operation)
+                    fs::rename(old_path, new_path)
+                        .await
+                        .map_err(|e| format!("Failed to move {} to {}: {}", old_path_str, action.local_path, e))?;
+
+                    // 3. Update sync state
+                    if let Some(existing) = state
+                        .synced_files
+                        .iter_mut()
+                        .find(|f| f.remote_path == action.remote_path)
+                    {
+                        existing.local_path = action.local_path.clone();
+                    } else {
+                        // If not found by remote_path, try by old local_path
+                        if let Some(existing) = state
+                            .synced_files
+                            .iter_mut()
+                            .find(|f| f.local_path == *old_path_str)
+                        {
+                            existing.remote_path = action.remote_path.clone();
+                            existing.local_path = action.local_path.clone();
+                        }
+                    }
+
+                    // Save state after each move
+                    save_sync_state(state_path, &state).await?;
+                } else {
+                    // Old file doesn't exist, fall back to download
+                    if let Some(cb) = callback {
+                        cb(
+                            index + 1,
+                            total,
+                            &format!("原文件不存在，降级下载: {}", action.remote_path),
+                        );
+                    }
+                    smb_client::download_file(
+                        connection_id.to_string(),
+                        action.remote_path.clone(),
+                        action.local_path.clone(),
+                    )
+                    .await?;
+
+                    // Update sync state
+                    let file_info = smb_client::get_file_info(
+                        connection_id.to_string(),
+                        action.remote_path.clone(),
+                    )
+                    .await?;
+
+                    state.synced_files.push(SyncedFile {
+                        remote_path: action.remote_path.clone(),
+                        local_path: action.local_path.clone(),
+                        size: file_info.size,
+                        last_modified: file_info.last_modified,
+                    });
+
+                    save_sync_state(state_path, &state).await?;
+                }
             }
         }
     }

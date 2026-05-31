@@ -19,7 +19,8 @@
     "allSongs": "全部歌曲",
     "folders": "文件夹",
     "songs": "首歌曲",
-    "searchPlaceholder": "搜索音乐...",
+    "loading": "加载中...",
+    "searchPlaceholder": "搜索音乐...", 
     "quickActions": {
       "nasSettings": "NAS 设置",
       "syncMusic": "同步音乐",
@@ -39,6 +40,12 @@
     "paused": "已暂停",
     "playlist": "播放列表",
     "emptyPlaylist": "暂无播放列表"
+  },
+  "remoteBrowser": {
+    "title": "远程浏览",
+    "emptyDir": "目录为空",
+    "musicFiles": "个音乐文件",
+    "folders": "个文件夹"
   },
   "settings": {
     "title": "设置",
@@ -86,7 +93,23 @@
     "connectingTo": "正在连接 NAS 服务器",
     "configureFirst": "请先配置 SMB 连接",
     "settings": "设置",
+    "browseRemote": "远程浏览",
     "syncInfo": "同步信息",
+    "logs": {
+      "connected": "已连接到 SMB 服务器",
+      "connecting": "正在连接到 SMB 服务器...",
+      "startScan": "开始扫描远程目录...",
+      "remoteDir": "远程目录:",
+      "scanComplete": "扫描完成,找到 {{count}} 个音乐文件",
+      "comparing": "对比本地文件...",
+      "localDir": "本地目录:",
+      "needSync": "需要下载: {{download}} 个,移动: {{move}} 个,删除: {{delete}} 个,跳过: {{skip}} 个",
+      "allUpToDate": "所有文件已是最新,无需同步",
+      "startSync": "开始同步文件...",
+      "syncComplete": "同步完成!",
+      "syncFailed": "同步失败:",
+      "connectFailed": "连接失败:"
+    },
     "lastSync": "上次同步",
     "syncedFiles": "已同步文件",
     "never": "从未",

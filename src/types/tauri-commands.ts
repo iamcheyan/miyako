@@ -45,11 +45,12 @@ export interface RemoteFile {
   last_modified: number | null;
 }
 
-export type SyncActionType = "Download" | "Skip" | "Delete";
+export type SyncActionType = "Download" | "Skip" | "Delete" | "LocalMove";
 
 export interface SyncAction {
   remote_path: string;
   local_path: string;
+  old_local_path: string | null;
   action: SyncActionType;
   reason: string;
 }

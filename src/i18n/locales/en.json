@@ -19,7 +19,8 @@
     "allSongs": "All Songs",
     "folders": "Folders",
     "songs": "songs",
-    "searchPlaceholder": "Search music...",
+    "loading": "Loading...",
+    "searchPlaceholder": "Search music...", 
     "quickActions": {
       "nasSettings": "NAS Settings",
       "syncMusic": "Sync Music",
@@ -39,6 +40,12 @@
     "paused": "Paused",
     "playlist": "Playlist",
     "emptyPlaylist": "No playlist"
+  },
+  "remoteBrowser": {
+    "title": "Remote Browser",
+    "emptyDir": "Directory is empty",
+    "musicFiles": "music files",
+    "folders": "folders"
   },
   "settings": {
     "title": "Settings",
@@ -86,7 +93,23 @@
     "connectingTo": "Connecting to NAS server",
     "configureFirst": "Please configure SMB connection first",
     "settings": "Settings",
+    "browseRemote": "Browse Remote",
     "syncInfo": "Sync Info",
+    "logs": {
+      "connected": "Connected to SMB server",
+      "connecting": "Connecting to SMB server...",
+      "startScan": "Start scanning remote directory...",
+      "remoteDir": "Remote directory:",
+      "scanComplete": "Scan complete, found {{count}} music files",
+      "comparing": "Comparing local files...",
+      "localDir": "Local directory:",
+      "needSync": "Need to download: {{download}}, move: {{move}}, delete: {{delete}}, skip: {{skip}}",
+      "allUpToDate": "All files are up to date, no sync needed",
+      "startSync": "Start syncing files...",
+      "syncComplete": "Sync complete!",
+      "syncFailed": "Sync failed:",
+      "connectFailed": "Connection failed:"
+    },
     "lastSync": "Last Sync",
     "syncedFiles": "Synced Files",
     "never": "Never",

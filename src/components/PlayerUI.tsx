@@ -16,6 +16,8 @@ function PlayerUI() {
   const pushStateRef = useRef(false);
   const trackTitleRef = useRef<HTMLHeadingElement>(null);
   const dragStartRef = useRef<{ y: number; time: number } | null>(null);
+  const playlistScrollRef = useRef<HTMLDivElement>(null);
+  const activeRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setState(player.getState());
@@ -53,6 +55,43 @@ function PlayerUI() {
       window.removeEventListener("popstate", handlePopState);
     };
   }, [isExpanded]);
+
+  // 当 currentIndex 改变或从暂停切换到播放时，自动将当前歌曲滚动到播放列表居中位置
+  const prevIsPlayingRef = useRef(state.isPlaying);
+  useEffect(() => {
+    const wasPaused = !prevIsPlayingRef.current;
+    const isNowPlaying = state.isPlaying;
+    const justResumed = wasPaused && isNowPlaying;
+    
+    // 更新 ref
+    prevIsPlayingRef.current = state.isPlaying;
+    
+    // 仅在展开状态下执行滚动
+    if (isExpanded && activeRowRef.current && playlistScrollRef.current) {
+      const container = playlistScrollRef.current;
+      const element = activeRowRef.current;
+      
+      // 1. 获取元素相对于滚动容器的精确相对 Top 位置，避免 offsetParent 导致的高度错乱
+      const containerRect = container.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const elementTopRelative = elementRect.top - containerRect.top + container.scrollTop;
+      
+      const containerHeight = container.clientHeight;
+      const elementHeight = element.clientHeight;
+      
+      // 2. 计算居中滚动位置
+      let scrollTo = elementTopRelative - containerHeight / 2 + elementHeight / 2;
+      
+      // 3. 边界避让与安全限制：防止滚出可见视口
+      const maxScrollTop = Math.max(0, container.scrollHeight - containerHeight);
+      scrollTo = Math.max(0, Math.min(maxScrollTop, scrollTo));
+      
+      container.scrollTo({
+        top: scrollTo,
+        behavior: justResumed ? 'instant' : 'smooth'
+      });
+    }
+  }, [state.currentIndex, state.isPlaying, isExpanded]);
 
   // 处理关闭播放器
   const handleClosePlayer = useCallback(() => {
@@ -287,7 +326,7 @@ function PlayerUI() {
         {/* 中间：播放列表，填满剩余空间，可滚动 */}
         <div className="expanded-playlist">
           <h3 className="playlist-header">{t("player.playlist")}</h3>
-          <div className="playlist-scroll">
+          <div className="playlist-scroll" ref={playlistScrollRef}>
             {state.playlist.length === 0 ? (
               <div className="playlist-empty">
                 <span className="material-symbols-outlined">queue_music</span>
@@ -297,6 +336,7 @@ function PlayerUI() {
               state.playlist.map((track, index) => (
                 <div
                   key={index}
+                  ref={index === state.currentIndex ? activeRowRef : undefined}
                   className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
                   onClick={() => player.playTrack(index)}
                 >

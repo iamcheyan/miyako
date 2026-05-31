@@ -191,7 +191,7 @@ function RemoteBrowser() {
         {isLoading && (
           <div className="browser-loading">
             <div className="loading-spinner" />
-            <span>加载中...</span>
+            <span>{t("common.loading")}</span>
           </div>
         )}
 
@@ -201,7 +201,7 @@ function RemoteBrowser() {
             {folders.length === 0 && musicFiles.length === 0 ? (
               <div className="empty-state">
                 <span className="material-symbols-outlined empty-icon">folder_off</span>
-                <span>目录为空</span>
+                <span>{t("remoteBrowser.emptyDir")}</span>
               </div>
             ) : (
               <>

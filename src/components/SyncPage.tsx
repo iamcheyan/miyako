@@ -84,11 +84,11 @@ function SyncPage() {
 
   useEffect(() => {
     if (connectionState.connectionId) {
-      addLog("已连接到 SMB 服务器", "success");
+      addLog(t("sync.logs.connected"), "success");
     } else if (connectionState.isConnecting) {
-      addLog("正在连接到 SMB 服务器...");
+      addLog(t("sync.logs.connecting"));
     }
-  }, [connectionState.connectionId, connectionState.isConnecting, addLog]);
+  }, [connectionState.connectionId, connectionState.isConnecting, addLog, t]);
 
   const connectionId = connectionState.connectionId;
 
@@ -128,7 +128,7 @@ function SyncPage() {
       activeConnectionId = await reconnectIfNeeded();
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
-      setError(`连接失败: ${errorMessage}`);
+      setError(`${t("sync.logs.connectFailed")} ${errorMessage}`);
       return;
     }
 
@@ -139,19 +139,19 @@ function SyncPage() {
 
     try {
       // 步骤 1: 扫描远程目录
-      addLog("开始扫描远程目录...");
+      addLog(t("sync.logs.startScan"));
       const remotePath = getRemotePath();
-      addLog(`远程目录: /${remotePath || ""}`);
+      addLog(`${t("sync.logs.remoteDir")} /${remotePath || ""}`);
       const remoteFiles = await invoke<RemoteFile[]>("sync_scan_remote", {
         connectionId: activeConnectionId,
         path: remotePath,
       });
-      addLog(`扫描完成，找到 ${remoteFiles.length} 个音乐文件`, "success");
+      addLog(t("sync.logs.scanComplete", { count: remoteFiles.length }), "success");
 
       // 步骤 2: 对比本地文件
-      addLog("对比本地文件...");
+      addLog(t("sync.logs.comparing"));
       const localDir = getLocalDir();
-      addLog(`本地目录: ${localDir}`);
+      addLog(`${t("sync.logs.localDir")} ${localDir}`);
       const actions = await invoke<SyncAction[]>("sync_compare", {
         remoteFiles,
         localDir,
@@ -160,32 +160,33 @@ function SyncPage() {
       const toDownload = actions.filter((a) => a.action === "Download");
       const toDelete = actions.filter((a) => a.action === "Delete");
       const toSkip = actions.filter((a) => a.action === "Skip");
-      addLog(`需要下载: ${toDownload.length} 个，删除: ${toDelete.length} 个，跳过: ${toSkip.length} 个`);
+      const toMove = actions.filter((a) => a.action === "LocalMove");
+      addLog(t("sync.logs.needSync", { download: toDownload.length, move: toMove.length, delete: toDelete.length, skip: toSkip.length }));
 
-      if (toDownload.length === 0 && toDelete.length === 0) {
-        addLog("所有文件已是最新，无需同步", "success");
+      if (toDownload.length === 0 && toDelete.length === 0 && toMove.length === 0) {
+        addLog(t("sync.logs.allUpToDate"), "success");
         setIsSyncing(false);
         return;
       }
 
-      // 步骤 3: 下载和删除文件
-      const totalActions = toDownload.length + toDelete.length;
+      // 步骤 3: 下载、移动和删除文件
+      const totalActions = toDownload.length + toDelete.length + toMove.length;
       setProgress({ current: 0, total: totalActions });
-      addLog("开始同步文件...");
+      addLog(t("sync.logs.startSync"));
 
       const state = await invoke<SyncState>("sync_download", {
         connectionId: activeConnectionId,
-        actions: [...toDownload, ...toDelete],
+        actions: [...toDownload, ...toDelete, ...toMove],
         localDir,
         statePath: STATE_PATH,
       });
 
       setSyncState(state);
-      addLog("同步完成！", "success");
+      addLog(t("sync.logs.syncComplete"), "success");
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
-      setError(`同步失败: ${errorMessage}`);
-      addLog(`同步失败: ${errorMessage}`, "error");
+      setError(`${t("sync.logs.syncFailed")} ${errorMessage}`);
+      addLog(`${t("sync.logs.syncFailed")} ${errorMessage}`, "error");
     } finally {
       setIsSyncing(false);
     }
@@ -206,7 +207,7 @@ function SyncPage() {
         <h1 className="page-title">{t("sync.title")}</h1>
       </div>
 
-      {/* 固定头部：状态卡片 + 错误提示 + 统计 */}
+      {/* 固定头部:状态卡片 + 错误提示 + 统计 */}
       <div className="sync-header">
         {/* 同步状态卡片 */}
         <div className="status-card">
@@ -226,6 +227,15 @@ function SyncPage() {
             </div>
 
             <div className="status-actions">
+              {connectionId && (
+                <button
+                  className="browse-btn"
+                  onClick={() => navigate("/remote")}
+                  aria-label={t("sync.browseRemote")}
+                >
+                  <span className="material-symbols-outlined">folder_open</span>
+                </button>
+              )}
               <button
                 className="settings-btn"
                 onClick={() => navigate("/settings")}
@@ -234,7 +244,7 @@ function SyncPage() {
                 <span className="material-symbols-outlined">settings</span>
               </button>
               <button
-                className="sync-fab"
+                className={`sync-fab ${isSyncing ? "syncing" : ""}`}
                 onClick={handleStartSync}
                 disabled={isSyncing || connectionState.isConnecting}
               >
@@ -269,27 +279,6 @@ function SyncPage() {
             <span>{error}</span>
           </div>
         )}
-
-        {/* 同步统计 */}
-        <div className="stats-section">
-          <h3 className="section-title">{t("sync.syncInfo")}</h3>
-          <div className="stats-list">
-            <div className="stat-row">
-              <span className="material-symbols-outlined stat-icon">schedule</span>
-              <span className="stat-label">{t("sync.lastSync")}</span>
-              <span className="stat-value">
-                {formatTime(syncState?.last_sync_time ?? null)}
-              </span>
-            </div>
-            <div className="stat-row">
-              <span className="material-symbols-outlined stat-icon">audio_file</span>
-              <span className="stat-label">{t("sync.syncedFiles")}</span>
-              <span className="stat-value">
-                {syncState?.synced_files?.length ?? 0} {t("sync.files")}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* 可滚动内容：同步日志 */}
@@ -303,14 +292,24 @@ function SyncPage() {
                 <span>{t("sync.noLogs")}</span>
               </div>
             ) : (
-              logs.map((log, index) => (
-                <div key={index} className={`log-item log-${log.type}`}>
-                  <span className="log-time">{log.time}</span>
-                  <span className="log-message">{log.message}</span>
-                </div>
-              ))
+              // 只显示最新的一条日志
+              (() => {
+                const latestLog = logs[logs.length - 1];
+                return (
+                  <div className={`log-item log-${latestLog.type}`}>                  
+                    <span className="log-time">{latestLog.time}</span>
+                    <span className="log-message">{latestLog.message}</span>
+                  </div>
+                );
+              })()
             )}
           </div>
+        </div>
+
+        {/* 最后同步时间 */}
+        <div className="last-sync-info">
+          <span className="material-symbols-outlined">schedule</span>
+          <span>{t("sync.lastSync")}: {formatTime(syncState?.last_sync_time ?? null)}</span>
         </div>
       </div>
 

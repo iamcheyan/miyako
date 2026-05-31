@@ -31,17 +31,35 @@ export class AudioPlayer {
   private playMode: PlayMode = "sequential";
   private eventListeners: Map<PlayerEvent, Set<EventCallback>> = new Map();
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  
+  // 演示模式专用状态
+  private demoMode = false;
+  private demoPlaying = false;
+  private demoCurrentTime = 0;
+  private demoDuration = 240;
+  private demoTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     this.audio = new Audio();
     this.setupAudioEvents();
     this.loadSavedState();
+    
+    // 检查是否为演示模式
+    if (isDemoMode()) {
+      this.demoMode = true;
+      this.demoPlaying = false;
+      this.demoCurrentTime = 0;
+    }
   }
 
   // 加载保存的状态
   private async loadSavedState() {
-    // 演示模式下不加载保存的状态
+    // 演示模式下加载演示播放列表
     if (isDemoMode()) {
+      this.playlist = getDemoPlaylist();
+      this.currentIndex = getDemoCurrentIndex();
+      this.demoDuration = 240; // 默认4分钟
+      this.emit("loadedmetadata", this.demoDuration);
       return;
     }
     
@@ -150,6 +168,89 @@ export class AudioPlayer {
     }
   }
 
+  // 演示模式：开始模拟播放
+  private startDemoPlayback() {
+    if (this.demoTimer) {
+      clearInterval(this.demoTimer);
+    }
+    this.demoPlaying = true;
+    
+    // 模拟播放进度
+    this.demoTimer = setInterval(() => {
+      if (this.demoPlaying) {
+        this.demoCurrentTime += 0.5;
+        if (this.demoCurrentTime >= this.demoDuration) {
+          this.demoCurrentTime = 0;
+          this.handleDemoEnded();
+        }
+        this.emit("timeupdate", this.demoCurrentTime);
+      }
+    }, 500);
+    
+    this.emit("play");
+  }
+  
+  // 演示模式：暂停
+  private pauseDemoPlayback() {
+    this.demoPlaying = false;
+    this.emit("pause");
+  }
+  
+  // 演示模式：播放结束处理
+  private handleDemoEnded() {
+    this.emit("ended");
+    switch (this.playMode) {
+      case "sequential":
+        this.demoNext();
+        break;
+      case "loop":
+        this.demoCurrentTime = 0;
+        this.startDemoPlayback();
+        break;
+      case "shuffle":
+        this.demoPlayRandom();
+        break;
+    }
+  }
+  
+  // 演示模式：下一首
+  private demoNext() {
+    if (this.playlist.length === 0) return;
+    let nextIndex: number;
+    switch (this.playMode) {
+      case "shuffle":
+        nextIndex = Math.floor(Math.random() * this.playlist.length);
+        break;
+      case "loop":
+        nextIndex = this.currentIndex;
+        break;
+      default:
+        nextIndex = (this.currentIndex + 1) % this.playlist.length;
+        break;
+    }
+    this.demoPlayTrack(nextIndex);
+  }
+  
+  // 演示模式：随机播放
+  private demoPlayRandom() {
+    if (this.playlist.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * this.playlist.length);
+    this.demoPlayTrack(randomIndex);
+  }
+  
+  // 演示模式：播放指定曲目
+  private demoPlayTrack(index: number) {
+    if (index >= 0 && index < this.playlist.length) {
+      this.currentIndex = index;
+      this.demoCurrentTime = 0;
+      this.emit("loadedmetadata", this.demoDuration);
+      if (this.demoPlaying) {
+        this.startDemoPlayback();
+      }
+      this.saveState();
+    }
+  }
+
   // 将本地文件路径转换为可播放的 blob URL
   private async toBlobUrl(filePath: string): Promise<string> {
     if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("blob:")) {
@@ -189,11 +290,22 @@ export class AudioPlayer {
       case 'm4a': return 'audio/mp4';
       case 'aac': return 'audio/aac';
       case 'ogg': return 'audio/ogg';
+      case 'opus': return 'audio/opus';
+      case 'wma': return 'audio/x-ms-wma';
+      case 'aiff': return 'audio/aiff';
+      case 'ape': return 'audio/ape';
+      case 'alac': return 'audio/alac';
       default: return 'audio/mpeg';
     }
   }
 
   async play(src?: string) {
+    // 演示模式
+    if (this.demoMode) {
+      this.startDemoPlayback();
+      return;
+    }
+    
     if (src) {
       this.audio.src = await this.toBlobUrl(src);
       console.log("Audio src set to:", this.audio.src);
@@ -208,6 +320,12 @@ export class AudioPlayer {
   }
 
   pause() {
+    // 演示模式
+    if (this.demoMode) {
+      this.pauseDemoPlayback();
+      return;
+    }
+    
     this.audio.pause();
   }
 
@@ -219,6 +337,14 @@ export class AudioPlayer {
   }
 
   seekTo(time: number) {
+    // 演示模式
+    if (this.demoMode) {
+      this.demoCurrentTime = time;
+      this.emit("timeupdate", this.demoCurrentTime);
+      this.saveState();
+      return;
+    }
+    
     this.audio.currentTime = time;
     this.saveState();
   }
@@ -237,6 +363,14 @@ export class AudioPlayer {
     this.playlist = tracks;
     this.currentIndex = startIndex;
 
+    // 演示模式
+    if (this.demoMode) {
+      this.demoCurrentTime = 0;
+      this.emit("loadedmetadata", this.demoDuration);
+      this.saveState();
+      return;
+    }
+    
     if (tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
       this.audio.src = await this.toBlobUrl(tracks[startIndex]);
     }
@@ -245,6 +379,12 @@ export class AudioPlayer {
 
   async playTrack(index: number) {
     if (index >= 0 && index < this.playlist.length) {
+      // 演示模式
+      if (this.demoMode) {
+        this.demoPlayTrack(index);
+        return;
+      }
+      
       this.currentIndex = index;
       this.audio.src = await this.toBlobUrl(this.playlist[index]);
       await this.audio.play();
@@ -255,6 +395,12 @@ export class AudioPlayer {
   async next() {
     if (this.playlist.length === 0) return;
 
+    // 演示模式
+    if (this.demoMode) {
+      this.demoNext();
+      return;
+    }
+    
     let nextIndex: number;
     switch (this.playMode) {
       case "shuffle":
@@ -274,6 +420,21 @@ export class AudioPlayer {
   async previous() {
     if (this.playlist.length === 0) return;
 
+    // 演示模式
+    if (this.demoMode) {
+      let prevIndex: number;
+      switch (this.playMode) {
+        case "shuffle":
+          prevIndex = Math.floor(Math.random() * this.playlist.length);
+          break;
+        default:
+          prevIndex = (this.currentIndex - 1 + this.playlist.length) % this.playlist.length;
+          break;
+      }
+      this.demoPlayTrack(prevIndex);
+      return;
+    }
+    
     let prevIndex: number;
     switch (this.playMode) {
       case "shuffle":
@@ -297,18 +458,16 @@ export class AudioPlayer {
   }
 
   getState(): AudioPlayerState {
-    // 演示模式：返回假数据
-    if (isDemoMode()) {
-      const demoPlaylist = getDemoPlaylist();
-      const demoIndex = getDemoCurrentIndex();
+    // 演示模式：返回动态模拟数据
+    if (this.demoMode) {
       return {
-        isPlaying: true,
-        currentTrack: demoPlaylist[demoIndex] || null,
-        currentTime: 45,
-        duration: 240,
-        playMode: "sequential",
-        playlist: demoPlaylist,
-        currentIndex: demoIndex,
+        isPlaying: this.demoPlaying,
+        currentTrack: this.playlist[this.currentIndex] || null,
+        currentTime: this.demoCurrentTime,
+        duration: this.demoDuration,
+        playMode: this.playMode,
+        playlist: [...this.playlist],
+        currentIndex: this.currentIndex,
       };
     }
     

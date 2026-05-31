@@ -46,3 +46,18 @@ Started: 2026-05-31 08:29:05
   - Use `github.event.inputs.branch || github.ref` to handle both manual and automatic triggers
   - The workflow now supports three trigger types: push, pull_request, and workflow_dispatch
 ---
+
+## 2026-05-31 18:00:00 - US-004
+- Added tag trigger to workflow for automatic GitHub Release creation
+- Updated build summary to show release-specific download instructions when triggered by tag
+- Build summary includes wget command for downloading APKs from Releases
+- Typecheck and lint passed
+- **Files changed:**
+  - `.github/workflows/build-android.yml` - Added tag trigger and updated summary section
+  - `prd.json` - Set passes: true for US-004
+- **Learnings for future iterations:**
+  - Use `tags: ['v*']` pattern to trigger workflow on version tags
+  - Check `$GITHUB_REF` to determine if build was triggered by tag
+  - Release APKs are uploaded via `softprops/action-gh-release@v2` action
+  - Build summary can conditionally show different instructions based on trigger type
+---

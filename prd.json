@@ -68,8 +68,8 @@
         "Verify in browser"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added tag trigger to workflow. Updated build summary to show release-specific download instructions and installation commands when triggered by tag."
     }
   ]
 }

@@ -3,6 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
@@ -152,14 +153,39 @@ jobs:
           echo "- **ARM64 (arm64-v8a)**: Modern Android devices (2016+)" >> $GITHUB_STEP_SUMMARY
           echo "- **ARMv7 (armeabi-v7a)**: Older Android devices" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Download" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. Go to the **Actions** tab" >> $GITHUB_STEP_SUMMARY
-          echo "2. Click on this workflow run" >> $GITHUB_STEP_SUMMARY
-          echo "3. Download the APK artifacts from the bottom" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Install on Android" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "adb install miyako-arm64.apk" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+          # Check if this is a tag release
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            echo "### 🚀 Release: $TAG_NAME" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This build was triggered by tag \`$TAG_NAME\`. APKs have been uploaded to the GitHub Release." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Download from Release" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to the **Releases** page" >> $GITHUB_STEP_SUMMARY
+            echo "2. Find **$TAG_NAME**" >> $GITHUB_STEP_SUMMARY
+            echo "3. Download \`miyako-arm64.apk\` or \`miyako-armv7.apk\` from the Assets section" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Install from Release" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```bash' >> $GITHUB_STEP_SUMMARY
+            echo "# Download ARM64 APK" >> $GITHUB_STEP_SUMMARY
+            echo "wget https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG_NAME/miyako-arm64.apk" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "# Install on Android device" >> $GITHUB_STEP_SUMMARY
+            echo "adb install miyako-arm64.apk" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Download" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to the **Actions** tab" >> $GITHUB_STEP_SUMMARY
+            echo "2. Click on this workflow run" >> $GITHUB_STEP_SUMMARY
+            echo "3. Download the APK artifacts from the bottom" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Install on Android" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```bash' >> $GITHUB_STEP_SUMMARY
+            echo "adb install miyako-arm64.apk" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi

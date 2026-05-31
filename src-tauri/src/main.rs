@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    nas_music_sync_lib::run()
+    miyako_lib::run()
 }

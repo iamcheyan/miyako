@@ -123,12 +123,21 @@ fn is_music_file(filename: &str) -> bool {
 }
 
 fn resolve_local_dir(local_dir: &str) -> Result<PathBuf, String> {
+    // Android 上使用应用内部存储
+    #[cfg(target_os = "android")]
+    let home = {
+        // Android: 使用 /sdcard/Android/data/com.nasmusic.sync/files/
+        PathBuf::from("/sdcard/Android/data/com.nasmusic.sync/files")
+    };
+
+    #[cfg(not(target_os = "android"))]
+    let home = dirs::home_dir().ok_or_else(|| "Failed to resolve home directory".to_string())?;
+
     if local_dir == "~" {
-        return dirs::home_dir().ok_or_else(|| "Failed to resolve home directory".to_string());
+        return Ok(home);
     }
 
     if let Some(stripped) = local_dir.strip_prefix("~/") {
-        let home = dirs::home_dir().ok_or_else(|| "Failed to resolve home directory".to_string())?;
         return Ok(home.join(stripped));
     }
 

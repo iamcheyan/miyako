@@ -1,12 +1,12 @@
 [package]
-name = "nas-music-sync"
+name = "miyako"
 version = "0.1.0"
 description = "NAS Music Sync - Android offline music player"
 authors = ["you"]
 edition = "2021"
 
 [lib]
-name = "nas_music_sync_lib"
+name = "miyako_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]

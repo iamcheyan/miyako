@@ -128,8 +128,8 @@ async fn sync_load_state(state_path: String) -> Result<SyncState, String> {
 /// Read JSON file from app data directory
 #[tauri::command]
 async fn storage_read(dir: String, filename: String) -> Result<String, String> {
-    let app_data = dirs::data_dir().ok_or("Failed to get app data directory")?;
-    let file_path = app_data.join("nas-music-sync").join(&dir).join(&filename);
+    let app_data = get_app_data_dir()?;
+    let file_path = app_data.join(&dir).join(&filename);
 
     if !file_path.exists() {
         return Err(format!("File not found: {}", file_path.display()));
@@ -141,14 +141,27 @@ async fn storage_read(dir: String, filename: String) -> Result<String, String> {
 /// Write JSON file to app data directory
 #[tauri::command]
 async fn storage_write(dir: String, filename: String, content: String) -> Result<(), String> {
-    let app_data = dirs::data_dir().ok_or("Failed to get app data directory")?;
-    let dir_path = app_data.join("nas-music-sync").join(&dir);
+    let app_data = get_app_data_dir()?;
+    let dir_path = app_data.join(&dir);
     let file_path = dir_path.join(&filename);
 
     // Create directory if it doesn't exist
     fs::create_dir_all(&dir_path).map_err(|e| format!("Failed to create directory: {}", e))?;
 
     fs::write(&file_path, content).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+/// 获取应用数据目录（跨平台）
+fn get_app_data_dir() -> Result<std::path::PathBuf, String> {
+    #[cfg(target_os = "android")]
+    {
+        Ok(std::path::PathBuf::from("/sdcard/Android/data/com.nasmusic.sync/files"))
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        dirs::data_dir().ok_or("Failed to get app data directory".to_string())
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

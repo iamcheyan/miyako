@@ -2365,6 +2365,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "miyako"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "dirs 5.0.1",
+ "futures-util",
+ "serde",
+ "serde_json",
+ "smb",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-fs",
+ "tauri-plugin-shell",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "modular-bitfield"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2404,24 +2422,6 @@ dependencies = [
  "serde",
  "thiserror 2.0.18",
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "nas-music-sync"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "dirs 5.0.1",
- "futures-util",
- "serde",
- "serde_json",
- "smb",
- "tauri",
- "tauri-build",
- "tauri-plugin-fs",
- "tauri-plugin-shell",
- "tokio",
- "uuid",
 ]
 
 [[package]]

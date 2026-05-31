@@ -10,7 +10,7 @@ export interface DirEntry {
   name: string;
   is_directory: boolean;
   size: number;
-  last_modified: number;
+  last_modified?: number;
 }
 
 export interface DownloadResult {

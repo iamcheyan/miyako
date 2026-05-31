@@ -8,6 +8,7 @@
 .mini-only {
   background-color: var(--surface);
   border-top: 1px solid var(--outline-variant);
+  padding-bottom: calc(var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -126,12 +127,27 @@
   display: flex;
   flex-direction: column;
   padding-top: max(env(safe-area-inset-top, 0px), 36px);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--android-nav-height, 0px));
+}
+
+.expanded::before {
+  content: "";
+  position: absolute;
+  top: calc(max(env(safe-area-inset-top, 0px), 36px) + 8px);
+  left: 24px;
+  right: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--outline-variant), transparent);
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .expanded {
     background-color: var(--surface-dark);
+  }
+
+  .expanded::before {
+    background: linear-gradient(90deg, transparent, var(--outline-variant-dark), transparent);
   }
 }
 
@@ -144,13 +160,108 @@
 /* 顶部：歌曲信息 */
 .expanded-header {
   flex-shrink: 0;
-  padding: 16px 24px 8px;
+  padding: 18px 24px 10px;
 }
 
 /* 歌曲信息 */
 .track-section {
   text-align: center;
   margin-bottom: 8px;
+}
+
+.signal-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+/* 停止状态：变成小点 */
+.signal-mark.paused {
+  gap: 3px;
+  height: 12px;
+}
+
+.signal-mark.paused span {
+  width: 4px;
+  height: 4px !important;
+  opacity: 0.4;
+  animation: none;
+}
+
+/* 播放状态：脉冲动画 */
+.signal-mark.playing span {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.signal-mark.playing span:nth-child(1),
+.signal-mark.playing span:nth-child(7) {
+  animation-delay: 0s;
+}
+
+.signal-mark.playing span:nth-child(2),
+.signal-mark.playing span:nth-child(6) {
+  animation-delay: 0.15s;
+}
+
+.signal-mark.playing span:nth-child(3),
+.signal-mark.playing span:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+.signal-mark.playing span:nth-child(4) {
+  animation-delay: 0.45s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scaleY(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scaleY(1.8);
+    opacity: 1;
+  }
+}
+
+.signal-mark span {
+  display: block;
+  width: 2px;
+  border-radius: 999px;
+  background-color: var(--on-surface);
+  opacity: 0.78;
+  transition: height 0.3s ease, opacity 0.3s ease;
+}
+
+.signal-mark span:nth-child(1),
+.signal-mark span:nth-child(7) {
+  height: 8px;
+  opacity: 0.3;
+}
+
+.signal-mark span:nth-child(2),
+.signal-mark span:nth-child(6) {
+  height: 16px;
+  opacity: 0.45;
+}
+
+.signal-mark span:nth-child(3),
+.signal-mark span:nth-child(5) {
+  height: 24px;
+  opacity: 0.62;
+}
+
+.signal-mark span:nth-child(4) {
+  height: 30px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .signal-mark span {
+    background-color: var(--on-surface-dark);
+  }
 }
 
 .track-title {
@@ -173,6 +284,7 @@
   font-size: 14px;
   color: var(--on-surface-variant);
   margin: 0;
+  padding-top: 2px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -191,16 +303,31 @@
 }
 
 .playlist-header {
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--on-surface-variant);
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
   flex-shrink: 0;
+  letter-spacing: 0.08em;
+}
+
+.playlist-header::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background-color: var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .playlist-header {
     color: var(--on-surface-variant-dark);
+  }
+
+  .playlist-header::after {
+    background-color: var(--outline-variant-dark);
   }
 }
 
@@ -236,7 +363,18 @@
 /* 底部：进度条 + 控制按钮，固定在屏幕底部 */
 .expanded-controls {
   flex-shrink: 0;
-  padding: 8px 24px;
+  padding: 12px 24px calc(10px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
+  border-top: 1px solid var(--outline-variant);
+  background-color: var(--surface);
+  box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  .expanded-controls {
+    border-top-color: var(--outline-variant-dark);
+    background-color: var(--surface-dark);
+    box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.22);
+  }
 }
 
 /* 进度条 */
@@ -262,8 +400,14 @@
 
 .seek-bar {
   flex: 1;
-  height: 4px;
-  background-color: var(--outline-variant);
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--on-surface) 0%,
+    var(--on-surface) var(--seek-progress, 0%),
+    var(--outline-variant) var(--seek-progress, 0%),
+    var(--outline-variant) 100%
+  );
   border-radius: 2px;
   outline: none;
   -webkit-appearance: none;
@@ -272,22 +416,32 @@
 
 @media (prefers-color-scheme: dark) {
   .seek-bar {
-    background-color: var(--outline-variant-dark);
+    background: linear-gradient(
+      90deg,
+      var(--on-surface-dark) 0%,
+      var(--on-surface-dark) var(--seek-progress, 0%),
+      var(--outline-variant-dark) var(--seek-progress, 0%),
+      var(--outline-variant-dark) 100%
+    );
   }
 }
 
 .seek-bar::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   background-color: var(--on-surface);
   border-radius: 50%;
   cursor: pointer;
+  border: 4px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .seek-bar::-webkit-slider-thumb {
     background-color: var(--on-surface-dark);
+    border-color: var(--surface-dark);
+    box-shadow: 0 0 0 1px var(--outline-variant-dark);
   }
 }
 
@@ -385,7 +539,7 @@
   }
 
   .expanded-controls {
-    padding: 6px 16px;
+    padding: 6px 16px calc(6px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
   }
 
   .seek-section {
@@ -413,7 +567,7 @@
   }
 
   .expanded-controls {
-    padding: 4px 12px;
+    padding: 4px 12px calc(4px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
   }
 
   .seek-section {
@@ -454,9 +608,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 8px;
   cursor: pointer;
+  position: relative;
+  border: 1px solid transparent;
 }
 
 .playlist-row:hover {
@@ -470,12 +626,31 @@
 }
 
 .playlist-row.active {
-  background-color: var(--primary-container);
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .playlist-row.active {
-    background-color: var(--primary-container-dark);
+    background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
+  }
+}
+
+.playlist-row.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 999px;
+  background-color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .playlist-row.active::before {
+    background-color: var(--on-surface-dark);
   }
 }
 

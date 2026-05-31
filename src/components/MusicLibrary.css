@@ -312,6 +312,34 @@
   }
 }
 
+/* 全部歌曲选项 */
+.folder-item.all-files {
+  background-color: var(--primary-container);
+  margin-bottom: 8px;
+  border-radius: 12px;
+  border-bottom: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .folder-item.all-files {
+    background-color: var(--primary-container-dark);
+  }
+}
+
+.folder-item.all-files:hover {
+  opacity: 0.9;
+}
+
+.folder-item.all-files .folder-icon {
+  color: var(--on-primary-container);
+}
+
+@media (prefers-color-scheme: dark) {
+  .folder-item.all-files .folder-icon {
+    color: var(--on-primary-container-dark);
+  }
+}
+
 .folder-icon {
   font-size: 32px;
   color: var(--on-surface);

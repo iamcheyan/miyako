@@ -1,0 +1,218 @@
+{
+  "folders": [
+    {
+      "name": "流行",
+      "path": "流行",
+      "files": [
+        {
+          "name": "周杰伦 - 晴天.mp3",
+          "remotePath": "流行/周杰伦/晴天.mp3",
+          "localPath": "/demo/流行/周杰伦/晴天.mp3",
+          "size": 8543210
+        },
+        {
+          "name": "周杰伦 - 稻香.mp3",
+          "remotePath": "流行/周杰伦/稻香.mp3",
+          "localPath": "/demo/流行/周杰伦/稻香.mp3",
+          "size": 7234567
+        },
+        {
+          "name": "周杰伦 - 青花瓷.flac",
+          "remotePath": "流行/周杰伦/青花瓷.flac",
+          "localPath": "/demo/流行/周杰伦/青花瓷.flac",
+          "size": 32123456
+        },
+        {
+          "name": "林俊杰 - 江南.mp3",
+          "remotePath": "流行/林俊杰/江南.mp3",
+          "localPath": "/demo/流行/林俊杰/江南.mp3",
+          "size": 6543210
+        },
+        {
+          "name": "林俊杰 - 她说.mp3",
+          "remotePath": "流行/林俊杰/她说.mp3",
+          "localPath": "/demo/流行/林俊杰/她说.mp3",
+          "size": 5432109
+        },
+        {
+          "name": "陈奕迅 - 十年.mp3",
+          "remotePath": "流行/陈奕迅/十年.mp3",
+          "localPath": "/demo/流行/陈奕迅/十年.mp3",
+          "size": 4321098
+        },
+        {
+          "name": "邓紫棋 - 光年之外.flac",
+          "remotePath": "流行/邓紫棋/光年之外.flac",
+          "localPath": "/demo/流行/邓紫棋/光年之外.flac",
+          "size": 45678901
+        }
+      ]
+    },
+    {
+      "name": "摇滚",
+      "path": "摇滚",
+      "files": [
+        {
+          "name": "Beyond - 海阔天空.mp3",
+          "remotePath": "摇滚/Beyond/海阔天空.mp3",
+          "localPath": "/demo/摇滚/Beyond/海阔天空.mp3",
+          "size": 7654321
+        },
+        {
+          "name": "Beyond - 光辉岁月.mp3",
+          "remotePath": "摇滚/Beyond/光辉岁月.mp3",
+          "localPath": "/demo/摇滚/Beyond/光辉岁月.mp3",
+          "size": 6543210
+        },
+        {
+          "name": "五月天 - 倔强.mp3",
+          "remotePath": "摇滚/五月天/倔强.mp3",
+          "localPath": "/demo/摇滚/五月天/倔强.mp3",
+          "size": 5432109
+        },
+        {
+          "name": "五月天 - 突然好想你.flac",
+          "remotePath": "摇滚/五月天/突然好想你.flac",
+          "localPath": "/demo/摇滚/五月天/突然好想你.flac",
+          "size": 38765432
+        }
+      ]
+    },
+    {
+      "name": "古典",
+      "path": "古典",
+      "files": [
+        {
+          "name": "贝多芬 - 月光奏鸣曲.flac",
+          "remotePath": "古典/贝多芬/月光奏鸣曲.flac",
+          "localPath": "/demo/古典/贝多芬/月光奏鸣曲.flac",
+          "size": 52345678
+        },
+        {
+          "name": "莫扎特 - 小夜曲.flac",
+          "remotePath": "古典/莫扎特/小夜曲.flac",
+          "localPath": "/demo/古典/莫扎特/小夜曲.flac",
+          "size": 41234567
+        },
+        {
+          "name": "肖邦 - 夜曲.flac",
+          "remotePath": "古典/肖邦/夜曲.flac",
+          "localPath": "/demo/古典/肖邦/夜曲.flac",
+          "size": 35678901
+        }
+      ]
+    },
+    {
+      "name": "爵士",
+      "path": "爵士",
+      "files": [
+        {
+          "name": "Norah Jones - Don't Know Why.mp3",
+          "remotePath": "爵士/Norah Jones/Don't Know Why.mp3",
+          "localPath": "/demo/爵士/Norah Jones/Don't Know Why.mp3",
+          "size": 8765432
+        },
+        {
+          "name": "Louis Armstrong - What A Wonderful World.mp3",
+          "remotePath": "爵士/Louis Armstrong/What A Wonderful World.mp3",
+          "localPath": "/demo/爵士/Louis Armstrong/What A Wonderful World.mp3",
+          "size": 4321098
+        }
+      ]
+    },
+    {
+      "name": "电子",
+      "path": "电子",
+      "files": [
+        {
+          "name": "Daft Punk - Get Lucky.mp3",
+          "remotePath": "电子/Daft Punk/Get Lucky.mp3",
+          "localPath": "/demo/电子/Daft Punk/Get Lucky.mp3",
+          "size": 9876543
+        },
+        {
+          "name": "The Weeknd - Blinding Lights.flac",
+          "remotePath": "电子/The Weeknd/Blinding Lights.flac",
+          "localPath": "/demo/电子/The Weeknd/Blinding Lights.flac",
+          "size": 42345678
+        }
+      ]
+    },
+    {
+      "name": "日语",
+      "path": "日语",
+      "files": [
+        {
+          "name": "米津玄師 - Lemon.mp3",
+          "remotePath": "日语/米津玄師/Lemon.mp3",
+          "localPath": "/demo/日语/米津玄師/Lemon.mp3",
+          "size": 7654321
+        },
+        {
+          "name": "YOASOBI - 夜に駆ける.mp3",
+          "remotePath": "日语/YOASOBI/夜に駆ける.mp3",
+          "localPath": "/demo/日语/YOASOBI/夜に駆ける.mp3",
+          "size": 8765432
+        }
+      ]
+    }
+  ],
+  "remoteBrowser": {
+    "流行": [
+      { "name": "周杰伦", "is_directory": true, "size": 0 },
+      { "name": "林俊杰", "is_directory": true, "size": 0 },
+      { "name": "陈奕迅", "is_directory": true, "size": 0 },
+      { "name": "邓紫棋", "is_directory": true, "size": 0 }
+    ],
+    "流行/周杰伦": [
+      { "name": "晴天.mp3", "is_directory": false, "size": 8543210 },
+      { "name": "稻香.mp3", "is_directory": false, "size": 7234567 },
+      { "name": "青花瓷.flac", "is_directory": false, "size": 32123456 }
+    ],
+    "摇滚": [
+      { "name": "Beyond", "is_directory": true, "size": 0 },
+      { "name": "五月天", "is_directory": true, "size": 0 }
+    ],
+    "摇滚/Beyond": [
+      { "name": "海阔天空.mp3", "is_directory": false, "size": 7654321 },
+      { "name": "光辉岁月.mp3", "is_directory": false, "size": 6543210 }
+    ],
+    "古典": [
+      { "name": "贝多芬", "is_directory": true, "size": 0 },
+      { "name": "莫扎特", "is_directory": true, "size": 0 },
+      { "name": "肖邦", "is_directory": true, "size": 0 }
+    ],
+    "古典/贝多芬": [
+      { "name": "月光奏鸣曲.flac", "is_directory": false, "size": 52345678 }
+    ],
+    "爵士": [
+      { "name": "Norah Jones", "is_directory": true, "size": 0 },
+      { "name": "Louis Armstrong", "is_directory": true, "size": 0 }
+    ],
+    "爵士/Norah Jones": [
+      { "name": "Don't Know Why.mp3", "is_directory": false, "size": 8765432 }
+    ],
+    "电子": [
+      { "name": "Daft Punk", "is_directory": true, "size": 0 },
+      { "name": "The Weeknd", "is_directory": true, "size": 0 }
+    ],
+    "电子/Daft Punk": [
+      { "name": "Get Lucky.mp3", "is_directory": false, "size": 9876543 }
+    ],
+    "日语": [
+      { "name": "米津玄師", "is_directory": true, "size": 0 },
+      { "name": "YOASOBI", "is_directory": true, "size": 0 }
+    ],
+    "日语/米津玄師": [
+      { "name": "Lemon.mp3", "is_directory": false, "size": 7654321 }
+    ]
+  },
+  "rootEntries": [
+    { "name": "流行", "is_directory": true, "size": 0 },
+    { "name": "摇滚", "is_directory": true, "size": 0 },
+    { "name": "古典", "is_directory": true, "size": 0 },
+    { "name": "爵士", "is_directory": true, "size": 0 },
+    { "name": "电子", "is_directory": true, "size": 0 },
+    { "name": "日语", "is_directory": true, "size": 0 }
+  ]
+}

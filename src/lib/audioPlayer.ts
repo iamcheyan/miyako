@@ -1,4 +1,5 @@
 import { savePlaybackState, loadPlaybackState } from "./playbackStorage";
+import { isDemoMode, getDemoPlaylist, getDemoCurrentIndex } from "./demoData";
 
 export type PlayMode = "sequential" | "loop" | "shuffle";
 
@@ -291,6 +292,21 @@ export class AudioPlayer {
   }
 
   getState(): AudioPlayerState {
+    // 演示模式：返回假数据
+    if (isDemoMode()) {
+      const demoPlaylist = getDemoPlaylist();
+      const demoIndex = getDemoCurrentIndex();
+      return {
+        isPlaying: true,
+        currentTrack: demoPlaylist[demoIndex] || null,
+        currentTime: 45,
+        duration: 240,
+        playMode: "sequential",
+        playlist: demoPlaylist,
+        currentIndex: demoIndex,
+      };
+    }
+    
     return {
       isPlaying: !this.audio.paused,
       currentTrack:

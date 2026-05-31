@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useNavigate } from "react-router-dom";
 import type {
   RemoteFile,
   SyncAction,
@@ -8,7 +9,6 @@ import type {
 } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
-import Settings from "./Settings";
 import "./SyncPage.css";
 
 const STATE_PATH = "sync_state.json";
@@ -27,13 +27,13 @@ interface SyncProgressPayload {
 }
 
 function SyncPage() {
+  const navigate = useNavigate();
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [logs, setLogs] = useState<SyncLog[]>([]);
   const [connectionState, setConnectionState] = useState(getSmbSessionState());
   const [error, setError] = useState<string | null>(getSmbSessionState().error);
-  const [showSettings, setShowSettings] = useState(false);
 
   const addLog = useCallback((message: string, type: SyncLog["type"] = "info") => {
     const time = new Date().toLocaleTimeString();
@@ -194,6 +194,14 @@ function SyncPage() {
 
   return (
     <div className="sync-page">
+      {/* 固定标题栏 */}
+      <div className="page-header">
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 className="page-title">同步管理</h1>
+      </div>
+
       {/* 固定头部：状态卡片 + 错误提示 + 统计 */}
       <div className="sync-header">
         {/* 同步状态卡片 */}
@@ -216,7 +224,7 @@ function SyncPage() {
             <div className="status-actions">
               <button
                 className="settings-btn"
-                onClick={() => setShowSettings(true)}
+                onClick={() => navigate("/settings")}
                 aria-label="设置"
               >
                 <span className="material-symbols-outlined">settings</span>
@@ -302,26 +310,7 @@ function SyncPage() {
         </div>
       </div>
 
-      {/* 设置模态框 */}
-      {showSettings && (
-        <div className="settings-modal-overlay" onClick={() => setShowSettings(false)}>
-          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="settings-modal-header">
-              <h2>设置</h2>
-              <button
-                className="settings-modal-close"
-                onClick={() => setShowSettings(false)}
-                aria-label="关闭"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <div className="settings-modal-content">
-              <Settings />
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useNavigate } from "react-router-dom";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
 import { DEFAULT_SMB_CONFIG, loadSmbConfig, saveSmbConfig } from "../lib/smbConfig";
@@ -8,6 +9,7 @@ import "./Settings.css";
 const STATE_PATH = "sync_state.json";
 
 function Settings() {
+  const navigate = useNavigate();
   const [config, setConfig] = useState<SmbConfig>(DEFAULT_SMB_CONFIG);
   const [showPassword, setShowPassword] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -128,8 +130,17 @@ function Settings() {
 
   return (
     <div className="settings-page">
-      {/* 固定头部：SMB 连接配置 */}
-      <div className="settings-header">
+      {/* 固定标题栏 */}
+      <div className="page-header">
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 className="page-title">设置</h1>
+      </div>
+
+      {/* 可滚动内容 */}
+      <div className="settings-scroll">
+        {/* SMB 连接配置 */}
         <section className="settings-section">
           <h2 className="section-title">SMB 服务器</h2>
 
@@ -238,10 +249,7 @@ function Settings() {
             </div>
           )}
         </section>
-      </div>
 
-      {/* 可滚动内容：统计 + 数据管理 */}
-      <div className="settings-scroll">
         {/* 同步统计 */}
         <section className="settings-section">
           <h2 className="section-title">同步数据</h2>
@@ -295,6 +303,9 @@ function Settings() {
             </button>
           </div>
         </section>
+
+        {/* 底部间距 */}
+        <div className="settings-bottom-spacer" />
       </div>
 
       {/* 确认对话框 */}

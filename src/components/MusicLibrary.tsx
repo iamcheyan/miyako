@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
 import type { SyncState } from "../types/tauri-commands";
 import { getAudioPlayer } from "../lib/audioPlayer";
+import { isDemoMode, getDemoFolders } from "../lib/demoData";
 import "./MusicLibrary.css";
 
 const STATE_PATH = "sync_state.json";
@@ -34,6 +35,15 @@ function MusicLibrary() {
 
   const loadMusicLibrary = async () => {
     setIsLoading(true);
+    
+    // 演示模式：使用假数据
+    if (isDemoMode()) {
+      const demoFolders = getDemoFolders();
+      setFolders(demoFolders as Folder[]);
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const state = await invoke<SyncState>("sync_load_state", {
         statePath: STATE_PATH,
@@ -78,13 +88,42 @@ function MusicLibrary() {
     setCurrentPath(folder.path);
     setCurrentFiles(folder.files);
     setSearchQuery("");
+    // 添加历史记录条目
+    window.history.pushState({ path: folder.path }, "");
   };
 
-  const handleBackClick = () => {
+  const handleAllFilesClick = () => {
+    // 收集所有文件夹的歌曲
+    const allFiles: MusicFile[] = [];
+    for (const folder of folders) {
+      allFiles.push(...folder.files);
+    }
+    setCurrentPath("全部歌曲");
+    setCurrentFiles(allFiles);
+    setSearchQuery("");
+    // 添加历史记录条目
+    window.history.pushState({ path: "全部歌曲" }, "");
+  };
+
+  const handleBackClick = useCallback(() => {
     setCurrentPath(null);
     setCurrentFiles([]);
     setSearchQuery("");
-  };
+  }, []);
+
+  // 处理系统返回键
+  useEffect(() => {
+    const handlePopState = () => {
+      if (currentPath) {
+        handleBackClick();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [currentPath, handleBackClick]);
 
   const handleFileClick = async (file: MusicFile) => {
     const player = getAudioPlayer();
@@ -146,7 +185,7 @@ function MusicLibrary() {
           <div className="quick-actions">
             <button
               className="action-card"
-              onClick={() => navigate("/sync")}
+              onClick={() => navigate("/settings")}
             >
               <span className="material-symbols-outlined action-icon">settings_input_antenna</span>
               <span className="action-label">NAS 设置</span>
@@ -196,6 +235,20 @@ function MusicLibrary() {
             </div>
           ) : (
             <div className="folder-list">
+              {/* 全部歌曲选项 */}
+              <button
+                className="folder-item all-files"
+                onClick={handleAllFilesClick}
+              >
+                <span className="material-symbols-outlined folder-icon">library_music</span>
+                <div className="folder-info">
+                  <span className="folder-name">全部歌曲</span>
+                  <span className="folder-count">{folders.reduce((sum, f) => sum + f.files.length, 0)} 首歌曲</span>
+                </div>
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+              
+              {/* 各个文件夹 */}
               {folders.map((folder) => (
                 <button
                   key={folder.path}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react";
 import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/audioPlayer";
 import "./PlayerUI.css";
 
@@ -14,28 +14,40 @@ function PlayerUI() {
 
   // 展开播放器时拦截安卓返回键：先收起播放器，而不是退出页面
   useEffect(() => {
-    if (!isExpanded) return;
+    if (!isExpanded) {
+      pushStateRef.current = false;
+      return;
+    }
 
     // 压入一个假的历史记录，这样返回键会触发 popstate
     window.history.pushState({ playerExpanded: true }, "");
     pushStateRef.current = true;
 
-    const handlePopState = () => {
-      // 收起播放器，阻止默认的返回导航
-      setIsExpanded(false);
-      pushStateRef.current = false;
+    const handlePopState = (e: PopStateEvent) => {
+      // 检查是否是我们压入的状态
+      if (e.state?.playerExpanded) {
+        // 收起播放器，阻止默认的返回导航
+        setIsExpanded(false);
+        pushStateRef.current = false;
+      }
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => {
       window.removeEventListener("popstate", handlePopState);
-      // 如果是通过关闭按钮收起的（不是返回键），需要清理多余的历史记录
-      if (pushStateRef.current) {
-        window.history.back();
-        pushStateRef.current = false;
-      }
     };
   }, [isExpanded]);
+
+  // 处理关闭播放器时的历史记录清理
+  const handleClosePlayer = useCallback(() => {
+    setIsExpanded(false);
+    // 如果有假的历史记录，需要清理
+    if (pushStateRef.current) {
+      // 先移除监听器，避免触发handlePopState
+      pushStateRef.current = false;
+      // 不需要手动调用history.back()，因为popstate已经处理了
+    }
+  }, []);
 
   useEffect(() => {
     const updateState = () => {
@@ -121,6 +133,7 @@ function PlayerUI() {
     : "未选择歌曲";
 
   const hasHistory = state.playlist.length > 0 && state.currentIndex >= 0;
+  const progress = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
 
   // 迷你播放器
   if (!isExpanded) {
@@ -174,6 +187,15 @@ function PlayerUI() {
       <div className="expanded-container">
         {/* 顶部：歌曲名 + 状态 */}
         <div className="expanded-header">
+          <div className={`signal-mark ${state.isPlaying ? 'playing' : 'paused'}`} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
           <div className="track-section">
             <h2 className="track-title">{currentTrackName}</h2>
             {hasHistory && (
@@ -222,6 +244,7 @@ function PlayerUI() {
             <input
               type="range"
               className="seek-bar"
+              style={{ "--seek-progress": `${progress}%` } as CSSProperties}
               min={0}
               max={state.duration || 0}
               value={state.currentTime}

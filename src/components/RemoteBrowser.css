@@ -3,13 +3,78 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: 16px;
   box-sizing: border-box;
 }
 
-/* 固定头部区域 */
+/* 页面标题栏 */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--outline-variant);
+  flex-shrink: 0;
+  margin-bottom: 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header {
+    background-color: var(--surface-dark);
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.page-header .back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header .back-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.page-header .back-btn:hover {
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header .back-btn:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.page-title {
+  flex: 1;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--on-surface);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-title {
+    color: var(--on-surface-dark);
+  }
+}
+
 .remote-header {
   flex-shrink: 0;
+  padding: 0 16px;
 }
 
 /* 可滚动内容区域 */
@@ -26,7 +91,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin: 16px 16px 0;
   padding: 8px 12px;
   background-color: var(--surface-variant);
   border-radius: 12px;
@@ -72,7 +137,7 @@
 
 .current-path {
   flex: 1;
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
   font-size: 14px;
   color: var(--on-surface-variant);
   overflow: hidden;
@@ -92,7 +157,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px;
+  padding: 48px 16px;
   gap: 16px;
   color: var(--on-surface-variant);
 }
@@ -114,7 +179,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 错误提示 */
@@ -135,7 +202,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 48px;
+  padding: 48px 16px;
   color: var(--outline);
 }
 

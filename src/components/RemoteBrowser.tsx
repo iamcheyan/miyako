@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useNavigate } from "react-router-dom";
 import type { DirEntry } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
+import { isDemoMode, getDemoRootEntries, getDemoEntries } from "../lib/demoData";
 import "./RemoteBrowser.css";
 
 const MUSIC_EXTENSIONS = [".mp3", ".flac", ".aac", ".wav"];
 
 function RemoteBrowser() {
+  const navigate = useNavigate();
   const [currentPath, setCurrentPath] = useState("");
   const [entries, setEntries] = useState<DirEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +35,27 @@ function RemoteBrowser() {
   };
 
   const loadDirectory = useCallback(async (path: string) => {
+    // 演示模式：返回假数据
+    if (isDemoMode()) {
+      setIsLoading(true);
+      setError(null);
+      
+      // 模拟加载延迟
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 根据路径返回不同的假数据
+      const now = Date.now();
+      const demoEntries: DirEntry[] = getDemoEntries(path).map(entry => ({
+        ...entry,
+        last_modified: now,
+      }));
+      
+      setEntries(demoEntries);
+      setCurrentPath(path);
+      setIsLoading(false);
+      return;
+    }
+    
     const activeConnectionId =
       connectionState.connectionId || await ensureSmbConnection(loadSmbConfig());
 
@@ -60,6 +84,18 @@ function RemoteBrowser() {
 
   // 连接后加载根目录
   useEffect(() => {
+    // 演示模式：加载假数据
+    if (isDemoMode()) {
+      const now = Date.now();
+      const demoEntries: DirEntry[] = getDemoRootEntries().map(entry => ({
+        ...entry,
+        last_modified: now,
+      }));
+      setEntries(demoEntries);
+      setCurrentPath("音乐库");
+      return;
+    }
+    
     if (connectionState.connectionId) {
       loadDirectory(getRemotePath());
     }
@@ -82,14 +118,30 @@ function RemoteBrowser() {
     const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
     setPathHistory((prev) => [...prev, currentPath]);
     loadDirectory(newPath);
+    // 添加历史记录条目
+    window.history.pushState({ path: newPath }, "");
   };
 
-  const handleBackClick = () => {
+  const handleBackClick = useCallback(() => {
     if (pathHistory.length === 0) return;
     const prevPath = pathHistory[pathHistory.length - 1];
     setPathHistory((prev) => prev.slice(0, -1));
     loadDirectory(prevPath);
-  };
+  }, [pathHistory, loadDirectory]);
+
+  // 处理系统返回键
+  useEffect(() => {
+    const handlePopState = () => {
+      if (pathHistory.length > 0) {
+        handleBackClick();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [pathHistory.length, handleBackClick]);
 
   const musicFiles = entries.filter(
     (e) => !e.is_directory && isMusicFile(e.name)
@@ -99,28 +151,33 @@ function RemoteBrowser() {
 
   return (
     <div className="remote-browser">
-      {/* 固定头部：路径导航 + 错误提示 */}
-      <div className="remote-header">
-        {/* 路径导航 */}
-        {currentPath && (
-          <div className="path-nav">
-            <button className="back-btn" onClick={handleBackClick}>
-              <span className="material-symbols-outlined">arrow_back</span>
-            </button>
-            <span className="current-path">
-              /{currentPath || "根目录"}
-            </span>
-          </div>
-        )}
-
-        {/* 错误提示 */}
-        {error && (
-          <div className="error-banner">
-            <span className="material-symbols-outlined">error</span>
-            <span>{error}</span>
-          </div>
-        )}
+      {/* 固定标题栏 */}
+      <div className="page-header">
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <span className="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h1 className="page-title">远程浏览</h1>
       </div>
+
+      {/* 路径导航 */}
+      {currentPath && (
+        <div className="path-nav">
+          <button className="back-btn" onClick={handleBackClick}>
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <span className="current-path">
+            /{currentPath || "根目录"}
+          </span>
+        </div>
+      )}
+
+      {/* 错误提示 */}
+      {error && (
+        <div className="error-banner">
+          <span className="material-symbols-outlined">error</span>
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* 可滚动内容 */}
       <div className="remote-scroll">

@@ -6,25 +6,27 @@
   box-sizing: border-box;
 }
 
-/* 顶部导航栏 */
-.settings-topbar {
+/* 页面标题栏 */
+.page-header {
   display: flex;
   align-items: center;
-  height: 56px;
-  padding: 0 4px;
-  flex-shrink: 0;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--surface);
   border-bottom: 1px solid var(--outline-variant);
+  flex-shrink: 0;
 }
 
 @media (prefers-color-scheme: dark) {
-  .settings-topbar {
+  .page-header {
+    background-color: var(--surface-dark);
     border-bottom-color: var(--outline-variant-dark);
   }
 }
 
-.settings-back-btn {
-  width: 48px;
-  height: 48px;
+.page-header .back-btn {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,37 +35,40 @@
   color: var(--on-surface);
   cursor: pointer;
   border-radius: 50%;
-}
-
-@media (prefers-color-scheme: dark) {
-  .settings-back-btn {
-    color: var(--on-surface-dark);
-  }
-}
-
-.settings-back-btn:active {
-  background-color: var(--surface-variant);
-}
-
-.settings-title {
-  flex: 1;
-  font-size: 22px;
-  font-weight: 400;
-  margin: 0;
-  padding: 0 12px;
-  color: var(--on-surface);
-}
-
-@media (prefers-color-scheme: dark) {
-  .settings-title {
-    color: var(--on-surface-dark);
-  }
-}
-
-/* 固定头部区域 */
-.settings-header {
   flex-shrink: 0;
-  padding: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header .back-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.page-header .back-btn:hover {
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header .back-btn:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.page-title {
+  flex: 1;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--on-surface);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-title {
+    color: var(--on-surface-dark);
+  }
 }
 
 /* 可滚动内容区域 */
@@ -72,8 +77,12 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 12px;
-  padding-bottom: 100px;
+  padding: 12px 12px 0 12px;
+}
+
+/* 底部间距，确保最后一个内容不被遮挡 */
+.settings-bottom-spacer {
+  height: 40px;
 }
 
 /* 设置区块 */

@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ANDROID_PROJECT_DIR="$ROOT_DIR/src-tauri/gen/android"
 APK_OUTPUT_DIR="$ANDROID_PROJECT_DIR/app/build/outputs/apk"
-BUILD_MODE="${BUILD_MODE:-debug}"
+BUILD_MODE="${BUILD_MODE:-release}"
 DEVICE_SERIAL="${DEVICE_SERIAL:-}"
 
 export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home}"
@@ -209,23 +209,28 @@ printf 'Device ABI: %s\n' "$DEVICE_ABI"
 printf 'Tauri target: %s\n' "$TAURI_TARGET"
 printf 'Package: %s\n' "$PACKAGE_NAME"
 
-clean_gradle_locks() {
-  step "Cleaning Gradle locks"
-  # Stop any running Gradle daemons
-  if [ -x "$ANDROID_PROJECT_DIR/gradlew" ]; then
-    "$ANDROID_PROJECT_DIR/gradlew" --stop 2>/dev/null || true
-  fi
-  pkill -f "gradle.*daemon" 2>/dev/null || true
-  # Remove lock files
+kill_conflicting_processes() {
+  step "Killing conflicting processes"
+  # Kill any running tauri/cargo processes that hold Cargo file locks
+  pkill -9 -f "tauri android dev" 2>/dev/null || true
+  pkill -9 -f "tauri android build" 2>/dev/null || true
+  pkill -9 -f "[Gg]radle" 2>/dev/null || true
+  sleep 1
+  # Remove Cargo lock files (cause of "Blocking waiting for file lock on Android")
+  find "$ROOT_DIR/src-tauri/target" -name ".cargo-lock" -delete 2>/dev/null || true
+  find "$ROOT_DIR/src-tauri/target" -name ".package-cache" -delete 2>/dev/null || true
+  # Remove Gradle lock files
   find "$GRADLE_USER_HOME" -name "*.lock" -delete 2>/dev/null || true
   find "$ANDROID_PROJECT_DIR" -name "*.lock" -delete 2>/dev/null || true
+  find "$HOME/.gradle" -name "*.lock" -delete 2>/dev/null || true
 }
 
 step "Building Tauri Android APK"
 cd "$ROOT_DIR"
-clean_gradle_locks
+kill_conflicting_processes
 sync_android_icons
 clean_generated_jni_symlinks
+export GRADLE_OPTS="${GRADLE_OPTS:-} -Dorg.gradle.daemon=false"
 if [ "$BUILD_MODE" = "debug" ]; then
   npx tauri android build --debug --target "$TAURI_TARGET" --apk
 else

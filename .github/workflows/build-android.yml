@@ -2,20 +2,21 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, ralph/* ]
     tags: [ 'v*' ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, ralph/* ]
   workflow_dispatch:
     inputs:
       branch:
         description: 'Branch to build from'
         required: false
-        default: 'main'
+        default: 'ralph/nas-music-sync'
         type: choice
         options:
           - main
           - master
+          - ralph/nas-music-sync
           - ralph/github-actions-android-apk
 
 env:

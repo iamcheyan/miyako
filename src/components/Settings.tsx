@@ -2,20 +2,14 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
+import { DEFAULT_SMB_CONFIG, loadSmbConfig, saveSmbConfig } from "../lib/smbConfig";
 import "./Settings.css";
 
-const STORAGE_KEY = "smb-config";
 const STATE_PATH = "sync_state.json";
 
 function Settings() {
-  const [config, setConfig] = useState<SmbConfig>({
-    server: "",
-    share: "",
-    username: "",
-    password: "",
-  });
+  const [config, setConfig] = useState<SmbConfig>(DEFAULT_SMB_CONFIG);
   const [showPassword, setShowPassword] = useState(false);
-  const [, setConnectionId] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
     success: boolean;
@@ -27,17 +21,9 @@ function Settings() {
   }>({ fileCount: 0, totalSize: 0 });
   const [showConfirmDialog, setShowConfirmDialog] = useState<string | null>(null);
 
-  // Load saved config and sync stats on mount
+  // 加载保存的配置
   useEffect(() => {
-    const savedConfig = localStorage.getItem(STORAGE_KEY);
-    if (savedConfig) {
-      try {
-        const parsed = JSON.parse(savedConfig) as SmbConfig;
-        setConfig(parsed);
-      } catch (e) {
-        console.error("Failed to parse saved config:", e);
-      }
-    }
+    setConfig(loadSmbConfig());
     loadSyncStats();
   }, []);
 
@@ -55,38 +41,36 @@ function Settings() {
     }
   };
 
-  // Save config to localStorage
+  // 保存配置
   const saveConfig = (newConfig: SmbConfig) => {
     setConfig(newConfig);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newConfig));
+    saveSmbConfig(newConfig);
   };
 
-  // Handle input changes
+  // 处理输入变化
   const handleChange = (field: keyof SmbConfig, value: string) => {
     saveConfig({ ...config, [field]: value });
   };
 
-  // Test connection
+  // 测试连接
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
 
     try {
-      const result = await invoke<ConnectResult>("smb_connect", {
+      await invoke<ConnectResult>("smb_connect", {
         server: config.server,
         share: config.share,
         username: config.username,
         password: config.password,
       });
 
-      setConnectionId(result.connection_id);
       setTestResult({
         success: true,
         message: "连接成功！",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      setConnectionId(null);
       setTestResult({
         success: false,
         message: `连接失败: ${errorMessage}`,
@@ -96,7 +80,7 @@ function Settings() {
     }
   };
 
-  // Clear sync data
+  // 清除同步数据
   const handleClearSyncData = async () => {
     try {
       const storage = getStorageManager();
@@ -104,7 +88,6 @@ function Settings() {
       await storage.clearHistory();
       await storage.clearPlaybackState();
 
-      // Reset sync state by writing empty state
       await invoke("storage_write", {
         dir: "app_data",
         filename: "sync_state.json",
@@ -120,7 +103,7 @@ function Settings() {
     }
   };
 
-  // Clear playback history
+  // 清除播放历史
   const handleClearHistory = async () => {
     try {
       const storage = getStorageManager();
@@ -144,129 +127,177 @@ function Settings() {
   };
 
   return (
-    <div className="settings-container">
-      <h2>SMB 服务器配置</h2>
+    <div className="settings-page">
+      {/* SMB 连接配置 */}
+      <section className="settings-section">
+        <h2 className="section-title">SMB 服务器</h2>
 
-      <div className="settings-form">
-        <div className="form-group">
-          <label htmlFor="server">服务器地址</label>
-          <input
-            type="text"
-            id="server"
-            placeholder="例如: 192.168.1.100"
-            value={config.server}
-            onChange={(e) => handleChange("server", e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="share">共享目录</label>
-          <input
-            type="text"
-            id="share"
-            placeholder="例如: music"
-            value={config.share}
-            onChange={(e) => handleChange("share", e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="username">用户名</label>
-          <input
-            type="text"
-            id="username"
-            placeholder="SMB 用户名"
-            value={config.username}
-            onChange={(e) => handleChange("username", e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="password">密码</label>
-          <div className="password-input-container">
+        <div className="settings-list">
+          <div className="setting-item">
+            <label className="setting-label" htmlFor="server">服务器地址</label>
             <input
-              type={showPassword ? "text" : "password"}
-              id="password"
-              placeholder="SMB 密码"
-              value={config.password}
-              onChange={(e) => handleChange("password", e.target.value)}
+              type="text"
+              id="server"
+              className="setting-input"
+              placeholder="192.168.1.100"
+              value={config.server}
+              onChange={(e) => handleChange("server", e.target.value)}
             />
-            <button
-              type="button"
-              className="toggle-password"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? "隐藏" : "显示"}
-            </button>
+          </div>
+
+          <div className="setting-item">
+            <label className="setting-label" htmlFor="share">共享目录</label>
+            <input
+              type="text"
+              id="share"
+              className="setting-input"
+              placeholder="NAS"
+              value={config.share}
+              onChange={(e) => handleChange("share", e.target.value)}
+            />
+          </div>
+
+          <div className="setting-item">
+            <label className="setting-label" htmlFor="username">用户名</label>
+            <input
+              type="text"
+              id="username"
+              className="setting-input"
+              placeholder="留空表示匿名访问"
+              value={config.username}
+              onChange={(e) => handleChange("username", e.target.value)}
+            />
+          </div>
+
+          <div className="setting-item">
+            <label className="setting-label" htmlFor="password">密码</label>
+            <div className="password-field">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                className="setting-input"
+                placeholder="留空表示匿名访问"
+                value={config.password}
+                onChange={(e) => handleChange("password", e.target.value)}
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                <span className="material-symbols-outlined">
+                  {showPassword ? "visibility_off" : "visibility"}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="setting-item">
+            <label className="setting-label" htmlFor="localDir">本地同步目录</label>
+            <input
+              type="text"
+              id="localDir"
+              className="setting-input"
+              placeholder="~/Music/NasSync"
+              value={config.localDir}
+              onChange={(e) => handleChange("localDir", e.target.value)}
+            />
+            <span className="setting-hint">音乐文件将同步到此目录</span>
           </div>
         </div>
 
         <button
-          className="test-connection-btn"
+          className="test-btn"
           onClick={handleTestConnection}
           disabled={isTesting || !config.server || !config.share}
         >
+          <span className="material-symbols-outlined">link</span>
           {isTesting ? "测试中..." : "测试连接"}
         </button>
 
         {testResult && (
           <div className={`test-result ${testResult.success ? "success" : "error"}`}>
+            <span className="material-symbols-outlined">
+              {testResult.success ? "check_circle" : "error"}
+            </span>
             {testResult.message}
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="sync-stats">
-        <h3>同步数据</h3>
+      {/* 同步统计 */}
+      <section className="settings-section">
+        <h2 className="section-title">同步数据</h2>
+
         <div className="stats-grid">
-          <div className="stat-item">
-            <span className="stat-label">已同步文件数:</span>
-            <span className="stat-value">{syncStats.fileCount}</span>
+          <div className="stat-card">
+            <span className="material-symbols-outlined stat-icon">folder</span>
+            <div className="stat-info">
+              <span className="stat-value">{syncStats.fileCount}</span>
+              <span className="stat-label">已同步文件</span>
+            </div>
           </div>
-          <div className="stat-item">
-            <span className="stat-label">总大小:</span>
-            <span className="stat-value">{formatSize(syncStats.totalSize)}</span>
+
+          <div className="stat-card">
+            <span className="material-symbols-outlined stat-icon">database</span>
+            <div className="stat-info">
+              <span className="stat-value">{formatSize(syncStats.totalSize)}</span>
+              <span className="stat-label">总大小</span>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="danger-zone">
-        <h3>数据管理</h3>
-        <div className="danger-actions">
+      {/* 数据管理 */}
+      <section className="settings-section">
+        <h2 className="section-title">数据管理</h2>
+
+        <div className="danger-list">
           <button
-            className="danger-btn"
+            className="danger-item"
             onClick={() => setShowConfirmDialog("sync")}
           >
-            清除同步数据
+            <span className="material-symbols-outlined danger-icon">delete_sweep</span>
+            <div className="danger-info">
+              <span className="danger-title">清除同步数据</span>
+              <span className="danger-desc">删除同步状态和本地文件</span>
+            </div>
+            <span className="material-symbols-outlined">chevron_right</span>
           </button>
+
           <button
-            className="danger-btn"
+            className="danger-item"
             onClick={() => setShowConfirmDialog("history")}
           >
-            清除播放历史
+            <span className="material-symbols-outlined danger-icon">history</span>
+            <div className="danger-info">
+              <span className="danger-title">清除播放历史</span>
+              <span className="danger-desc">删除最近播放和播放记录</span>
+            </div>
+            <span className="material-symbols-outlined">chevron_right</span>
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Confirmation Dialog */}
+      {/* 确认对话框 */}
       {showConfirmDialog && (
-        <div className="confirm-dialog-overlay">
-          <div className="confirm-dialog">
-            <h3>确认操作</h3>
-            <p>
+        <div className="dialog-overlay" onClick={() => setShowConfirmDialog(null)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()}>
+            <h3 className="dialog-title">确认操作</h3>
+            <p className="dialog-text">
               {showConfirmDialog === "sync"
-                ? "确定要清除所有同步数据吗？这将删除同步状态和播放记录。"
-                : "确定要清除播放历史吗？这将删除最近播放和播放记录。"}
+                ? "确定要清除所有同步数据吗？这将删除同步状态和本地音乐文件。"
+                : "确定要清除播放历史吗？这将删除所有播放记录。"}
             </p>
-            <div className="dialog-buttons">
+            <div className="dialog-actions">
               <button
-                className="cancel-btn"
+                className="dialog-btn cancel"
                 onClick={() => setShowConfirmDialog(null)}
               >
                 取消
               </button>
               <button
-                className="confirm-btn"
+                className="dialog-btn confirm"
                 onClick={
                   showConfirmDialog === "sync"
                     ? handleClearSyncData

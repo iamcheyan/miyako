@@ -1,235 +1,411 @@
 .player-ui {
   position: fixed;
-  bottom: 0;
+  bottom: 80px; /* 在底部导航栏上方 */
   left: 0;
   right: 0;
-  background-color: #1a1a1a;
-  border-top: 1px solid #333;
   z-index: 1000;
+  pointer-events: none;
 }
 
+.player-ui > * {
+  pointer-events: auto;
+}
+
+/* 迷你播放器 */
 .mini-player {
+  background-color: var(--surface);
+  border-top: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .mini-player {
+    background-color: var(--surface-dark);
+    border-top-color: var(--outline-variant-dark);
+  }
+}
+
+.mini-progress {
+  height: 2px;
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .mini-progress {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background-color: var(--primary);
+  transition: width 0.1s linear;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mini-progress-fill {
+    background-color: var(--primary-dark);
+  }
+}
+
+.mini-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 12px 16px;
   cursor: pointer;
 }
 
-.mini-player-info {
+.mini-info {
   flex: 1;
   min-width: 0;
 }
 
 .mini-track-name {
   display: block;
-  color: #e0e0e0;
   font-size: 14px;
   font-weight: 500;
+  color: var(--on-surface);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.mini-track-time {
+@media (prefers-color-scheme: dark) {
+  .mini-track-name {
+    color: var(--on-surface-dark);
+  }
+}
+
+.mini-time {
   display: block;
-  color: #888;
   font-size: 12px;
+  color: var(--on-surface-variant);
   margin-top: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .mini-time {
+    color: var(--on-surface-variant-dark);
+  }
 }
 
 .mini-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
 }
 
 .mini-btn {
-  background: none;
-  border: none;
-  color: #e0e0e0;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-}
-
-.mini-btn:hover {
-  background-color: #333;
-}
-
-.mini-btn.play-btn {
-  font-size: 24px;
-}
-
-.expanded-player {
-  padding: 20px;
-  border-top: 1px solid #333;
-}
-
-.track-info {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.track-name {
-  margin: 0 0 5px 0;
-  color: #e0e0e0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.track-mode {
-  margin: 0;
-  color: #888;
-  font-size: 14px;
-}
-
-.progress-section {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 6px;
-  background-color: #333;
-  border-radius: 3px;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.progress-bar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
-  background-color: #4CAF50;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.time {
-  color: #888;
-  font-size: 12px;
-  min-width: 40px;
-  text-align: center;
-}
-
-.controls {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  margin-bottom: 20px;
-}
-
-.control-btn {
   background: none;
   border: none;
-  color: #e0e0e0;
-  font-size: 20px;
+  color: var(--on-surface);
   cursor: pointer;
-  padding: 8px;
   border-radius: 50%;
   transition: background-color 0.2s;
 }
 
-.control-btn:hover {
-  background-color: #333;
+@media (prefers-color-scheme: dark) {
+  .mini-btn {
+    color: var(--on-surface-dark);
+  }
 }
 
-.control-btn.play-btn {
-  font-size: 28px;
-  background-color: #4CAF50;
-  color: white;
-  padding: 12px;
+.mini-btn:hover {
+  background-color: var(--surface-variant);
 }
 
-.control-btn.play-btn:hover {
-  background-color: #45a049;
+@media (prefers-color-scheme: dark) {
+  .mini-btn:hover {
+    background-color: var(--surface-variant-dark);
+  }
 }
 
-.volume-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 20px;
+.mini-btn.play-btn {
+  width: 48px;
+  height: 48px;
+  background-color: var(--primary);
+  color: var(--on-primary);
 }
 
-.volume-icon {
-  font-size: 16px;
+@media (prefers-color-scheme: dark) {
+  .mini-btn.play-btn {
+    background-color: var(--primary-dark);
+    color: var(--on-primary-dark);
+  }
 }
 
-.volume-bar {
-  width: 80px;
-  height: 4px;
-  background-color: #333;
-  border-radius: 2px;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.volume-bar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 12px;
-  height: 12px;
-  background-color: #e0e0e0;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.playlist-section {
-  max-height: 200px;
+/* 展开的播放器 */
+.expanded-player {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 80px;
+  background-color: var(--surface);
+  z-index: 1100;
   overflow-y: auto;
 }
 
-.playlist-section h4 {
-  margin: 0 0 10px 0;
-  color: #e0e0e0;
-  font-size: 14px;
+@media (prefers-color-scheme: dark) {
+  .expanded-player {
+    background-color: var(--surface-dark);
+  }
 }
 
-.playlist {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.expanded-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 24px 24px;
+  min-height: 100%;
 }
 
-.playlist-item {
+.close-btn {
+  align-self: flex-end;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
-  padding: 8px 12px;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-radius: 50%;
 }
 
-.playlist-item:hover {
-  background-color: #2a2a2a;
+@media (prefers-color-scheme: dark) {
+  .close-btn {
+    color: var(--on-surface-variant-dark);
+  }
 }
 
-.playlist-item.active {
-  background-color: #333;
+/* 歌曲信息 */
+.track-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 32px 0;
 }
 
-.playlist-number {
-  color: #888;
-  font-size: 12px;
-  width: 30px;
+.track-icon {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--secondary-container);
+  border-radius: 16px;
+  margin-bottom: 24px;
 }
 
-.playlist-name {
-  flex: 1;
-  color: #e0e0e0;
-  font-size: 14px;
+@media (prefers-color-scheme: dark) {
+  .track-icon {
+    background-color: var(--secondary-container-dark);
+  }
+}
+
+.track-icon .material-symbols-outlined {
+  font-size: 48px;
+  color: var(--on-secondary-container);
+}
+
+@media (prefers-color-scheme: dark) {
+  .track-icon .material-symbols-outlined {
+    color: var(--secondary-dark);
+  }
+}
+
+.track-name {
+  font-size: 20px;
+  font-weight: 500;
+  text-align: center;
+  margin: 0;
+  color: var(--on-surface);
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.playlist-item.active .playlist-name {
-  color: #4CAF50;
+@media (prefers-color-scheme: dark) {
+  .track-name {
+    color: var(--on-surface-dark);
+  }
+}
+
+/* 进度条 */
+.progress-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.progress-slider {
+  flex: 1;
+  height: 4px;
+  background-color: var(--outline-variant);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .progress-slider {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background-color: var(--primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  .progress-slider::-webkit-slider-thumb {
+    background-color: var(--primary-dark);
+  }
+}
+
+.time {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  min-width: 40px;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .time {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+/* 控制按钮 */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.control-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .control-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.control-btn:hover {
+  background-color: var(--surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .control-btn:hover {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.control-btn.play-btn {
+  width: 64px;
+  height: 64px;
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  .control-btn.play-btn {
+    background-color: var(--primary-dark);
+    color: var(--on-primary-dark);
+  }
+}
+
+.control-btn.play-btn:hover {
+  opacity: 0.9;
+}
+
+.control-btn .material-symbols-outlined {
+  font-size: 28px;
+}
+
+.control-btn.play-btn .material-symbols-outlined {
+  font-size: 36px;
+}
+
+/* 音量控制 */
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0 16px;
+}
+
+.volume-control .material-symbols-outlined {
+  font-size: 20px;
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .volume-control .material-symbols-outlined {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.volume-slider {
+  flex: 1;
+  height: 4px;
+  background-color: var(--outline-variant);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .volume-slider {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background-color: var(--on-surface);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+  .volume-slider::-webkit-slider-thumb {
+    background-color: var(--on-surface-dark);
+  }
 }

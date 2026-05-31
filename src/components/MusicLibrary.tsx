@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useNavigate } from "react-router-dom";
 import type { SyncState } from "../types/tauri-commands";
 import "./MusicLibrary.css";
 
@@ -18,6 +19,7 @@ interface Folder {
 }
 
 function MusicLibrary() {
+  const navigate = useNavigate();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [currentPath, setCurrentPath] = useState<string | null>(null);
   const [currentFiles, setCurrentFiles] = useState<MusicFile[]>([]);
@@ -35,7 +37,7 @@ function MusicLibrary() {
         statePath: STATE_PATH,
       });
 
-      // Group files by folder
+      // 按文件夹分组
       const folderMap = new Map<string, MusicFile[]>();
 
       for (const file of state.synced_files) {
@@ -54,7 +56,7 @@ function MusicLibrary() {
         });
       }
 
-      // Convert to folder array
+      // 转换为文件夹数组
       const folderArray: Folder[] = [];
       for (const [path, files] of folderMap.entries()) {
         const name = path === "根目录" ? "根目录" : path.split("/").pop()!;
@@ -82,7 +84,7 @@ function MusicLibrary() {
   };
 
   const handleFileClick = (file: MusicFile) => {
-    // TODO: Play the file
+    // TODO: 播放文件
     console.log("Play file:", file.path);
   };
 
@@ -95,7 +97,6 @@ function MusicLibrary() {
   };
 
   const formatFileName = (name: string): string => {
-    // Remove extension
     const lastDot = name.lastIndexOf(".");
     return lastDot > 0 ? name.substring(0, lastDot) : name;
   };
@@ -106,40 +107,94 @@ function MusicLibrary() {
 
   if (isLoading) {
     return (
-      <div className="music-library">
-        <div className="loading">加载中...</div>
+      <div className="library-loading">
+        <div className="loading-spinner" />
+        <span>加载中...</span>
       </div>
     );
   }
 
-  // Show folder list
+  // 显示文件夹列表
   if (!currentPath) {
     return (
-      <div className="music-library">
-        <div className="library-header">
-          <h2>音乐库</h2>
+      <div className="library-page">
+        {/* 搜索栏 */}
+        <div className="search-bar">
+          <span className="material-symbols-outlined search-icon">search</span>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="搜索音乐..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
-        {folders.length === 0 && (
-          <div className="empty-state">
-            还没有同步任何音乐
-            <br />
-            请先在同步页面同步音乐
-          </div>
-        )}
+        {/* 快捷操作 */}
+        <div className="quick-actions">
+          <button
+            className="action-card"
+            onClick={() => navigate("/settings")}
+          >
+            <span className="material-symbols-outlined action-icon">settings_input_antenna</span>
+            <span className="action-label">NAS 设置</span>
+          </button>
 
-        {folders.length > 0 && (
-          <div className="folder-grid">
+          <button
+            className="action-card"
+            onClick={() => navigate("/sync")}
+          >
+            <span className="material-symbols-outlined action-icon">sync</span>
+            <span className="action-label">同步音乐</span>
+          </button>
+
+          <button
+            className="action-card"
+            onClick={() => navigate("/remote")}
+          >
+            <span className="material-symbols-outlined action-icon">folder_open</span>
+            <span className="action-label">浏览远程</span>
+          </button>
+        </div>
+
+        {/* 文件夹列表 */}
+        {folders.length === 0 ? (
+          <div className="empty-state">
+            <span className="material-symbols-outlined empty-icon">library_music</span>
+            <h3 className="empty-title">还没有音乐</h3>
+            <p className="empty-desc">
+              请先配置 NAS 连接，然后同步音乐到本地
+            </p>
+            <div className="empty-actions">
+              <button
+                className="empty-btn primary"
+                onClick={() => navigate("/settings")}
+              >
+                配置 NAS
+              </button>
+              <button
+                className="empty-btn secondary"
+                onClick={() => navigate("/sync")}
+              >
+                开始同步
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="folder-list">
             {folders.map((folder) => (
-              <div
+              <button
                 key={folder.path}
-                className="folder-card"
+                className="folder-item"
                 onClick={() => handleFolderClick(folder)}
               >
-                <div className="folder-icon">📁</div>
-                <div className="folder-name">{folder.name}</div>
-                <div className="folder-count">{folder.files.length} 首</div>
-              </div>
+                <span className="material-symbols-outlined folder-icon">folder</span>
+                <div className="folder-info">
+                  <span className="folder-name">{folder.name}</span>
+                  <span className="folder-count">{folder.files.length} 首歌曲</span>
+                </div>
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
             ))}
           </div>
         )}
@@ -147,45 +202,57 @@ function MusicLibrary() {
     );
   }
 
-  // Show file list
+  // 显示文件列表
   return (
-    <div className="music-library">
-      <div className="library-header">
-        <button className="back-btn" onClick={handleBackClick}>
-          ← 返回
+    <div className="library-page">
+      {/* 顶部导航 */}
+      <div className="list-header">
+        <button className="back-btn-small" onClick={handleBackClick}>
+          <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h2>{currentPath === "根目录" ? "根目录" : currentPath.split("/").pop()}</h2>
+        <div className="list-header-info">
+          <h2 className="list-title">{currentPath.split("/").pop()}</h2>
+          <span className="list-subtitle">{currentFiles.length} 首歌曲</span>
+        </div>
       </div>
 
+      {/* 搜索栏 */}
       <div className="search-bar">
+        <span className="material-symbols-outlined search-icon">search</span>
         <input
           type="text"
-          placeholder="搜索音乐..."
+          className="search-input"
+          placeholder="搜索歌曲..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
-      {filteredFiles.length === 0 && (
-        <div className="empty-state">
-          {searchQuery ? "没有找到匹配的音乐" : "此文件夹没有音乐文件"}
+      {/* 文件列表 */}
+      {filteredFiles.length === 0 ? (
+        <div className="empty-state small">
+          <span className="material-symbols-outlined empty-icon">search_off</span>
+          <p className="empty-desc">
+            {searchQuery ? "没有找到匹配的歌曲" : "此文件夹没有音乐文件"}
+          </p>
         </div>
-      )}
-
-      {filteredFiles.length > 0 && (
-        <ul className="file-list">
-          {filteredFiles.map((file) => (
-            <li
+      ) : (
+        <div className="file-list">
+          {filteredFiles.map((file, index) => (
+            <button
               key={file.path}
               className="file-item"
               onClick={() => handleFileClick(file)}
             >
-              <span className="file-icon">🎵</span>
-              <span className="file-name">{formatFileName(file.name)}</span>
-              <span className="file-size">{formatSize(file.size)}</span>
-            </li>
+              <span className="file-index">{index + 1}</span>
+              <div className="file-info">
+                <span className="file-name">{formatFileName(file.name)}</span>
+                <span className="file-size">{formatSize(file.size)}</span>
+              </div>
+              <span className="material-symbols-outlined">play_circle</span>
+            </button>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

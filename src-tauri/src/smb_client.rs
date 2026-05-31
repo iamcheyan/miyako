@@ -110,8 +110,20 @@ pub async fn connect(
     let unc_path = UncPath::from_str(&unc_path_str)
         .map_err(|e| format!("Invalid UNC path: {}", e))?;
 
-    // Create client
-    let client = Client::new(ClientConfig::default());
+    // Create client config - 匿名访问时启用 guest access
+    let config = if username.is_empty() {
+        ClientConfig {
+            connection: smb::ConnectionConfig {
+                allow_unsigned_guest_access: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    } else {
+        ClientConfig::default()
+    };
+
+    let client = Client::new(config);
 
     // Connect and authenticate
     client

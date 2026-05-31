@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { DirEntry, SmbConfig } from "../types/tauri-commands";
+import { loadSmbConfig } from "../lib/smbConfig";
 import "./RemoteBrowser.css";
 
 const MUSIC_EXTENSIONS = [".mp3", ".flac", ".aac", ".wav"];
-const STORAGE_KEY = "smb-config";
 
 function RemoteBrowser() {
   const [currentPath, setCurrentPath] = useState("");
@@ -12,19 +12,12 @@ function RemoteBrowser() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectionId, setConnectionId] = useState<string | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [pathHistory, setPathHistory] = useState<string[]>([]);
 
-  // Load saved config and connect on mount
+  // 加载配置并连接
   useEffect(() => {
-    const savedConfig = localStorage.getItem(STORAGE_KEY);
-    if (savedConfig) {
-      try {
-        const config = JSON.parse(savedConfig) as SmbConfig;
-        connectToSmb(config);
-      } catch (e) {
-        console.error("Failed to parse saved config:", e);
-      }
-    }
+    const config = loadSmbConfig();
+    connectToSmb(config);
   }, []);
 
   const connectToSmb = async (config: SmbConfig) => {
@@ -65,7 +58,7 @@ function RemoteBrowser() {
     }
   }, [connectionId]);
 
-  // Load root directory on connection
+  // 连接后加载根目录
   useEffect(() => {
     if (connectionId) {
       loadDirectory("");
@@ -87,22 +80,15 @@ function RemoteBrowser() {
 
   const handleFolderClick = (folderName: string) => {
     const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
-    setExpandedFolders((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(newPath)) {
-        newSet.delete(newPath);
-      } else {
-        newSet.add(newPath);
-      }
-      return newSet;
-    });
+    setPathHistory((prev) => [...prev, currentPath]);
     loadDirectory(newPath);
   };
 
   const handleBackClick = () => {
-    if (!currentPath) return;
-    const parentPath = currentPath.split("/").slice(0, -1).join("/");
-    loadDirectory(parentPath);
+    if (pathHistory.length === 0) return;
+    const prevPath = pathHistory[pathHistory.length - 1];
+    setPathHistory((prev) => prev.slice(0, -1));
+    loadDirectory(prevPath);
   };
 
   const musicFiles = entries.filter(
@@ -113,68 +99,86 @@ function RemoteBrowser() {
 
   return (
     <div className="remote-browser">
-      <div className="browser-header">
-        <h2>远程目录浏览</h2>
-        {currentPath && (
+      {/* 路径导航 */}
+      {currentPath && (
+        <div className="path-nav">
           <button className="back-btn" onClick={handleBackClick}>
-            ← 返回上级
+            <span className="material-symbols-outlined">arrow_back</span>
           </button>
-        )}
-      </div>
+          <span className="current-path">
+            /{currentPath || "根目录"}
+          </span>
+        </div>
+      )}
 
-      <div className="current-path">
-        当前路径: /{currentPath || "根目录"}
-      </div>
+      {/* 加载状态 */}
+      {isLoading && (
+        <div className="browser-loading">
+          <div className="loading-spinner" />
+          <span>加载中...</span>
+        </div>
+      )}
 
-      {isLoading && <div className="loading">加载中...</div>}
+      {/* 错误提示 */}
+      {error && (
+        <div className="error-banner">
+          <span className="material-symbols-outlined">error</span>
+          <span>{error}</span>
+        </div>
+      )}
 
-      {error && <div className="error-message">{error}</div>}
-
+      {/* 内容列表 */}
       {!isLoading && !error && (
         <div className="browser-content">
-          {folders.length === 0 && musicFiles.length === 0 && (
-            <div className="empty-state">目录为空</div>
-          )}
-
-          {folders.length > 0 && (
-            <div className="section">
-              <h3>文件夹</h3>
-              <ul className="folder-list">
-                {folders.map((folder) => (
-                  <li
-                    key={folder.name}
-                    className={`folder-item ${
-                      expandedFolders.has(`${currentPath}/${folder.name}`)
-                        ? "expanded"
-                        : ""
-                    }`}
-                    onClick={() => handleFolderClick(folder.name)}
-                  >
-                    <span className="folder-icon">
-                      {expandedFolders.has(`${currentPath}/${folder.name}`)
-                        ? "📂"
-                        : "📁"}
-                    </span>
-                    <span className="folder-name">{folder.name}</span>
-                  </li>
-                ))}
-              </ul>
+          {folders.length === 0 && musicFiles.length === 0 ? (
+            <div className="empty-state">
+              <span className="material-symbols-outlined empty-icon">folder_off</span>
+              <span>目录为空</span>
             </div>
-          )}
+          ) : (
+            <>
+              {/* 文件夹列表 */}
+              {folders.length > 0 && (
+                <div className="entry-section">
+                  <h3 className="section-title">文件夹</h3>
+                  <div className="entry-list">
+                    {folders.map((folder) => (
+                      <button
+                        key={folder.name}
+                        className="entry-item"
+                        onClick={() => handleFolderClick(folder.name)}
+                      >
+                        <span className="material-symbols-outlined entry-icon folder">
+                          folder
+                        </span>
+                        <span className="entry-name">{folder.name}</span>
+                        <span className="material-symbols-outlined">chevron_right</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          {musicFiles.length > 0 && (
-            <div className="section">
-              <h3>音乐文件</h3>
-              <ul className="file-list">
-                {musicFiles.map((file) => (
-                  <li key={file.name} className="file-item">
-                    <span className="file-icon">🎵</span>
-                    <span className="file-name">{file.name}</span>
-                    <span className="file-size">{formatSize(file.size)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              {/* 音乐文件列表 */}
+              {musicFiles.length > 0 && (
+                <div className="entry-section">
+                  <h3 className="section-title">音乐文件</h3>
+                  <div className="entry-list">
+                    {musicFiles.map((file) => (
+                      <div key={file.name} className="entry-item">
+                        <span className="material-symbols-outlined entry-icon music">
+                          audio_file
+                        </span>
+                        <div className="entry-info">
+                          <span className="entry-name">{file.name}</span>
+                          <span className="entry-size">{formatSize(file.size)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

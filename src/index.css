@@ -1,68 +1,98 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Android Material Design 颜色 */
+  --primary: #6750A4;
+  --primary-container: #EADDFF;
+  --on-primary: #FFFFFF;
+  --on-primary-container: #21005D;
+  --secondary: #625B71;
+  --secondary-container: #E8DEF8;
+  --surface: #FFFBFE;
+  --surface-variant: #E7E0EC;
+  --on-surface: #1C1B1F;
+  --on-surface-variant: #49454F;
+  --outline: #79747E;
+  --outline-variant: #CAC4D0;
+  --error: #B3261E;
+  --error-container: #F9DEDC;
+
+  /* 深色模式 */
+  --primary-dark: #D0BCFF;
+  --primary-container-dark: #4F378B;
+  --on-primary-dark: #381E72;
+  --on-primary-container-dark: #EADDFF;
+  --secondary-dark: #CCC2DC;
+  --secondary-container-dark: #4A4458;
+  --surface-dark: #1C1B1F;
+  --surface-variant-dark: #49454F;
+  --on-surface-dark: #E6E1E5;
+  --on-surface-variant-dark: #CAC4D0;
+  --outline-dark: #938F99;
+  --outline-variant-dark: #49454F;
+
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--on-surface);
+  background-color: var(--surface);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: var(--on-surface-dark);
+    background-color: var(--surface-dark);
+  }
 }
-a:hover {
-  color: #535bf2;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
+  overscroll-behavior: none;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* 触控优化 */
+a, button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+  border-radius: 2px;
+}
+
+/* 输入框样式 */
+input, textarea, select {
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+  font-size: 16px; /* 防止 iOS 缩放 */
 }

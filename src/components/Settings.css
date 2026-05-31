@@ -1,251 +1,440 @@
-.settings-container {
-  padding: 20px;
-  max-width: 500px;
-  margin: 0 auto;
+.settings-page {
+  padding: 16px;
+  padding-bottom: 100px;
 }
 
-.settings-container h2 {
+/* 设置区块 */
+.settings-section {
   margin-bottom: 24px;
-  font-size: 1.5rem;
-  color: inherit;
 }
 
-.settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary);
+  margin-bottom: 8px;
+  padding-left: 16px;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+@media (prefers-color-scheme: dark) {
+  .section-title {
+    color: var(--primary-dark);
+  }
 }
 
-.form-group label {
-  font-size: 0.9rem;
-  color: #aaa;
+/* 设置列表 */
+.settings-list {
+  background-color: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.form-group input {
-  padding: 10px 12px;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background-color: #1a1a1a;
-  color: #fff;
-  font-size: 0.95rem;
-  font-family: inherit;
+@media (prefers-color-scheme: dark) {
+  .settings-list {
+    background-color: var(--surface-variant-dark);
+  }
 }
 
-.form-group input::placeholder {
-  color: #666;
+.setting-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--outline-variant);
 }
 
-.form-group input:focus {
+@media (prefers-color-scheme: dark) {
+  .setting-item {
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  display: block;
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  margin-bottom: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .setting-label {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.setting-input {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--on-surface);
+  transition: border-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .setting-input {
+    background-color: var(--surface-dark);
+    border-color: var(--outline-dark);
+    color: var(--on-surface-dark);
+  }
+}
+
+.setting-input:focus {
   outline: none;
-  border-color: #646cff;
+  border-color: var(--primary);
 }
 
-.password-input-container {
+@media (prefers-color-scheme: dark) {
+  .setting-input:focus {
+    border-color: var(--primary-dark);
+  }
+}
+
+.setting-input::placeholder {
+  color: var(--outline);
+}
+
+.setting-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--outline);
+  margin-top: 4px;
+}
+
+/* 密码字段 */
+.password-field {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
-.password-input-container input {
+.password-field .setting-input {
   flex: 1;
 }
 
-.toggle-password {
-  padding: 0.6em 1em;
-  font-size: 0.85rem;
-  background-color: #2a2a2a;
-  border: 1px solid #333;
-  color: #ccc;
-  white-space: nowrap;
-}
-
-.toggle-password:hover {
-  background-color: #333;
-  border-color: #646cff;
-}
-
-.test-connection-btn {
-  margin-top: 8px;
-  padding: 10px 16px;
-  background-color: #1a1a1a;
-  color: #fff;
-  border: 1px solid #646cff;
-  border-radius: 6px;
-  font-size: 0.95rem;
+.password-toggle {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
   cursor: pointer;
-  transition: background-color 0.2s, opacity 0.2s;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.test-connection-btn:hover:not(:disabled) {
-  background-color: #646cff;
-  color: #fff;
+@media (prefers-color-scheme: dark) {
+  .password-toggle {
+    color: var(--on-surface-variant-dark);
+  }
 }
 
-.test-connection-btn:disabled {
+.password-toggle:hover {
+  background-color: var(--surface-variant);
+}
+
+/* 测试连接按钮 */
+.test-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  margin-top: 16px;
+  background-color: var(--primary);
+  color: var(--on-primary);
+  border: none;
+  border-radius: 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .test-btn {
+    background-color: var(--primary-dark);
+    color: var(--on-primary-dark);
+  }
+}
+
+.test-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.test-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.test-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* 测试结果 */
 .test-result {
-  padding: 10px 14px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-top: 12px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .test-result.success {
-  background-color: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background-color: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+@media (prefers-color-scheme: dark) {
+  .test-result.success {
+    background-color: var(--primary-container-dark);
+    color: var(--on-primary-container-dark);
+  }
 }
 
 .test-result.error {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background-color: var(--error-container);
+  color: var(--error);
 }
 
-.sync-stats {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #1a1a1a;
-  border-radius: 8px;
-}
-
-.sync-stats h3 {
-  margin: 0 0 15px 0;
-  color: #e0e0e0;
-  font-size: 16px;
-}
-
+/* 统计卡片 */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  gap: 12px;
 }
 
-.stat-item {
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--surface);
+  border-radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .stat-card {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.stat-icon {
+  font-size: 32px;
+  color: var(--primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  .stat-icon {
+    color: var(--primary-dark);
+  }
+}
+
+.stat-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-
-.stat-label {
-  color: #888;
-  font-size: 14px;
 }
 
 .stat-value {
-  color: #e0e0e0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--on-surface);
 }
 
-.danger-zone {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #1a1a1a;
-  border-radius: 8px;
-  border: 1px solid #5a2a2a;
+@media (prefers-color-scheme: dark) {
+  .stat-value {
+    color: var(--on-surface-dark);
+  }
 }
 
-.danger-zone h3 {
-  margin: 0 0 15px 0;
-  color: #ff6b6b;
-  font-size: 16px;
+.stat-label {
+  font-size: 12px;
+  color: var(--on-surface-variant);
 }
 
-.danger-actions {
+@media (prefers-color-scheme: dark) {
+  .stat-label {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+/* 危险操作列表 */
+.danger-list {
+  background-color: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .danger-list {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.danger-item {
+  width: 100%;
   display: flex;
-  gap: 15px;
-}
-
-.danger-btn {
-  flex: 1;
-  padding: 12px 16px;
-  background-color: #3a1a1a;
-  color: #ff6b6b;
-  border: 1px solid #5a2a2a;
-  border-radius: 6px;
-  font-size: 14px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--outline-variant);
   cursor: pointer;
+  text-align: left;
   transition: background-color 0.2s;
 }
 
-.danger-btn:hover {
-  background-color: #5a2a2a;
+@media (prefers-color-scheme: dark) {
+  .danger-item {
+    border-bottom-color: var(--outline-variant-dark);
+  }
 }
 
-.confirm-dialog-overlay {
+.danger-item:last-child {
+  border-bottom: none;
+}
+
+.danger-item:hover {
+  background-color: var(--surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .danger-item:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.danger-icon {
+  font-size: 24px;
+  color: var(--error);
+}
+
+.danger-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.danger-title {
+  font-size: 16px;
+  color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .danger-title {
+    color: var(--on-surface-dark);
+  }
+}
+
+.danger-desc {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .danger-desc {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+/* 对话框 */
+.dialog-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-}
-
-.confirm-dialog {
-  background-color: #1a1a1a;
-  border-radius: 8px;
+  z-index: 1000;
   padding: 24px;
-  max-width: 400px;
-  width: 90%;
-  border: 1px solid #333;
 }
 
-.confirm-dialog h3 {
-  margin: 0 0 12px 0;
-  color: #e0e0e0;
-  font-size: 18px;
+.dialog {
+  width: 100%;
+  max-width: 312px;
+  background-color: var(--surface);
+  border-radius: 28px;
+  padding: 24px;
 }
 
-.confirm-dialog p {
-  margin: 0 0 20px 0;
-  color: #aaa;
+@media (prefers-color-scheme: dark) {
+  .dialog {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.dialog-title {
+  font-size: 24px;
+  font-weight: 400;
+  margin: 0 0 16px 0;
+  color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .dialog-title {
+    color: var(--on-surface-dark);
+  }
+}
+
+.dialog-text {
   font-size: 14px;
   line-height: 1.5;
+  color: var(--on-surface-variant);
+  margin: 0 0 24px 0;
 }
 
-.dialog-buttons {
+@media (prefers-color-scheme: dark) {
+  .dialog-text {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.dialog-actions {
   display: flex;
-  gap: 12px;
   justify-content: flex-end;
+  gap: 8px;
 }
 
-.cancel-btn {
-  padding: 10px 20px;
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-  border: 1px solid #333;
-  border-radius: 6px;
+.dialog-btn {
+  padding: 10px 24px;
+  border-radius: 20px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.cancel-btn:hover {
-  background-color: #333;
+.dialog-btn.cancel {
+  background: none;
+  border: none;
+  color: var(--primary);
 }
 
-.confirm-btn {
-  padding: 10px 20px;
-  background-color: #5a2a2a;
-  color: #ff6b6b;
-  border: 1px solid #7a3a3a;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
+@media (prefers-color-scheme: dark) {
+  .dialog-btn.cancel {
+    color: var(--primary-dark);
+  }
 }
 
-.confirm-btn:hover {
-  background-color: #7a3a3a;
+.dialog-btn.confirm {
+  background-color: var(--error);
+  color: white;
+  border: none;
+}
+
+.dialog-btn.confirm:hover {
+  opacity: 0.9;
 }

@@ -28,6 +28,7 @@ export interface SmbConfig {
   share: string;
   username: string;
   password: string;
+  localDir: string;
 }
 
 export interface ConnectionState {

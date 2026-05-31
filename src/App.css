@@ -1,56 +1,196 @@
 .app {
-  min-height: 100vh;
-  background-color: #0a0a0a;
-  color: #e0e0e0;
+  height: 100vh;
+  height: 100dvh;
+  background-color: var(--surface);
+  color: var(--on-surface);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-.app-content {
+@media (prefers-color-scheme: dark) {
+  .app {
+    background-color: var(--surface-dark);
+    color: var(--on-surface-dark);
+  }
+}
+
+/* 页面包装器 */
+.page-wrapper {
   flex: 1;
-  padding-bottom: 160px; /* Space for player + nav */
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+/* Android 风格顶部栏 */
+.top-bar {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 4px;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--outline-variant);
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .top-bar {
+    background-color: var(--surface-dark);
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.top-bar-title {
+  flex: 1;
+  font-size: 22px;
+  font-weight: 400;
+  margin: 0;
+  padding: 0 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-bar-spacer {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.back-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .back-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.back-btn:hover {
+  background-color: var(--surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .back-btn:hover {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.back-btn:active {
+  background-color: var(--outline-variant);
+}
+
+/* 页面内容 */
+.page-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 底部导航栏 - Android Material Design 3 */
 .bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #1a1a1a;
-  border-top: 1px solid #333;
   display: flex;
   justify-content: space-around;
-  padding: 10px 0;
-  z-index: 900;
+  align-items: center;
+  height: 80px;
+  background-color: var(--surface);
+  border-top: 1px solid var(--outline-variant);
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bottom-nav {
+    background-color: var(--surface-dark);
+    border-top-color: var(--outline-variant-dark);
+  }
 }
 
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-decoration: none;
-  color: #888;
-  padding: 5px 15px;
-  border-radius: 8px;
-  transition: all 0.2s;
+  color: var(--on-surface-variant);
+  padding: 12px 0;
+  min-width: 64px;
+  position: relative;
+  transition: color 0.2s;
 }
 
-.nav-item:hover {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
+@media (prefers-color-scheme: dark) {
+  .nav-item {
+    color: var(--on-surface-variant-dark);
+  }
 }
 
 .nav-item.active {
-  color: #4CAF50;
+  color: var(--primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-item.active {
+    color: var(--primary-dark);
+  }
+}
+
+/* Material Design 3 导航指示器 */
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 32px;
+  background-color: var(--secondary-container);
+  border-radius: 16px;
+  z-index: -1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-item.active::before {
+    background-color: var(--secondary-container-dark);
+  }
 }
 
 .nav-icon {
-  font-size: 20px;
+  font-size: 24px;
   margin-bottom: 4px;
 }
 
 .nav-label {
   font-size: 12px;
   font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Material Symbols 图标 */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
 }

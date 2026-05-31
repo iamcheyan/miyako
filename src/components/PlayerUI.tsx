@@ -48,10 +48,6 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
     }
   }, [state.isPlaying]);
 
-  const handleStop = useCallback(() => {
-    player.stop();
-  }, []);
-
   const handleNext = useCallback(async () => {
     await player.next();
   }, []);
@@ -63,11 +59,6 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(e.target.value);
     player.seekTo(time);
-  }, []);
-
-  const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const volume = parseFloat(e.target.value);
-    player.setVolume(volume);
   }, []);
 
   const handleModeChange = useCallback(() => {
@@ -94,11 +85,11 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
   const getModeIcon = (mode: PlayMode): string => {
     switch (mode) {
       case "sequential":
-        return "↻";
+        return "repeat";
       case "loop":
-        return "🔁";
+        return "repeat_one";
       case "shuffle":
-        return "🔀";
+        return "shuffle";
     }
   };
 
@@ -108,120 +99,132 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
 
   return (
     <div className={`player-ui ${isExpanded ? "expanded" : ""}`}>
-      {/* Mini player */}
-      <div className="mini-player" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="mini-player-info">
-          <span className="mini-track-name">{currentTrackName}</span>
-          <span className="mini-track-time">
-            {formatTime(state.currentTime)} / {formatTime(state.duration)}
-          </span>
+      {/* 迷你播放器 - 底部停靠 */}
+      <div className="mini-player">
+        {/* 进度条 */}
+        <div className="mini-progress">
+          <div
+            className="mini-progress-fill"
+            style={{
+              width: `${state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0}%`,
+            }}
+          />
         </div>
-        <div className="mini-controls">
-          <button
-            className="mini-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePrevious();
-            }}
-          >
-            ⏮
-          </button>
-          <button
-            className="mini-btn play-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handlePlayPause();
-            }}
-          >
-            {state.isPlaying ? "⏸" : "▶"}
-          </button>
-          <button
-            className="mini-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleNext();
-            }}
-          >
-            ⏭
-          </button>
+
+        <div className="mini-content" onClick={() => setIsExpanded(!isExpanded)}>
+          <div className="mini-info">
+            <span className="mini-track-name">{currentTrackName}</span>
+            <span className="mini-time">
+              {formatTime(state.currentTime)} / {formatTime(state.duration)}
+            </span>
+          </div>
+
+          <div className="mini-controls">
+            <button
+              className="mini-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevious();
+              }}
+              aria-label="上一首"
+            >
+              <span className="material-symbols-outlined">skip_previous</span>
+            </button>
+
+            <button
+              className="mini-btn play-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePlayPause();
+              }}
+              aria-label={state.isPlaying ? "暂停" : "播放"}
+            >
+              <span className="material-symbols-outlined">
+                {state.isPlaying ? "pause" : "play_arrow"}
+              </span>
+            </button>
+
+            <button
+              className="mini-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              aria-label="下一首"
+            >
+              <span className="material-symbols-outlined">skip_next</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Expanded player */}
+      {/* 展开的播放器 */}
       {isExpanded && (
-        <div className="expanded-player">
-          <div className="track-info">
-            <h3 className="track-name">{currentTrackName}</h3>
-            <p className="track-mode">
-              {getModeIcon(state.playMode)}{" "}
-              {state.playMode === "sequential"
-                ? "顺序播放"
-                : state.playMode === "loop"
-                  ? "单曲循环"
-                  : "随机播放"}
-            </p>
-          </div>
+        <div className="expanded-player" onClick={() => setIsExpanded(false)}>
+          <div className="expanded-content" onClick={(e) => e.stopPropagation()}>
+            {/* 关闭按钮 */}
+            <button className="close-btn" onClick={() => setIsExpanded(false)}>
+              <span className="material-symbols-outlined">expand_more</span>
+            </button>
 
-          <div className="progress-section">
-            <span className="time">{formatTime(state.currentTime)}</span>
-            <input
-              type="range"
-              className="progress-bar"
-              min={0}
-              max={state.duration || 0}
-              value={state.currentTime}
-              onChange={handleSeek}
-            />
-            <span className="time">{formatTime(state.duration)}</span>
-          </div>
+            {/* 歌曲信息 */}
+            <div className="track-info">
+              <div className="track-icon">
+                <span className="material-symbols-outlined">music_note</span>
+              </div>
+              <h3 className="track-name">{currentTrackName}</h3>
+            </div>
 
-          <div className="controls">
-            <button className="control-btn" onClick={handleModeChange}>
-              {getModeIcon(state.playMode)}
-            </button>
-            <button className="control-btn" onClick={handlePrevious}>
-              ⏮
-            </button>
-            <button className="control-btn play-btn" onClick={handlePlayPause}>
-              {state.isPlaying ? "⏸" : "▶"}
-            </button>
-            <button className="control-btn" onClick={handleStop}>
-              ⏹
-            </button>
-            <button className="control-btn" onClick={handleNext}>
-              ⏭
-            </button>
-            <div className="volume-control">
-              <span className="volume-icon">🔊</span>
+            {/* 进度条 */}
+            <div className="progress-section">
+              <span className="time">{formatTime(state.currentTime)}</span>
               <input
                 type="range"
-                className="volume-bar"
+                className="progress-slider"
                 min={0}
-                max={1}
-                step={0.01}
-                value={state.volume}
-                onChange={handleVolumeChange}
+                max={state.duration || 0}
+                value={state.currentTime}
+                onChange={handleSeek}
               />
+              <span className="time">{formatTime(state.duration)}</span>
+            </div>
+
+            {/* 控制按钮 */}
+            <div className="controls">
+              <button className="control-btn" onClick={handleModeChange}>
+                <span className="material-symbols-outlined">
+                  {getModeIcon(state.playMode)}
+                </span>
+              </button>
+
+              <button className="control-btn" onClick={handlePrevious}>
+                <span className="material-symbols-outlined">skip_previous</span>
+              </button>
+
+              <button className="control-btn play-btn" onClick={handlePlayPause}>
+                <span className="material-symbols-outlined">
+                  {state.isPlaying ? "pause" : "play_arrow"}
+                </span>
+              </button>
+
+              <button className="control-btn" onClick={handleNext}>
+                <span className="material-symbols-outlined">skip_next</span>
+              </button>
+
+              <div className="volume-control">
+                <span className="material-symbols-outlined">volume_up</span>
+                <input
+                  type="range"
+                  className="volume-slider"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={state.volume}
+                  onChange={(e) => player.setVolume(parseFloat(e.target.value))}
+                />
+              </div>
             </div>
           </div>
-
-          {state.playlist.length > 0 && (
-            <div className="playlist-section">
-              <h4>播放列表</h4>
-              <ul className="playlist">
-                {state.playlist.map((track, index) => (
-                  <li
-                    key={index}
-                    className={`playlist-item ${index === state.currentIndex ? "active" : ""}`}
-                    onClick={() => player.playTrack(index)}
-                  >
-                    <span className="playlist-number">{index + 1}</span>
-                    <span className="playlist-name">{getFileName(track)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
     </div>

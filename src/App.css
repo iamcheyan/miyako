@@ -31,7 +31,7 @@
   overflow: hidden;
 }
 
-/* 页面内容 */
+/* 页面内容 - 带丝滑的入场淡入上浮动画 */
 .page-content {
   flex: 1;
   min-height: 0;
@@ -40,6 +40,35 @@
   box-sizing: border-box;
   overflow: hidden;
   padding-top: var(--system-top-inset);
+  animation: pageFadeIn 0.35s cubic-bezier(0.215, 0.610, 0.355, 1) both;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 全局物理触感反馈：清除移动端点击高亮 */
+.btn-interactive,
+button,
+.playlist-row,
+.music-card,
+.folder-item,
+.file-item,
+.ctrl-btn,
+.action-card,
+.search-result-item,
+.empty-btn,
+.back-btn-small,
+.search-btn {
+  -webkit-tap-highlight-color: transparent !important;
+  transition: background-color 0.2s ease, opacity 0.2s ease !important;
 }
 
 /* Material Symbols 图标 */

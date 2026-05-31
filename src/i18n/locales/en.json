@@ -24,7 +24,8 @@
     "quickActions": {
       "nasSettings": "NAS Settings",
       "syncMusic": "Sync Music",
-      "browseRemote": "Browse Remote"
+      "browseRemote": "Browse Remote",
+      "favorites": "Favorites"
     },
     "empty": {
       "title": "No music yet",

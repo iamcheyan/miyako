@@ -16,8 +16,34 @@ function PlayerUI() {
   const pushStateRef = useRef(false);
   const trackTitleRef = useRef<HTMLHeadingElement>(null);
   const dragStartRef = useRef<{ y: number; time: number } | null>(null);
-  const playlistScrollRef = useRef<HTMLDivElement>(null);
+  const defaultScrollRef = useRef<HTMLDivElement>(null);
+  const favoritesScrollRef = useRef<HTMLDivElement>(null);
   const activeRowRef = useRef<HTMLDivElement>(null);
+
+  const [playlistTab, setPlaylistTab] = useState<'default' | 'favorites'>('default');
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handlePlaylistTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handlePlaylistTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!swipeStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const diffX = touch.clientX - swipeStartRef.current.x;
+    const diffY = touch.clientY - swipeStartRef.current.y;
+    swipeStartRef.current = null;
+
+    // 水平滑动大于 50px，且垂直偏移小于 40px，判定为横滑
+    if (Math.abs(diffX) > 50 && Math.abs(diffY) < 40) {
+      if (diffX < 0) {
+        setPlaylistTab('favorites');
+      } else {
+        setPlaylistTab('default');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     setState(player.getState());
@@ -57,18 +83,24 @@ function PlayerUI() {
   }, [isExpanded]);
 
   // 当 currentIndex 改变或从暂停切换到播放时，自动将当前歌曲滚动到播放列表居中位置
+  const prevIndexRef = useRef(state.currentIndex);
   const prevIsPlayingRef = useRef(state.isPlaying);
   useEffect(() => {
     const wasPaused = !prevIsPlayingRef.current;
     const isNowPlaying = state.isPlaying;
     const justResumed = wasPaused && isNowPlaying;
     
-    // 更新 ref
-    prevIsPlayingRef.current = state.isPlaying;
+    // 计算歌曲切换的索引跨度
+    const indexDiff = Math.abs(state.currentIndex - prevIndexRef.current);
     
+    // 更新 refs
+    prevIsPlayingRef.current = state.isPlaying;
+    prevIndexRef.current = state.currentIndex;
+    
+    const activeScrollRef = playlistTab === "default" ? defaultScrollRef : favoritesScrollRef;
     // 仅在展开状态下执行滚动
-    if (isExpanded && activeRowRef.current && playlistScrollRef.current) {
-      const container = playlistScrollRef.current;
+    if (isExpanded && activeRowRef.current && activeScrollRef.current) {
+      const container = activeScrollRef.current;
       const element = activeRowRef.current;
       
       // 1. 获取元素相对于滚动容器的精确相对 Top 位置，避免 offsetParent 导致的高度错乱
@@ -86,9 +118,14 @@ function PlayerUI() {
       const maxScrollTop = Math.max(0, container.scrollHeight - containerHeight);
       scrollTo = Math.max(0, Math.min(maxScrollTop, scrollTo));
       
+      // 4. 智能滚动模式决策：
+      // 如果跨度较大（比如超过8个切歌位置），Android WebView 在平滑滚动时会因为渲染饱和而发生白屏或短暂消失现象。
+      // 此时直接“瞬移（instant）”过去，用户体验最为流畅，完全不会有任何视觉卡顿。
+      const scrollBehavior = (justResumed || indexDiff > 8) ? "instant" : "smooth";
+      
       container.scrollTo({
         top: scrollTo,
-        behavior: justResumed ? 'instant' : 'smooth'
+        behavior: scrollBehavior as ScrollBehavior
       });
     }
   }, [state.currentIndex, state.isPlaying, isExpanded]);
@@ -234,6 +271,10 @@ function PlayerUI() {
     }
   };
 
+  const favoritedItems = state.playlist
+    .map((track, originalIndex) => ({ track, originalIndex }))
+    .filter(item => isFavorite(item.track));
+
   const currentTrackName = state.currentTrack
     ? getFileName(state.currentTrack)
     : "未选择歌曲";
@@ -323,34 +364,97 @@ function PlayerUI() {
           </button>
         </div>
 
-        {/* 中间：播放列表，填满剩余空间，可滚动 */}
-        <div className="expanded-playlist">
-          <h3 className="playlist-header">{t("player.playlist")}</h3>
-          <div className="playlist-scroll" ref={playlistScrollRef}>
-            {state.playlist.length === 0 ? (
-              <div className="playlist-empty">
-                <span className="material-symbols-outlined">queue_music</span>
-                <span>{t("player.emptyPlaylist")}</span>
-              </div>
-            ) : (
-              state.playlist.map((track, index) => (
-                <div
-                  key={index}
-                  ref={index === state.currentIndex ? activeRowRef : undefined}
-                  className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
-                  onClick={() => player.playTrack(index)}
-                >
-                  <span className="row-num">
-                    {index === state.currentIndex && state.isPlaying ? (
-                      <span className="material-symbols-outlined playing">equalizer</span>
-                    ) : (
-                      index + 1
-                    )}
-                  </span>
-                  <span className="row-name">{getFileName(track)}</span>
+        {/* 中间：播放列表，填满剩余空间，可滚动，支持左右滑动手势切换默认/收藏 */}
+        <div
+          className="expanded-playlist"
+          onTouchStart={handlePlaylistTouchStart}
+          onTouchEnd={handlePlaylistTouchEnd}
+        >
+          <h3 className="playlist-header">
+            <div className="playlist-tabs">
+              <span
+                className={`playlist-tab ${playlistTab === 'default' ? 'active' : ''}`}
+                onClick={() => setPlaylistTab('default')}
+              >
+                {t("player.playlist")}
+              </span>
+              <span className="playlist-tab-separator">|</span>
+              <span
+                className={`playlist-tab ${playlistTab === 'favorites' ? 'active' : ''}`}
+                style={{ color: playlistTab === 'favorites' ? '#ff2d55' : undefined }}
+                onClick={() => setPlaylistTab('favorites')}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '14px', verticalAlign: 'middle', marginRight: '4px' }}>favorite</span>
+                {t("musicLibrary.quickActions.favorites")}
+              </span>
+            </div>
+          </h3>
+          
+          <div className="playlist-slider-wrapper">
+            <div
+              className="playlist-slider-content"
+              style={{ transform: `translateX(${playlistTab === 'default' ? '0%' : '-50%'})` }}
+            >
+              {/* 页面 1：默认全部歌曲 */}
+              <div className="playlist-slider-page">
+                <div className="playlist-scroll" ref={defaultScrollRef}>
+                  {state.playlist.length === 0 ? (
+                    <div className="playlist-empty">
+                      <span className="material-symbols-outlined">queue_music</span>
+                      <span>{t("player.emptyPlaylist")}</span>
+                    </div>
+                  ) : (
+                    state.playlist.map((track, index) => (
+                      <div
+                        key={index}
+                        ref={playlistTab === 'default' && index === state.currentIndex ? activeRowRef : undefined}
+                        className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
+                        onClick={() => player.playTrack(index)}
+                      >
+                        <span className="row-num">
+                          {index === state.currentIndex && state.isPlaying ? (
+                            <span className="material-symbols-outlined playing">equalizer</span>
+                          ) : (
+                            index + 1
+                          )}
+                        </span>
+                        <span className="row-name">{getFileName(track)}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))
-            )}
+              </div>
+
+              {/* 页面 2：红心收藏歌曲 */}
+              <div className="playlist-slider-page">
+                <div className="playlist-scroll" ref={favoritesScrollRef}>
+                  {favoritedItems.length === 0 ? (
+                    <div className="playlist-empty">
+                      <span className="material-symbols-outlined">favorite</span>
+                      <span>{t("musicLibrary.searchNoResults")}</span>
+                    </div>
+                  ) : (
+                    favoritedItems.map((item) => (
+                      <div
+                        key={item.originalIndex}
+                        ref={playlistTab === 'favorites' && item.originalIndex === state.currentIndex ? activeRowRef : undefined}
+                        className={`playlist-row ${item.originalIndex === state.currentIndex ? "active" : ""}`}
+                        onClick={() => player.playTrack(item.originalIndex)}
+                      >
+                        <span className="row-num">
+                          {item.originalIndex === state.currentIndex && state.isPlaying ? (
+                            <span className="material-symbols-outlined playing">equalizer</span>
+                          ) : (
+                            item.originalIndex + 1
+                          )}
+                        </span>
+                        <span className="row-name">{getFileName(item.track)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

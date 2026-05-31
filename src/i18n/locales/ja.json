@@ -23,8 +23,9 @@
     "searchPlaceholder": "音楽を検索...", 
     "quickActions": {
       "nasSettings": "NAS設定",
-      "syncMusic": "音楽を同期",
-      "browseRemote": "リモート閲覧"
+      "syncMusic": "音乐を同期",
+      "browseRemote": "リモート閲覧",
+      "favorites": "お気に入り"
     },
     "empty": {
       "title": "音楽がまだありません",

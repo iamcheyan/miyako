@@ -6,8 +6,17 @@
 
 /* ==================== 迷你播放器 ==================== */
 .mini-only {
-  background-color: var(--surface);
-  border-top: 1px solid var(--outline-variant);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.08) 49.9%,
+    rgba(255, 255, 255, 0.01) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  ) !important;
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 -4px 16px rgba(0, 0, 0, 0.06);
   padding-bottom: calc(
     var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
   );
@@ -15,8 +24,17 @@
 
 @media (prefers-color-scheme: dark) {
   .mini-only {
-    background-color: var(--surface-dark);
-    border-top-color: var(--outline-variant-dark);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.04) 49.9%,
+      rgba(0, 0, 0, 0.2) 50%,
+      rgba(255, 255, 255, 0.02) 100%
+    ) !important;
+    backdrop-filter: blur(20px) saturate(120%);
+    -webkit-backdrop-filter: blur(20px) saturate(120%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 -4px 16px rgba(0, 0, 0, 0.12);
   }
 }
 
@@ -200,8 +218,8 @@
   flex-direction: column;
   height: 100%;
   transition:
-    transform 0.3s ease-out,
-    border-radius 0.3s ease-out;
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 0.45s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   background-color: var(--surface);
 }
@@ -462,6 +480,7 @@
 .playlist-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   font-size: 13px;
   font-weight: 500;
@@ -471,12 +490,7 @@
   letter-spacing: 0.08em;
 }
 
-.playlist-header::after {
-  content: "";
-  height: 1px;
-  flex: 1;
-  background-color: var(--outline-variant);
-}
+
 
 @media (prefers-color-scheme: dark) {
   .playlist-header {
@@ -488,12 +502,89 @@
   }
 }
 
+.playlist-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playlist-tab {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s, color 0.2s;
+  font-weight: 500;
+}
+
+.playlist-tab.active {
+  opacity: 1;
+}
+
+.playlist-tab-separator {
+  opacity: 0.3;
+}
+
 .playlist-scroll {
   position: relative;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+}
+
+.playlist-slider-wrapper {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+}
+
+.playlist-slider-wrapper::before,
+.playlist-slider-wrapper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.playlist-slider-wrapper::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--surface) 10%, transparent);
+}
+
+.playlist-slider-wrapper::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--surface) 10%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .playlist-slider-wrapper::before {
+    background: linear-gradient(90deg, var(--surface-dark) 10%, transparent);
+  }
+  .playlist-slider-wrapper::after {
+    background: linear-gradient(270deg, var(--surface-dark) 10%, transparent);
+  }
+}
+
+.playlist-slider-content {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  flex-shrink: 0;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.playlist-slider-page {
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .playlist-empty {
@@ -665,17 +756,18 @@
 }
 
 .ctrl-btn.favorite.active {
-  color: #e91e63;
-  animation: heartBeat 0.4s ease-out;
+  color: #ff2d55 !important;
+  animation: heartBeat 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .ctrl-btn.favorite.active .material-symbols-outlined {
-  font-variation-settings: "FILL" 1;
+  font-variation-settings: "FILL" 1 !important;
+  color: #ff2d55 !important;
+  filter: drop-shadow(0 2px 4px rgba(255, 45, 85, 0.45)) drop-shadow(0 4px 10px rgba(255, 45, 85, 0.25)) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-.ctrl-btn.favorite:active {
-  transform: scale(0.85);
-}
+
 
 @keyframes heartBeat {
   0% {
@@ -834,33 +926,49 @@
 }
 
 .playlist-row.active {
-  background-color: var(--surface-variant);
-  border-color: var(--outline-variant);
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0.08) 49.9%,
+    rgba(255, 255, 255, 0.01) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  ) !important;
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  margin-left: -24px;
+  margin-right: -24px;
+  padding-left: 38px;
+  padding-right: 38px;
 }
 
 @media (prefers-color-scheme: dark) {
   .playlist-row.active {
-    background-color: var(--surface-variant-dark);
-    border-color: var(--outline-variant-dark);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.04) 49.9%,
+      rgba(0, 0, 0, 0.2) 50%,
+      rgba(255, 255, 255, 0.02) 100%
+    ) !important;
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    margin-left: -24px;
+    margin-right: -24px;
+    padding-left: 38px;
+    padding-right: 38px;
   }
 }
 
-.playlist-row.active::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 12px;
-  bottom: 12px;
-  width: 2px;
-  border-radius: 999px;
-  background-color: var(--on-surface);
-}
 
-@media (prefers-color-scheme: dark) {
-  .playlist-row.active::before {
-    background-color: var(--on-surface-dark);
-  }
-}
 
 .row-num {
   width: 24px;

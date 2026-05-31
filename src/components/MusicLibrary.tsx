@@ -32,6 +32,7 @@ function MusicLibrary() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [favoritesVersion, setFavoritesVersion] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -179,6 +180,9 @@ function MusicLibrary() {
     allFiles.push(...folder.files);
   }
   
+  // 获取收藏列表（favoritesVersion 用于强制更新）
+  const favorites = getFavorites();
+  
   // 全局搜索结果（用于搜索弹出层）
   const searchResults = searchQuery
     ? allFiles.filter((file) =>
@@ -308,7 +312,7 @@ function MusicLibrary() {
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleFavorite(file.localPath);
-                          setFolders([...folders]);
+                          setFavoritesVersion(v => v + 1);
                         }}
                       >
                         <span

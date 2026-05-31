@@ -51,7 +51,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 搜索栏 */
@@ -309,20 +311,6 @@
 @media (prefers-color-scheme: dark) {
   .folder-item:hover {
     background-color: var(--outline-variant-dark);
-  }
-}
-
-/* 全部歌曲选项 */
-.folder-item.all-files {
-  background-color: var(--primary-container);
-  margin-bottom: 8px;
-  border-radius: 12px;
-  border-bottom: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  .folder-item.all-files {
-    background-color: var(--primary-container-dark);
   }
 }
 

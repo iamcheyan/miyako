@@ -38,17 +38,6 @@ function PlayerUI() {
     };
   }, [isExpanded]);
 
-  // 处理关闭播放器时的历史记录清理
-  const handleClosePlayer = useCallback(() => {
-    setIsExpanded(false);
-    // 如果有假的历史记录，需要清理
-    if (pushStateRef.current) {
-      // 先移除监听器，避免触发handlePopState
-      pushStateRef.current = false;
-      // 不需要手动调用history.back()，因为popstate已经处理了
-    }
-  }, []);
-
   useEffect(() => {
     const updateState = () => {
       setState(player.getState());

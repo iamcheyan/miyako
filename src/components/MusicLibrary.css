@@ -4,7 +4,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  padding: 12px;
+  padding: 12px 12px 0 12px;
   box-sizing: border-box;
 }
 
@@ -453,13 +453,8 @@
 .file-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: none;
-  border: none;
+  padding: 0 16px;
   border-bottom: 1px solid var(--outline-variant);
-  cursor: pointer;
-  text-align: left;
   transition: background-color 0.2s;
 }
 
@@ -479,6 +474,43 @@
 
 @media (prefers-color-scheme: dark) {
   .file-item:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.file-play-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.file-fav-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.file-fav-btn:hover {
+  background-color: var(--surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .file-fav-btn:hover {
     background-color: var(--outline-variant-dark);
   }
 }
@@ -525,6 +557,38 @@
 @media (prefers-color-scheme: dark) {
   .file-size {
     color: var(--on-surface-variant-dark);
+  }
+}
+
+/* 播放全部按钮 */
+.play-all-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .play-all-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.play-all-btn:hover {
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .play-all-btn:hover {
+    background-color: var(--outline-variant-dark);
   }
 }
 
@@ -594,7 +658,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: calc(12px + var(--system-top-inset, 0px));
   border-bottom: 1px solid var(--outline-variant);
   flex-shrink: 0;
 }

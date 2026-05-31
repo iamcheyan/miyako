@@ -45,6 +45,30 @@ function PlayerUI() {
     }
   }, []);
 
+  // 迷你播放器向上拖动拉起播放器手势
+  const miniDragStartRef = useRef<{ y: number; time: number } | null>(null);
+
+  const handleMiniTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    miniDragStartRef.current = { y: touch.clientY, time: Date.now() };
+  }, []);
+
+  const handleMiniTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!miniDragStartRef.current) return;
+    const touch = e.touches[0];
+    const diffY = touch.clientY - miniDragStartRef.current.y;
+
+    // 向上滑动拉拽超过 15px，立即触发展开播放器
+    if (diffY < -15) {
+      setIsExpanded(true);
+      miniDragStartRef.current = null;
+    }
+  }, []);
+
+  const handleMiniTouchEnd = useCallback(() => {
+    miniDragStartRef.current = null;
+  }, []);
+
   useEffect(() => {
     setState(player.getState());
   }, [player]);
@@ -285,7 +309,12 @@ function PlayerUI() {
   // 迷你播放器
   if (!isExpanded) {
     return (
-      <div className="player-ui mini-only">
+      <div
+        className="player-ui mini-only"
+        onTouchStart={handleMiniTouchStart}
+        onTouchMove={handleMiniTouchMove}
+        onTouchEnd={handleMiniTouchEnd}
+      >
         <div className="mini-progress">
           <div
             className="mini-progress-fill"

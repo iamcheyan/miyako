@@ -2,21 +2,16 @@ import { useState, useEffect, useCallback } from "react";
 import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/audioPlayer";
 import "./PlayerUI.css";
 
-interface PlayerUIProps {
-  tracks?: string[];
-  currentIndex?: number;
-}
-
-function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
+function PlayerUI() {
   const player = getAudioPlayer();
   const [state, setState] = useState<AudioPlayerState>(player.getState());
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // 组件加载时恢复状态
   useEffect(() => {
-    if (tracks.length > 0) {
-      player.loadPlaylist(tracks, currentIndex);
-    }
-  }, [tracks, currentIndex]);
+    // 恢复播放器状态
+    setState(player.getState());
+  }, [player]);
 
   useEffect(() => {
     const updateState = () => {
@@ -38,35 +33,40 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
       player.off("timeupdate", updateState);
       player.off("loadedmetadata", updateState);
     };
-  }, []);
+  }, [player]);
 
   const handlePlayPause = useCallback(async () => {
     if (state.isPlaying) {
       player.pause();
     } else {
-      await player.play();
+      // 如果没有当前曲目但有播放列表，从第一个开始
+      if (!state.currentTrack && state.playlist.length > 0) {
+        await player.playTrack(0);
+      } else {
+        await player.play();
+      }
     }
-  }, [state.isPlaying]);
+  }, [state.isPlaying, state.currentTrack, state.playlist.length, player]);
 
   const handleNext = useCallback(async () => {
     await player.next();
-  }, []);
+  }, [player]);
 
   const handlePrevious = useCallback(async () => {
     await player.previous();
-  }, []);
+  }, [player]);
 
   const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const time = parseFloat(e.target.value);
     player.seekTo(time);
-  }, []);
+  }, [player]);
 
   const handleModeChange = useCallback(() => {
     const modes: PlayMode[] = ["sequential", "loop", "shuffle"];
     const currentIndex = modes.indexOf(state.playMode);
     const nextMode = modes[(currentIndex + 1) % modes.length];
     player.setPlayMode(nextMode);
-  }, [state.playMode]);
+  }, [state.playMode, player]);
 
   const formatTime = (seconds: number): string => {
     if (isNaN(seconds)) return "0:00";
@@ -97,9 +97,12 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
     ? getFileName(state.currentTrack)
     : "未选择歌曲";
 
+  // 检查是否有播放历史
+  const hasHistory = state.playlist.length > 0 && state.currentIndex >= 0;
+
   return (
     <div className={`player-ui ${isExpanded ? "expanded" : ""}`}>
-      {/* 迷你播放器 - 底部停靠 */}
+      {/* 迷你播放器 */}
       <div className="mini-player">
         {/* 进度条 */}
         <div className="mini-progress">
@@ -115,7 +118,7 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
           <div className="mini-info">
             <span className="mini-track-name">{currentTrackName}</span>
             <span className="mini-time">
-              {formatTime(state.currentTime)} / {formatTime(state.duration)}
+              {hasHistory ? `${formatTime(state.currentTime)} / ${formatTime(state.duration)}` : "点击播放"}
             </span>
           </div>
 
@@ -127,6 +130,7 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
                 handlePrevious();
               }}
               aria-label="上一首"
+              disabled={!hasHistory}
             >
               <span className="material-symbols-outlined">skip_previous</span>
             </button>
@@ -151,6 +155,7 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
                 handleNext();
               }}
               aria-label="下一首"
+              disabled={!hasHistory}
             >
               <span className="material-symbols-outlined">skip_next</span>
             </button>
@@ -173,6 +178,9 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
                 <span className="material-symbols-outlined">music_note</span>
               </div>
               <h3 className="track-name">{currentTrackName}</h3>
+              {hasHistory && (
+                <p className="track-hint">上次播放到 {formatTime(state.currentTime)}</p>
+              )}
             </div>
 
             {/* 进度条 */}
@@ -185,6 +193,7 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
                 max={state.duration || 0}
                 value={state.currentTime}
                 onChange={handleSeek}
+                disabled={!hasHistory}
               />
               <span className="time">{formatTime(state.duration)}</span>
             </div>
@@ -197,7 +206,11 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
                 </span>
               </button>
 
-              <button className="control-btn" onClick={handlePrevious}>
+              <button
+                className="control-btn"
+                onClick={handlePrevious}
+                disabled={!hasHistory}
+              >
                 <span className="material-symbols-outlined">skip_previous</span>
               </button>
 
@@ -207,7 +220,11 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
                 </span>
               </button>
 
-              <button className="control-btn" onClick={handleNext}>
+              <button
+                className="control-btn"
+                onClick={handleNext}
+                disabled={!hasHistory}
+              >
                 <span className="material-symbols-outlined">skip_next</span>
               </button>
 
@@ -224,6 +241,28 @@ function PlayerUI({ tracks = [], currentIndex = 0 }: PlayerUIProps) {
                 />
               </div>
             </div>
+
+            {/* 播放列表 */}
+            {state.playlist.length > 0 && (
+              <div className="playlist-section">
+                <h4>播放列表 ({state.playlist.length} 首)</h4>
+                <div className="playlist">
+                  {state.playlist.slice(0, 20).map((track, index) => (
+                    <div
+                      key={index}
+                      className={`playlist-item ${index === state.currentIndex ? "active" : ""}`}
+                      onClick={() => player.playTrack(index)}
+                    >
+                      <span className="playlist-number">{index + 1}</span>
+                      <span className="playlist-name">{getFileName(track)}</span>
+                      {index === state.currentIndex && state.isPlaying && (
+                        <span className="material-symbols-outlined playing-icon">equalizer</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

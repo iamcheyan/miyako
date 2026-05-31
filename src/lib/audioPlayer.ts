@@ -1,4 +1,5 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { savePlaybackState, loadPlaybackState } from "./playbackStorage";
 
 export type PlayMode = "sequential" | "loop" | "shuffle";
 
@@ -30,19 +31,67 @@ export class AudioPlayer {
   private currentIndex: number = -1;
   private playMode: PlayMode = "sequential";
   private eventListeners: Map<PlayerEvent, Set<EventCallback>> = new Map();
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.audio = new Audio();
     this.setupAudioEvents();
+    this.loadSavedState();
+  }
+
+  // 加载保存的状态
+  private loadSavedState() {
+    const saved = loadPlaybackState();
+    if (saved) {
+      this.playlist = saved.playlist;
+      this.currentIndex = saved.currentIndex;
+      this.playMode = saved.playMode;
+      this.audio.volume = saved.volume;
+
+      // 恢复播放位置
+      if (saved.currentIndex >= 0 && saved.currentIndex < saved.playlist.length) {
+        this.audio.src = this.toAssetUrl(saved.playlist[saved.currentIndex]);
+        this.audio.currentTime = saved.currentTime;
+      }
+    }
+  }
+
+  // 保存状态（防抖）
+  private saveState() {
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
+
+    this.saveTimeout = setTimeout(() => {
+      if (this.playlist.length > 0 && this.currentIndex >= 0) {
+        savePlaybackState({
+          playlist: this.playlist,
+          currentIndex: this.currentIndex,
+          currentTime: this.audio.currentTime,
+          volume: this.audio.volume,
+          playMode: this.playMode,
+        });
+      }
+    }, 500);
   }
 
   private setupAudioEvents() {
-    this.audio.addEventListener("play", () => this.emit("play"));
-    this.audio.addEventListener("pause", () => this.emit("pause"));
+    this.audio.addEventListener("play", () => {
+      this.emit("play");
+      this.saveState();
+    });
+    this.audio.addEventListener("pause", () => {
+      this.emit("pause");
+      this.saveState();
+    });
     this.audio.addEventListener("ended", () => this.handleEnded());
-    this.audio.addEventListener("timeupdate", () =>
-      this.emit("timeupdate", this.audio.currentTime)
-    );
+    this.audio.addEventListener("timeupdate", () => {
+      this.emit("timeupdate", this.audio.currentTime);
+      // 每 3 秒保存一次播放位置
+      if (Math.floor(this.audio.currentTime) % 3 === 0) {
+        this.saveState();
+      }
+    });
     this.audio.addEventListener("loadedmetadata", () =>
       this.emit("loadedmetadata", this.audio.duration)
     );
@@ -89,12 +138,9 @@ export class AudioPlayer {
 
   // 将本地文件路径转换为可播放的 URL
   private toAssetUrl(filePath: string): string {
-    // 如果已经是 http/https URL，直接返回
     if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
       return filePath;
     }
-
-    // 使用 Tauri 的 convertFileSrc 将本地路径转换为 asset URL
     return convertFileSrc(filePath);
   }
 
@@ -113,18 +159,22 @@ export class AudioPlayer {
     this.audio.pause();
     this.audio.currentTime = 0;
     this.emit("stop");
+    this.saveState();
   }
 
   seekTo(time: number) {
     this.audio.currentTime = time;
+    this.saveState();
   }
 
   setVolume(volume: number) {
     this.audio.volume = Math.max(0, Math.min(1, volume));
+    this.saveState();
   }
 
   setPlayMode(mode: PlayMode) {
     this.playMode = mode;
+    this.saveState();
   }
 
   getPlayMode(): PlayMode {
@@ -138,6 +188,7 @@ export class AudioPlayer {
     if (tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
       this.audio.src = this.toAssetUrl(tracks[startIndex]);
     }
+    this.saveState();
   }
 
   async playTrack(index: number) {
@@ -145,6 +196,7 @@ export class AudioPlayer {
       this.currentIndex = index;
       this.audio.src = this.toAssetUrl(this.playlist[index]);
       await this.audio.play();
+      this.saveState();
     }
   }
 
@@ -206,6 +258,11 @@ export class AudioPlayer {
     };
   }
 
+  // 检查是否有保存的播放状态
+  hasSavedState(): boolean {
+    return loadPlaybackState() !== null;
+  }
+
   getCurrentTime(): number {
     return this.audio.currentTime;
   }
@@ -236,7 +293,12 @@ let playerInstance: AudioPlayer | null = null;
 
 export function getAudioPlayer(): AudioPlayer {
   if (!playerInstance) {
-    playerInstance = new AudioPlayer();
+    playerInstance = newAudioPlayer();
   }
   return playerInstance;
+}
+
+// 创建新的播放器实例
+function newAudioPlayer(): AudioPlayer {
+  return new AudioPlayer();
 }

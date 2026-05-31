@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
+  useLocation,
 } from "react-router-dom";
 import Settings from "./components/Settings";
 import RemoteBrowser from "./components/RemoteBrowser";
@@ -16,6 +17,24 @@ import "./components/shared.css";
 
 // 页面内容区域
 function PageContent() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // 捕获当前页面的 DOM 结构与滚动快照，用于卡片滑动返回时的底图层级透出
+    const pageContent = document.querySelector(".page-content");
+    if (pageContent) {
+      const scrollEl = pageContent.querySelector(".library-scroll, .settings-scroll, .sync-scroll, .remote-scroll, .playlist-scroll");
+      const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
+
+      window.dispatchEvent(new CustomEvent("update_underlay", {
+        detail: {
+          html: pageContent.innerHTML,
+          scrollTop: scrollTop
+        }
+      }));
+    }
+  }, [location.pathname]);
+
   return (
     <div className="page-wrapper">
       <main className="page-content">
@@ -32,6 +51,19 @@ function PageContent() {
 
 function App() {
   const { messages, removeToast } = useToast();
+  const [underlayHtml, setUnderlayHtml] = useState("");
+  const [underlayScrollTop, setUnderlayScrollTop] = useState(0);
+
+  useEffect(() => {
+    const handleUpdateUnderlay = (e: any) => {
+      setUnderlayHtml(e.detail.html);
+      setUnderlayScrollTop(e.detail.scrollTop);
+    };
+    window.addEventListener("update_underlay" as any, handleUpdateUnderlay);
+    return () => {
+      window.removeEventListener("update_underlay" as any, handleUpdateUnderlay);
+    };
+  }, []);
 
   useEffect(() => {
     const mediaSession = getMediaSessionManager();
@@ -83,8 +115,17 @@ function App() {
 
       if (isEdgeSwipe) {
         const pageWrapper = document.querySelector<HTMLElement>(".page-wrapper");
+        const underlayPage = document.querySelector<HTMLElement>(".underlay-page-content");
+        const underlayMask = document.querySelector<HTMLElement>(".underlay-dim-mask");
+        
         if (pageWrapper) {
           pageWrapper.style.transition = "none";
+        }
+        if (underlayPage) {
+          underlayPage.style.transition = "none";
+        }
+        if (underlayMask) {
+          underlayMask.style.transition = "none";
         }
       }
     };
@@ -102,10 +143,27 @@ function App() {
         const dragAmount = Math.min(maxDrag, currentDragOffset);
 
         const pageWrapper = document.querySelector<HTMLElement>(".page-wrapper");
+        const underlayPage = document.querySelector<HTMLElement>(".underlay-page-content");
+        const underlayMask = document.querySelector<HTMLElement>(".underlay-dim-mask");
+
         if (pageWrapper) {
           // 页面容器实时跟随手指滑动移出
           pageWrapper.style.transform = `translateX(${dragAmount}px)`;
-          pageWrapper.style.boxShadow = `-8px 0 24px rgba(0, 0, 0, 0.15)`;
+          pageWrapper.style.boxShadow = `-8px 0 24px rgba(0, 0, 0, 0.2)`;
+        }
+
+        // 实时视差与面罩淡出：完美拟合 Android Predictive Back 物理引擎
+        const progress = dragAmount / window.innerWidth; // 0 到 1
+        if (underlayPage) {
+          // 底牌随着拖拽进度，从 0.97 缓缓放大到 1.0 满尺寸，实现极其真实的立体层级浮出！
+          const scale = 0.97 + (0.03 * progress);
+          const brightness = 0.7 + (0.3 * progress);
+          underlayPage.style.transform = `scale(${scale})`;
+          underlayPage.style.filter = `brightness(${brightness}) blur(${0.5 * (1 - progress)}px)`;
+        }
+        if (underlayMask) {
+          // 暗色面罩随着拖拽进度缓缓淡出（由 100% 降为 0%），露出下方清晰的底图
+          underlayMask.style.opacity = `${1 - progress}`;
         }
       }
     };
@@ -115,29 +173,65 @@ function App() {
       isEdgeSwipe = false;
 
       const pageWrapper = document.querySelector<HTMLElement>(".page-wrapper");
+      const underlayPage = document.querySelector<HTMLElement>(".underlay-page-content");
+      const underlayMask = document.querySelector<HTMLElement>(".underlay-dim-mask");
       if (!pageWrapper) return;
 
       const threshold = window.innerWidth * 0.35; // 35% 宽度作为回弹/返回分水岭
+      
       pageWrapper.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease";
+      if (underlayPage) {
+        underlayPage.style.transition = "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease";
+      }
+      if (underlayMask) {
+        underlayMask.style.transition = "opacity 0.3s ease";
+      }
 
       if (currentDragOffset > threshold) {
-        // 1. 成功返回：将页面完全滑出屏幕右侧
+        // 1. 成功返回：将页面完全滑出屏幕右侧，同时底页放大至 1.0，暗色遮罩全透明
         pageWrapper.style.transform = "translateX(100%)";
         pageWrapper.style.boxShadow = "none";
+        
+        if (underlayPage) {
+          underlayPage.style.transform = "scale(1)";
+          underlayPage.style.filter = "brightness(1) blur(0px)";
+        }
+        if (underlayMask) {
+          underlayMask.style.opacity = "0";
+        }
 
         setTimeout(() => {
           window.history.back();
           // 返回路由变更后，静默将容器复原，为新页面入场做好准备
           const wrapper = document.querySelector<HTMLElement>(".page-wrapper");
+          const uPage = document.querySelector<HTMLElement>(".underlay-page-content");
+          const uMask = document.querySelector<HTMLElement>(".underlay-dim-mask");
           if (wrapper) {
             wrapper.style.transition = "none";
             wrapper.style.transform = "translateX(0)";
             wrapper.style.boxShadow = "none";
           }
+          if (uPage) {
+            uPage.style.transition = "none";
+            uPage.style.transform = "scale(0.97)";
+            uPage.style.filter = "brightness(0.7) blur(0.5px)";
+          }
+          if (uMask) {
+            uMask.style.transition = "none";
+            uMask.style.opacity = "1";
+          }
         }, 300);
       } else {
-        // 2. 撤销返回：Q弹回弹原位
+        // 2. 撤销返回：Q弹回弹原位，底牌回归 0.97 视差，遮罩恢复
         pageWrapper.style.transform = "translateX(0)";
+        if (underlayPage) {
+          underlayPage.style.transform = "scale(0.97)";
+          underlayPage.style.filter = "brightness(0.7) blur(0.5px)";
+        }
+        if (underlayMask) {
+          underlayMask.style.opacity = "1";
+        }
+        
         setTimeout(() => {
           const wrapper = document.querySelector<HTMLElement>(".page-wrapper");
           if (wrapper) {
@@ -162,12 +256,28 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app">
-        {/* 拟物化背景底牌 (Skeuomorphic underlay card) */}
+        {/* 拟物化背景底牌 (完美还原上一个页面的 DOM 与滚动快照，实现原生级层级透出) */}
         <div className="app-swipe-underlay">
-          <div className="underlay-brand">
-            <span className="material-symbols-outlined brand-icon">library_music</span>
-            <span className="brand-text">Miyako Music</span>
-          </div>
+          {underlayHtml ? (
+            <div 
+              className="page-content underlay-page-content" 
+              dangerouslySetInnerHTML={{ __html: underlayHtml }}
+              ref={(el) => {
+                if (el && underlayScrollTop !== undefined) {
+                  const scrollEl = el.querySelector(".library-scroll, .settings-scroll, .sync-scroll, .remote-scroll");
+                  if (scrollEl) {
+                    scrollEl.scrollTop = underlayScrollTop;
+                  }
+                }
+              }}
+            />
+          ) : (
+            <div className="underlay-brand">
+              <span className="material-symbols-outlined brand-icon">library_music</span>
+              <span className="brand-text">Miyako Music</span>
+            </div>
+          )}
+          <div className="underlay-dim-mask" />
         </div>
 
         <Toast messages={messages} onRemove={removeToast} />

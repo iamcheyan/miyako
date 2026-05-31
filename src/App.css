@@ -144,3 +144,45 @@ button,
   font-weight: 500;
   letter-spacing: 0.12em;
 }
+
+/* 拟物底牌页面排布 */
+.underlay-page-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
+  opacity: 0.85;
+  transform: scale(0.97);
+  pointer-events: none !important;
+  filter: brightness(0.7) blur(0.5px);
+  transition: transform 0.1s linear, filter 0.1s linear;
+}
+
+@media (prefers-color-scheme: light) {
+  .underlay-page-content {
+    opacity: 0.9;
+    filter: brightness(0.9) blur(0.5px);
+  }
+}
+
+/* 底牌半透明黑色暗影面罩 */
+.underlay-dim-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 0.1s linear;
+}
+
+@media (prefers-color-scheme: light) {
+  .underlay-dim-mask {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+}

@@ -19,3 +19,15 @@ Started: 2026-05-31 08:29:05
   - Linting fails on src-tauri/target directory (compiled Rust artifacts)
   - The react-refresh/only-export-components rule warns about files exporting both components and hooks
 ---
+
+## 2026-05-31 17:34:12 - US-002
+- Verified GitHub Actions workflow includes artifact upload steps meeting acceptance criteria
+- ARM64 APK uploaded as 'miyako-arm64-apk' with 30-day retention
+- ARMv7 APK uploaded as 'miyako-armv7-apk' with 30-day retention
+- Build summary provides download instructions
+- Typecheck and lint passed
+- **Files changed:** (none)
+- **Learnings for future iterations:**
+  - Artifact upload steps were already present in workflow from US-001
+  - Ensure artifact names match exactly as specified in acceptance criteria
+---

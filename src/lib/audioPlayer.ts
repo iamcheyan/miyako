@@ -1,3 +1,5 @@
+import { convertFileSrc } from "@tauri-apps/api/core";
+
 export type PlayMode = "sequential" | "loop" | "shuffle";
 
 export type PlayerEvent =
@@ -85,9 +87,20 @@ export class AudioPlayer {
     }
   }
 
+  // 将本地文件路径转换为可播放的 URL
+  private toAssetUrl(filePath: string): string {
+    // 如果已经是 http/https URL，直接返回
+    if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+      return filePath;
+    }
+
+    // 使用 Tauri 的 convertFileSrc 将本地路径转换为 asset URL
+    return convertFileSrc(filePath);
+  }
+
   async play(src?: string) {
     if (src) {
-      this.audio.src = src;
+      this.audio.src = this.toAssetUrl(src);
     }
     await this.audio.play();
   }
@@ -123,14 +136,14 @@ export class AudioPlayer {
     this.currentIndex = startIndex;
 
     if (tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
-      this.audio.src = tracks[startIndex];
+      this.audio.src = this.toAssetUrl(tracks[startIndex]);
     }
   }
 
   async playTrack(index: number) {
     if (index >= 0 && index < this.playlist.length) {
       this.currentIndex = index;
-      this.audio.src = this.playlist[index];
+      this.audio.src = this.toAssetUrl(this.playlist[index]);
       await this.audio.play();
     }
   }

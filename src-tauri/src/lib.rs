@@ -2,8 +2,9 @@ mod smb_client;
 mod sync_engine;
 
 use smb_client::{ConnectResult, DirEntry, DownloadResult, FileInfo};
-use sync_engine::{SyncAction, SyncState};
+use sync_engine::{SyncAction, SyncProgress, SyncState};
 use std::fs;
+use tauri::Emitter;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -77,17 +78,29 @@ async fn sync_compare(
 /// Perform sync download
 #[tauri::command]
 async fn sync_download(
+    window: tauri::WebviewWindow,
     connection_id: String,
     actions: Vec<SyncAction>,
     local_dir: String,
     state_path: String,
 ) -> Result<SyncState, String> {
+    let window_handle = window.clone();
+    let progress_callback: sync_engine::ProgressCallback = Box::new(move |current, total, message| {
+        let payload = SyncProgress {
+            current,
+            total,
+            message: message.to_string(),
+            remote_path: None,
+        };
+        let _ = window_handle.emit("sync-progress", payload);
+    });
+
     sync_engine::sync_download(
         &connection_id,
         &actions,
         &local_dir,
         &state_path,
-        None,
+        Some(&progress_callback),
     )
     .await
 }

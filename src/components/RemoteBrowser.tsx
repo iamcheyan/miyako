@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { DirEntry, SmbConfig } from "../types/tauri-commands";
+import type { DirEntry } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
+import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
 import "./RemoteBrowser.css";
 
 const MUSIC_EXTENSIONS = [".mp3", ".flac", ".aac", ".wav"];
@@ -11,31 +12,30 @@ function RemoteBrowser() {
   const [entries, setEntries] = useState<DirEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [connectionId, setConnectionId] = useState<string | null>(null);
+  const [connectionState, setConnectionState] = useState(getSmbSessionState());
   const [pathHistory, setPathHistory] = useState<string[]>([]);
 
   // 加载配置并连接
   useEffect(() => {
     const config = loadSmbConfig();
-    connectToSmb(config);
+    const unsubscribe = subscribeSmbSession((nextState) => {
+      setConnectionState(nextState);
+      setError(nextState.error);
+    });
+    ensureSmbConnection(config).catch(() => {});
+    return unsubscribe;
   }, []);
 
-  const connectToSmb = async (config: SmbConfig) => {
-    try {
-      const result = await invoke<{ connection_id: string }>("smb_connect", {
-        server: config.server,
-        share: config.share,
-        username: config.username,
-        password: config.password,
-      });
-      setConnectionId(result.connection_id);
-    } catch (e) {
-      console.error("Failed to connect:", e);
-    }
+  const getRemotePath = (): string => {
+    const config = loadSmbConfig();
+    return config.remotePath || "";
   };
 
   const loadDirectory = useCallback(async (path: string) => {
-    if (!connectionId) {
+    const activeConnectionId =
+      connectionState.connectionId || await ensureSmbConnection(loadSmbConfig());
+
+    if (!activeConnectionId) {
       setError("未连接到 SMB 服务器");
       return;
     }
@@ -45,7 +45,7 @@ function RemoteBrowser() {
 
     try {
       const result = await invoke<DirEntry[]>("smb_list_dir", {
-        connectionId,
+        connectionId: activeConnectionId,
         path,
       });
       setEntries(result);
@@ -56,14 +56,14 @@ function RemoteBrowser() {
     } finally {
       setIsLoading(false);
     }
-  }, [connectionId]);
+  }, [connectionState.connectionId]);
 
   // 连接后加载根目录
   useEffect(() => {
-    if (connectionId) {
-      loadDirectory("");
+    if (connectionState.connectionId) {
+      loadDirectory(getRemotePath());
     }
-  }, [connectionId, loadDirectory]);
+  }, [connectionState.connectionId, loadDirectory]);
 
   const isMusicFile = (filename: string): boolean => {
     const ext = filename.toLowerCase().slice(filename.lastIndexOf("."));

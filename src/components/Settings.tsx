@@ -158,6 +158,19 @@ function Settings() {
           </div>
 
           <div className="setting-item">
+            <label className="setting-label" htmlFor="remotePath">远程子目录</label>
+            <input
+              type="text"
+              id="remotePath"
+              className="setting-input"
+              placeholder="Music"
+              value={config.remotePath}
+              onChange={(e) => handleChange("remotePath", e.target.value)}
+            />
+            <span className="setting-hint">例如共享为 NAS、音乐在 NAS/Music 时，这里填 Music</span>
+          </div>
+
+          <div className="setting-item">
             <label className="setting-label" htmlFor="username">用户名</label>
             <input
               type="text"

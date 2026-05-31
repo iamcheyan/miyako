@@ -26,6 +26,7 @@ export interface FileInfo {
 export interface SmbConfig {
   server: string;
   share: string;
+  remotePath: string;
   username: string;
   password: string;
   localDir: string;

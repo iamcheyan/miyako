@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::io::Write;
 use std::net::TcpStream;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 
 use crate::smb_client;
@@ -45,14 +45,22 @@ pub struct SyncedFile {
     pub last_modified: Option<i64>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SyncProgress {
+    pub current: usize,
+    pub total: usize,
+    pub message: String,
+    pub remote_path: Option<String>,
+}
+
 /// Progress callback type
 pub type ProgressCallback = Box<dyn Fn(usize, usize, &str) + Send + Sync>;
 
 const MUSIC_EXTENSIONS: &[&str] = &[".mp3", ".flac", ".aac", ".wav"];
 
-// #region debug-point A:rust-debug-reporting
+// #region debug-point A:download-debug-reporting
 fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
-    let env_content = std::fs::read_to_string(".dbg/sync-scan-stall.env").ok();
+    let env_content = std::fs::read_to_string(".dbg/sync-download-stall.env").ok();
     let url = env_content
         .as_deref()
         .and_then(|content| {
@@ -68,7 +76,7 @@ fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
                 .lines()
                 .find_map(|line| line.strip_prefix("DEBUG_SESSION_ID="))
         })
-        .unwrap_or("sync-scan-stall");
+        .unwrap_or("sync-download-stall");
 
     let Some(address_and_path) = url.strip_prefix("http://") else {
         return;
@@ -79,7 +87,7 @@ fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
 
     let payload = json!({
         "sessionId": session_id,
-        "runId": "pre-fix",
+        "runId": "post-fix",
         "hypothesisId": hypothesis_id,
         "location": "src-tauri/src/sync_engine.rs",
         "msg": format!("[DEBUG] {}", msg),
@@ -114,33 +122,36 @@ fn is_music_file(filename: &str) -> bool {
     MUSIC_EXTENSIONS.iter().any(|ext| lower.ends_with(ext))
 }
 
+fn resolve_local_dir(local_dir: &str) -> Result<PathBuf, String> {
+    if local_dir == "~" {
+        return dirs::home_dir().ok_or_else(|| "Failed to resolve home directory".to_string());
+    }
+
+    if let Some(stripped) = local_dir.strip_prefix("~/") {
+        let home = dirs::home_dir().ok_or_else(|| "Failed to resolve home directory".to_string())?;
+        return Ok(home.join(stripped));
+    }
+
+    Ok(PathBuf::from(local_dir))
+}
+
+fn build_local_path(local_dir: &str, remote_path: &str) -> Result<PathBuf, String> {
+    let mut full_path = resolve_local_dir(local_dir)?;
+    for segment in remote_path.split('/') {
+        if !segment.is_empty() {
+            full_path.push(segment);
+        }
+    }
+    Ok(full_path)
+}
+
 /// Recursively scan remote directory for music files
 pub async fn scan_remote_directory(
     connection_id: &str,
     path: &str,
 ) -> Result<Vec<RemoteFile>, String> {
     let mut result = Vec::new();
-    // #region debug-point A:scan-root-start
-    report_debug_event(
-        "A",
-        "scan_remote_directory entered",
-        json!({
-            "path": path,
-            "connectionId": connection_id,
-        }),
-    );
-    // #endregion
     scan_directory_recursive(connection_id, path, &mut result).await?;
-    // #region debug-point D:scan-root-finished
-    report_debug_event(
-        "D",
-        "scan_remote_directory completed",
-        json!({
-            "path": path,
-            "remoteFileCount": result.len(),
-        }),
-    );
-    // #endregion
     Ok(result)
 }
 
@@ -149,27 +160,7 @@ async fn scan_directory_recursive(
     path: &str,
     result: &mut Vec<RemoteFile>,
 ) -> Result<(), String> {
-    // #region debug-point B:scan-directory-enter
-    report_debug_event(
-        "B",
-        "scan_directory_recursive entered",
-        json!({
-            "path": path,
-            "filesCollected": result.len(),
-        }),
-    );
-    // #endregion
     let entries = smb_client::list_dir(connection_id.to_string(), path.to_string()).await?;
-    // #region debug-point B:scan-directory-listed
-    report_debug_event(
-        "B",
-        "directory listed",
-        json!({
-            "path": path,
-            "entryCount": entries.len(),
-        }),
-    );
-    // #endregion
 
     for entry in entries {
         let entry_path = if path.is_empty() {
@@ -182,36 +173,13 @@ async fn scan_directory_recursive(
             // Recursively scan subdirectories
             Box::pin(scan_directory_recursive(connection_id, &entry_path, result)).await?;
         } else if is_music_file(&entry.name) {
-            let debug_entry_path = entry_path.clone();
             result.push(RemoteFile {
                 remote_path: entry_path,
                 size: entry.size,
                 last_modified: entry.last_modified,
             });
-            // #region debug-point D:music-file-found
-            report_debug_event(
-                "D",
-                "music file discovered",
-                json!({
-                    "path": debug_entry_path,
-                    "size": entry.size,
-                    "filesCollected": result.len(),
-                }),
-            );
-            // #endregion
         }
     }
-
-    // #region debug-point B:scan-directory-exit
-    report_debug_event(
-        "B",
-        "scan_directory_recursive exited",
-        json!({
-            "path": path,
-            "filesCollected": result.len(),
-        }),
-    );
-    // #endregion
 
     Ok(())
 }
@@ -222,26 +190,17 @@ pub async fn compare_with_local(
     local_dir: &str,
 ) -> Result<Vec<SyncAction>, String> {
     let mut actions = Vec::new();
-    // #region debug-point C:compare-enter
-    report_debug_event(
-        "C",
-        "compare_with_local entered",
-        json!({
-            "remoteFileCount": remote_files.len(),
-            "localDir": local_dir,
-        }),
-    );
-    // #endregion
 
     for remote in remote_files {
-        let local_path = format!("{}/{}", local_dir, remote.remote_path);
+        let local_path = build_local_path(local_dir, &remote.remote_path)?;
         let local = Path::new(&local_path);
+        let local_path_string = local_path.to_string_lossy().into_owned();
 
         if !local.exists() {
             // Local file doesn't exist, need to download
             actions.push(SyncAction {
                 remote_path: remote.remote_path.clone(),
-                local_path,
+                local_path: local_path_string,
                 action: Action::Download,
                 reason: "文件不存在".to_string(),
             });
@@ -278,30 +237,20 @@ pub async fn compare_with_local(
 
                 actions.push(SyncAction {
                     remote_path: remote.remote_path.clone(),
-                    local_path,
+                    local_path: local_path_string,
                     action: Action::Download,
                     reason,
                 });
             } else {
                 actions.push(SyncAction {
                     remote_path: remote.remote_path.clone(),
-                    local_path,
+                    local_path: local_path_string,
                     action: Action::Skip,
                     reason: "文件相同，跳过".to_string(),
                 });
             }
         }
     }
-
-    // #region debug-point C:compare-exit
-    report_debug_event(
-        "C",
-        "compare_with_local exited",
-        json!({
-            "actionCount": actions.len(),
-        }),
-    );
-    // #endregion
 
     Ok(actions)
 }
@@ -351,10 +300,35 @@ pub async fn sync_download(
 ) -> Result<SyncState, String> {
     let mut state = load_sync_state(state_path).await?;
     let total = actions.len();
+    // #region debug-point A:sync-download-enter
+    report_debug_event(
+        "A",
+        "sync_download entered",
+        json!({
+            "connectionId": connection_id,
+            "actionCount": actions.len(),
+            "statePath": state_path,
+            "localDir": _local_dir,
+            "hasCallback": callback.is_some(),
+        }),
+    );
+    // #endregion
 
     for (index, action) in actions.iter().enumerate() {
         match action.action {
             Action::Download => {
+                // #region debug-point A:download-action-start
+                report_debug_event(
+                    "A",
+                    "download action started",
+                    json!({
+                        "index": index + 1,
+                        "total": total,
+                        "remotePath": action.remote_path,
+                        "localPath": action.local_path,
+                    }),
+                );
+                // #endregion
                 if let Some(cb) = callback {
                     cb(index + 1, total, &format!("下载: {}", action.remote_path));
                 }
@@ -366,6 +340,18 @@ pub async fn sync_download(
                     action.local_path.clone(),
                 )
                 .await?;
+                // #region debug-point B:download-file-finished
+                report_debug_event(
+                    "B",
+                    "download_file returned",
+                    json!({
+                        "index": index + 1,
+                        "total": total,
+                        "remotePath": action.remote_path,
+                        "localPath": action.local_path,
+                    }),
+                );
+                // #endregion
 
                 // Get file info for accurate size
                 let file_info = smb_client::get_file_info(
@@ -373,6 +359,19 @@ pub async fn sync_download(
                     action.remote_path.clone(),
                 )
                 .await?;
+                // #region debug-point C:file-info-finished
+                report_debug_event(
+                    "C",
+                    "get_file_info returned",
+                    json!({
+                        "index": index + 1,
+                        "total": total,
+                        "remotePath": action.remote_path,
+                        "size": file_info.size,
+                        "lastModified": file_info.last_modified,
+                    }),
+                );
+                // #endregion
 
                 // Update sync state
                 if let Some(existing) = state
@@ -391,6 +390,18 @@ pub async fn sync_download(
                         last_modified: file_info.last_modified,
                     });
                 }
+                // #region debug-point C:state-updated
+                report_debug_event(
+                    "C",
+                    "sync state updated",
+                    json!({
+                        "index": index + 1,
+                        "total": total,
+                        "remotePath": action.remote_path,
+                        "syncedFileCount": state.synced_files.len(),
+                    }),
+                );
+                // #endregion
             }
             Action::Skip => {
                 if let Some(cb) = callback {
@@ -409,7 +420,28 @@ pub async fn sync_download(
     );
 
     // Save state
+    // #region debug-point C:save-state-start
+    report_debug_event(
+        "C",
+        "save_sync_state starting",
+        json!({
+            "statePath": state_path,
+            "syncedFileCount": state.synced_files.len(),
+        }),
+    );
+    // #endregion
     save_sync_state(state_path, &state).await?;
+    // #region debug-point C:save-state-finished
+    report_debug_event(
+        "C",
+        "save_sync_state finished",
+        json!({
+            "statePath": state_path,
+            "syncedFileCount": state.synced_files.len(),
+            "lastSyncTime": state.last_sync_time,
+        }),
+    );
+    // #endregion
 
     Ok(state)
 }

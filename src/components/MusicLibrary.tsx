@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
 import type { SyncState } from "../types/tauri-commands";
+import { getAudioPlayer } from "../lib/audioPlayer";
 import "./MusicLibrary.css";
 
 const STATE_PATH = "sync_state.json";
@@ -83,9 +84,30 @@ function MusicLibrary() {
     setSearchQuery("");
   };
 
-  const handleFileClick = (file: MusicFile) => {
-    // TODO: 播放文件
-    console.log("Play file:", file.path);
+  const handleFileClick = async (file: MusicFile) => {
+    const player = getAudioPlayer();
+    // 获取本地同步目录
+    const savedConfig = localStorage.getItem("smb-config");
+    let localDir = "~/Music/NasSync";
+    if (savedConfig) {
+      try {
+        const config = JSON.parse(savedConfig);
+        localDir = config.localDir || localDir;
+      } catch (e) {
+        console.error("Failed to parse config:", e);
+      }
+    }
+
+    // 构建完整的本地文件路径
+    const localPath = `${localDir}/${file.path}`;
+    console.log("Playing file:", localPath);
+
+    // 加载播放列表（当前文件夹的所有音乐文件）
+    const trackPaths = currentFiles.map((f) => `${localDir}/${f.path}`);
+    const trackIndex = currentFiles.findIndex((f) => f.path === file.path);
+
+    player.loadPlaylist(trackPaths, trackIndex >= 0 ? trackIndex : 0);
+    await player.play();
   };
 
   const formatSize = (bytes: number): string => {

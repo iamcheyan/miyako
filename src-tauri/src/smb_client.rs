@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::io::Write;
+use std::net::TcpStream;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -6,6 +8,7 @@ use smb::{Client, ClientConfig, Directory, FileDirectoryInformation, GetLen, Unc
 use tokio::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use futures_util::StreamExt;
 
@@ -85,6 +88,64 @@ impl ConnectionManager {
 /// Global connection manager instance
 static CONNECTION_MANAGER: tokio::sync::OnceCell<ConnectionManager> =
     tokio::sync::OnceCell::const_new();
+
+// #region debug-point B:smb-download-debug-reporting
+fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
+    let env_content = std::fs::read_to_string(".dbg/sync-download-stall.env").ok();
+    let url = env_content
+        .as_deref()
+        .and_then(|content| {
+            content
+                .lines()
+                .find_map(|line| line.strip_prefix("DEBUG_SERVER_URL="))
+        })
+        .unwrap_or("http://127.0.0.1:7778/event");
+    let session_id = env_content
+        .as_deref()
+        .and_then(|content| {
+            content
+                .lines()
+                .find_map(|line| line.strip_prefix("DEBUG_SESSION_ID="))
+        })
+        .unwrap_or("sync-download-stall");
+
+    let Some(address_and_path) = url.strip_prefix("http://") else {
+        return;
+    };
+    let Some((address, path)) = address_and_path.split_once('/') else {
+        return;
+    };
+
+    let payload = json!({
+        "sessionId": session_id,
+        "runId": "post-fix",
+        "hypothesisId": hypothesis_id,
+        "location": "src-tauri/src/smb_client.rs",
+        "msg": format!("[DEBUG] {}", msg),
+        "data": data,
+        "ts": std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0),
+    });
+
+    let Ok(body) = serde_json::to_vec(&payload) else {
+        return;
+    };
+
+    if let Ok(mut stream) = TcpStream::connect(address) {
+        let request = format!(
+            "POST /{} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            path,
+            address,
+            body.len()
+        );
+        let _ = stream.write_all(request.as_bytes());
+        let _ = stream.write_all(&body);
+        let _ = stream.flush();
+    }
+}
+// #endregion
 
 /// Get or initialize the global connection manager
 async fn get_manager() -> &'static ConnectionManager {
@@ -241,6 +302,17 @@ pub async fn download_file(
     remote_path: String,
     local_path: String,
 ) -> Result<DownloadResult, String> {
+    // #region debug-point B:download-file-enter
+    report_debug_event(
+        "B",
+        "smb download_file entered",
+        json!({
+            "connectionId": connection_id,
+            "remotePath": remote_path,
+            "localPath": local_path,
+        }),
+    );
+    // #endregion
     let manager = get_manager().await;
     let conn_id = manager
         .get_connection(&connection_id)
@@ -270,6 +342,16 @@ pub async fn download_file(
         std::fs::create_dir_all(parent)
             .map_err(|e| format!("Failed to create local directory: {}", e))?;
     }
+    // #region debug-point D:local-dir-ready
+    report_debug_event(
+        "D",
+        "local parent directory ensured",
+        json!({
+            "localPath": local_path,
+            "fullRemotePath": full_remote_path,
+        }),
+    );
+    // #endregion
 
     // Open the remote file with read access
     let access = smb::FileAccessMask::new().with_generic_read(true);
@@ -285,6 +367,17 @@ pub async fn download_file(
 
     // Get file size
     let file_size = file.get_len().await.map_err(|e| format!("Failed to get file size: {}", e))?;
+    // #region debug-point B:remote-file-opened
+    report_debug_event(
+        "B",
+        "remote file opened",
+        json!({
+            "remotePath": remote_path,
+            "localPath": local_path,
+            "fileSize": file_size,
+        }),
+    );
+    // #endregion
 
     // Read file contents in chunks
     let mut contents = Vec::with_capacity(file_size as usize);
@@ -304,16 +397,49 @@ pub async fn download_file(
         contents.extend_from_slice(&buf[..bytes_read]);
         offset += bytes_read as u64;
     }
+    // #region debug-point B:remote-read-finished
+    report_debug_event(
+        "B",
+        "remote file read finished",
+        json!({
+            "remotePath": remote_path,
+            "localPath": local_path,
+            "bytesRead": contents.len(),
+        }),
+    );
+    // #endregion
 
     // Write to local file
     std::fs::write(&local_path, &contents)
         .map_err(|e| format!("Failed to write local file: {}", e))?;
+    // #region debug-point D:local-write-finished
+    report_debug_event(
+        "D",
+        "local file write finished",
+        json!({
+            "remotePath": remote_path,
+            "localPath": local_path,
+            "bytesWritten": contents.len(),
+        }),
+    );
+    // #endregion
 
     // Close the file handle
     file.handle()
         .close()
         .await
         .map_err(|e| format!("Failed to close file: {}", e))?;
+    // #region debug-point B:download-file-exit
+    report_debug_event(
+        "B",
+        "smb download_file exited",
+        json!({
+            "remotePath": remote_path,
+            "localPath": local_path,
+            "bytesWritten": contents.len(),
+        }),
+    );
+    // #endregion
 
     Ok(DownloadResult {
         success: true,

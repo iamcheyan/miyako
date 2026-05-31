@@ -115,15 +115,8 @@ function MusicLibrary() {
   }, []);
 
   const handleFavoritesClick = () => {
-    const favPaths = getFavorites();
-    const allSongsList: MusicFile[] = [];
-    for (const folder of folders) {
-      allSongsList.push(...folder.files);
-    }
-    const favoritedFiles = allSongsList.filter(f => favPaths.includes(f.localPath));
-    
     setCurrentPath(t("musicLibrary.quickActions.favorites"));
-    setCurrentFiles(favoritedFiles);
+    setCurrentFiles(validFavorites);
     setSearchQuery("");
     window.history.pushState({ path: "favorites" }, "");
   };
@@ -184,6 +177,8 @@ function MusicLibrary() {
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   favoritesVersion;
   const favorites = getFavorites();
+  // 过滤出在本地音乐库中真实存在的收藏文件，避免因为删除文件或重命名导致数量对不上
+  const validFavorites = allFiles.filter(file => favorites.includes(file.localPath));
   
   // 全局搜索结果（用于搜索弹出层）
   const searchResults = searchQuery

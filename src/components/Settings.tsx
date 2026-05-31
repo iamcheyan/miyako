@@ -133,6 +133,36 @@ function Settings() {
     }
   };
 
+  // 清理失效的收藏缓存（对比真实本地同步文件）
+  const handleCleanFavorites = async () => {
+    try {
+      const state = await invoke<SyncState>("sync_load_state", {
+        statePath: STATE_PATH,
+      });
+      // 获取当前所有真实的本地同步文件路径
+      const localPaths = state.synced_files.map(f => f.local_path);
+      
+      // 读取当前的收藏列表
+      const stored = localStorage.getItem("miyako_favorites");
+      if (stored) {
+        const favoritesList: string[] = JSON.parse(stored);
+        // 过滤出依然存在于本地同步数据库的收藏路径
+        const validFavoritesList = favoritesList.filter(path => localPaths.includes(path));
+        
+        // 写入清理后的收藏列表
+        localStorage.setItem("miyako_favorites", JSON.stringify(validFavoritesList));
+        
+        const cleanedCount = favoritesList.length - validFavoritesList.length;
+        alert(t("common.success") + `: 已自动扫描并清理 ${cleanedCount} 首因移除或改名失效的收藏记录。`);
+      } else {
+        alert(t("common.success") + ": 收藏夹本就为空，无需清理。");
+      }
+    } catch (e) {
+      console.error("Failed to clean favorites:", e);
+      alert(`${t("common.error")}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  };
+
   const formatSize = (bytes: number): string => {
     if (bytes === 0) return "0 B";
     const k = 1024;
@@ -291,6 +321,19 @@ function Settings() {
           <h2 className="section-title">{t("settings.dangerZone.title")}</h2>
 
           <div className="danger-list">
+            <button
+              className="danger-item"
+              onClick={handleCleanFavorites}
+              style={{ borderColor: "var(--outline-variant)" }}
+            >
+              <span className="material-symbols-outlined" style={{ color: "#ff2d55" }}>favorite</span>
+              <div className="danger-info">
+                <span className="danger-title" style={{ color: "var(--on-surface)" }}>清理失效收藏</span>
+                <span className="danger-desc">对比本地音乐库，自动删除已被物理移除或改名的失效收藏记录</span>
+              </div>
+              <span className="material-symbols-outlined" style={{ color: "var(--on-surface-variant)" }}>chevron_right</span>
+            </button>
+
             <button
               className="danger-item"
               onClick={() => setShowConfirmDialog("sync")}

@@ -9,11 +9,13 @@
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 16px;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .status-card {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 
@@ -31,12 +33,12 @@
 
 .status-icon {
   font-size: 40px;
-  color: var(--primary);
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .status-icon {
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
@@ -68,13 +70,13 @@
   }
 }
 
-/* 同步按钮 (FAB 风格) */
+/* 同步按钮 */
 .sync-fab {
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background-color: var(--primary);
-  color: var(--on-primary);
+  background-color: var(--on-surface);
+  color: var(--surface);
   border: none;
   cursor: pointer;
   display: flex;
@@ -86,8 +88,8 @@
 
 @media (prefers-color-scheme: dark) {
   .sync-fab {
-    background-color: var(--primary-dark);
-    color: var(--on-primary-dark);
+    background-color: var(--on-surface-dark);
+    color: var(--surface-dark);
   }
 }
 
@@ -130,13 +132,13 @@
 
 .progress-fill {
   height: 100%;
-  background-color: var(--primary);
+  background-color: var(--on-surface);
   transition: width 0.3s ease;
 }
 
 @media (prefers-color-scheme: dark) {
   .progress-fill {
-    background-color: var(--primary-dark);
+    background-color: var(--on-surface-dark);
   }
 }
 
@@ -162,14 +164,14 @@
 .section-title {
   font-size: 14px;
   font-weight: 500;
-  color: var(--primary);
+  color: var(--on-surface);
   margin-bottom: 12px;
   padding-left: 4px;
 }
 
 @media (prefers-color-scheme: dark) {
   .section-title {
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
@@ -182,11 +184,13 @@
   background-color: var(--surface);
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .stats-list {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 
@@ -210,12 +214,12 @@
 
 .stat-icon {
   font-size: 24px;
-  color: var(--primary);
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .stat-icon {
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
@@ -252,11 +256,13 @@
   background-color: var(--surface);
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .log-list {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 
@@ -317,12 +323,13 @@
 }
 
 .log-success .log-message {
-  color: #2e7d32;
+  color: var(--on-surface);
+  font-weight: 500;
 }
 
 @media (prefers-color-scheme: dark) {
   .log-success .log-message {
-    color: #81c784;
+    color: var(--on-surface-dark);
   }
 }
 

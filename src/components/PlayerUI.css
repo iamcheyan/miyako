@@ -1,6 +1,6 @@
 .player-ui {
   position: fixed;
-  bottom: 80px; /* 在底部导航栏上方 */
+  bottom: 80px;
   left: 0;
   right: 0;
   z-index: 1000;
@@ -37,13 +37,13 @@
 
 .mini-progress-fill {
   height: 100%;
-  background-color: var(--primary);
+  background-color: var(--on-surface);
   transition: width 0.1s linear;
 }
 
 @media (prefers-color-scheme: dark) {
   .mini-progress-fill {
-    background-color: var(--primary-dark);
+    background-color: var(--on-surface-dark);
   }
 }
 
@@ -128,14 +128,14 @@
 .mini-btn.play-btn {
   width: 48px;
   height: 48px;
-  background-color: var(--primary);
-  color: var(--on-primary);
+  background-color: var(--on-surface);
+  color: var(--surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .mini-btn.play-btn {
-    background-color: var(--primary-dark);
-    color: var(--on-primary-dark);
+    background-color: var(--on-surface-dark);
+    color: var(--surface-dark);
   }
 }
 
@@ -199,25 +199,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--secondary-container);
+  background-color: var(--surface-variant);
   border-radius: 16px;
   margin-bottom: 24px;
 }
 
 @media (prefers-color-scheme: dark) {
   .track-icon {
-    background-color: var(--secondary-container-dark);
+    background-color: var(--surface-variant-dark);
   }
 }
 
 .track-icon .material-symbols-outlined {
   font-size: 48px;
-  color: var(--on-secondary-container);
+  color: var(--on-surface-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .track-icon .material-symbols-outlined {
-    color: var(--secondary-dark);
+    color: var(--on-surface-variant-dark);
   }
 }
 
@@ -268,7 +268,7 @@
   -webkit-appearance: none;
   width: 20px;
   height: 20px;
-  background-color: var(--primary);
+  background-color: var(--on-surface);
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -276,7 +276,7 @@
 
 @media (prefers-color-scheme: dark) {
   .progress-slider::-webkit-slider-thumb {
-    background-color: var(--primary-dark);
+    background-color: var(--on-surface-dark);
   }
 }
 
@@ -336,14 +336,14 @@
 .control-btn.play-btn {
   width: 64px;
   height: 64px;
-  background-color: var(--primary);
-  color: var(--on-primary);
+  background-color: var(--on-surface);
+  color: var(--surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .control-btn.play-btn {
-    background-color: var(--primary-dark);
-    color: var(--on-primary-dark);
+    background-color: var(--on-surface-dark);
+    color: var(--surface-dark);
   }
 }
 

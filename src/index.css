@@ -1,33 +1,33 @@
 :root {
-  /* Android Material Design 颜色 */
-  --primary: #6750A4;
-  --primary-container: #EADDFF;
+  /* 黑白配色 */
+  --primary: #000000;
+  --primary-container: #E0E0E0;
   --on-primary: #FFFFFF;
-  --on-primary-container: #21005D;
-  --secondary: #625B71;
-  --secondary-container: #E8DEF8;
-  --surface: #FFFBFE;
-  --surface-variant: #E7E0EC;
-  --on-surface: #1C1B1F;
-  --on-surface-variant: #49454F;
-  --outline: #79747E;
-  --outline-variant: #CAC4D0;
-  --error: #B3261E;
-  --error-container: #F9DEDC;
+  --on-primary-container: #000000;
+  --secondary: #424242;
+  --secondary-container: #F5F5F5;
+  --surface: #FFFFFF;
+  --surface-variant: #F5F5F5;
+  --on-surface: #000000;
+  --on-surface-variant: #616161;
+  --outline: #9E9E9E;
+  --outline-variant: #E0E0E0;
+  --error: #B71C1C;
+  --error-container: #FFEBEE;
 
   /* 深色模式 */
-  --primary-dark: #D0BCFF;
-  --primary-container-dark: #4F378B;
-  --on-primary-dark: #381E72;
-  --on-primary-container-dark: #EADDFF;
-  --secondary-dark: #CCC2DC;
-  --secondary-container-dark: #4A4458;
-  --surface-dark: #1C1B1F;
-  --surface-variant-dark: #49454F;
-  --on-surface-dark: #E6E1E5;
-  --on-surface-variant-dark: #CAC4D0;
-  --outline-dark: #938F99;
-  --outline-variant-dark: #49454F;
+  --primary-dark: #FFFFFF;
+  --primary-container-dark: #424242;
+  --on-primary-dark: #000000;
+  --on-primary-container-dark: #FFFFFF;
+  --secondary-dark: #BDBDBD;
+  --secondary-container-dark: #616161;
+  --surface-dark: #121212;
+  --surface-variant-dark: #1E1E1E;
+  --on-surface-dark: #FFFFFF;
+  --on-surface-variant-dark: #B0B0B0;
+  --outline-dark: #757575;
+  --outline-variant-dark: #333333;
 
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
@@ -94,5 +94,5 @@ a, button, [role="button"] {
 /* 输入框样式 */
 input, textarea, select {
   font-family: inherit;
-  font-size: 16px; /* 防止 iOS 缩放 */
+  font-size: 16px;
 }

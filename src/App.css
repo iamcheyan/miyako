@@ -23,7 +23,7 @@
   overflow: hidden;
 }
 
-/* Android 风格顶部栏 */
+/* 顶部栏 */
 .top-bar {
   display: flex;
   align-items: center;
@@ -100,7 +100,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* 底部导航栏 - Android Material Design 3 */
+/* 底部导航栏 */
 .bottom-nav {
   display: flex;
   justify-content: space-around;
@@ -139,16 +139,16 @@
 }
 
 .nav-item.active {
-  color: var(--primary);
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .nav-item.active {
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
-/* Material Design 3 导航指示器 */
+/* 导航指示器 */
 .nav-item.active::before {
   content: "";
   position: absolute;
@@ -157,14 +157,14 @@
   transform: translateX(-50%);
   width: 56px;
   height: 32px;
-  background-color: var(--secondary-container);
+  background-color: var(--primary-container);
   border-radius: 16px;
   z-index: -1;
 }
 
 @media (prefers-color-scheme: dark) {
   .nav-item.active::before {
-    background-color: var(--secondary-container-dark);
+    background-color: var(--primary-container-dark);
   }
 }
 

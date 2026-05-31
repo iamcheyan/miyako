@@ -1,7 +1,7 @@
 # Debug Session: sync-scan-stall
 - **Status**: [OPEN]
 - **Issue**: 同步页点击同步后只显示“开始扫描远程目录...”，之后长时间无更多日志，也没有错误提示，用户无法判断当前是卡住、仍在扫描，还是已进入下一阶段。
-- **Debug Server**: TBD
+- **Debug Server**: http://127.0.0.1:7778/event
 - **Log File**: .dbg/trae-debug-log-sync-scan-stall.ndjson
 
 ## Reproduction Steps
@@ -23,3 +23,7 @@
 
 ## Verification Conclusion
 [Pending]
+
+## Instrumentation Points
+- `src/components/SyncPage.tsx`: 记录扫描开始/结束、compare 开始/结束、下载开始/结束、错误
+- `src-tauri/src/sync_engine.rs`: 记录进入扫描、每层目录列举结果、发现音乐文件、compare 进入/退出

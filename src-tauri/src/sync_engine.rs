@@ -1,4 +1,7 @@
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use std::io::Write;
+use std::net::TcpStream;
 use std::path::Path;
 use tokio::fs;
 
@@ -47,6 +50,64 @@ pub type ProgressCallback = Box<dyn Fn(usize, usize, &str) + Send + Sync>;
 
 const MUSIC_EXTENSIONS: &[&str] = &[".mp3", ".flac", ".aac", ".wav"];
 
+// #region debug-point A:rust-debug-reporting
+fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
+    let env_content = std::fs::read_to_string(".dbg/sync-scan-stall.env").ok();
+    let url = env_content
+        .as_deref()
+        .and_then(|content| {
+            content
+                .lines()
+                .find_map(|line| line.strip_prefix("DEBUG_SERVER_URL="))
+        })
+        .unwrap_or("http://127.0.0.1:7778/event");
+    let session_id = env_content
+        .as_deref()
+        .and_then(|content| {
+            content
+                .lines()
+                .find_map(|line| line.strip_prefix("DEBUG_SESSION_ID="))
+        })
+        .unwrap_or("sync-scan-stall");
+
+    let Some(address_and_path) = url.strip_prefix("http://") else {
+        return;
+    };
+    let Some((address, path)) = address_and_path.split_once('/') else {
+        return;
+    };
+
+    let payload = json!({
+        "sessionId": session_id,
+        "runId": "pre-fix",
+        "hypothesisId": hypothesis_id,
+        "location": "src-tauri/src/sync_engine.rs",
+        "msg": format!("[DEBUG] {}", msg),
+        "data": data,
+        "ts": std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis())
+            .unwrap_or(0),
+    });
+
+    let Ok(body) = serde_json::to_vec(&payload) else {
+        return;
+    };
+
+    if let Ok(mut stream) = TcpStream::connect(address) {
+        let request = format!(
+            "POST /{} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+            path,
+            address,
+            body.len()
+        );
+        let _ = stream.write_all(request.as_bytes());
+        let _ = stream.write_all(&body);
+        let _ = stream.flush();
+    }
+}
+// #endregion
+
 /// Check if a file is a music file based on extension
 fn is_music_file(filename: &str) -> bool {
     let lower = filename.to_lowercase();
@@ -59,7 +120,27 @@ pub async fn scan_remote_directory(
     path: &str,
 ) -> Result<Vec<RemoteFile>, String> {
     let mut result = Vec::new();
+    // #region debug-point A:scan-root-start
+    report_debug_event(
+        "A",
+        "scan_remote_directory entered",
+        json!({
+            "path": path,
+            "connectionId": connection_id,
+        }),
+    );
+    // #endregion
     scan_directory_recursive(connection_id, path, &mut result).await?;
+    // #region debug-point D:scan-root-finished
+    report_debug_event(
+        "D",
+        "scan_remote_directory completed",
+        json!({
+            "path": path,
+            "remoteFileCount": result.len(),
+        }),
+    );
+    // #endregion
     Ok(result)
 }
 
@@ -68,7 +149,27 @@ async fn scan_directory_recursive(
     path: &str,
     result: &mut Vec<RemoteFile>,
 ) -> Result<(), String> {
+    // #region debug-point B:scan-directory-enter
+    report_debug_event(
+        "B",
+        "scan_directory_recursive entered",
+        json!({
+            "path": path,
+            "filesCollected": result.len(),
+        }),
+    );
+    // #endregion
     let entries = smb_client::list_dir(connection_id.to_string(), path.to_string()).await?;
+    // #region debug-point B:scan-directory-listed
+    report_debug_event(
+        "B",
+        "directory listed",
+        json!({
+            "path": path,
+            "entryCount": entries.len(),
+        }),
+    );
+    // #endregion
 
     for entry in entries {
         let entry_path = if path.is_empty() {
@@ -81,13 +182,36 @@ async fn scan_directory_recursive(
             // Recursively scan subdirectories
             Box::pin(scan_directory_recursive(connection_id, &entry_path, result)).await?;
         } else if is_music_file(&entry.name) {
+            let debug_entry_path = entry_path.clone();
             result.push(RemoteFile {
                 remote_path: entry_path,
                 size: entry.size,
                 last_modified: entry.last_modified,
             });
+            // #region debug-point D:music-file-found
+            report_debug_event(
+                "D",
+                "music file discovered",
+                json!({
+                    "path": debug_entry_path,
+                    "size": entry.size,
+                    "filesCollected": result.len(),
+                }),
+            );
+            // #endregion
         }
     }
+
+    // #region debug-point B:scan-directory-exit
+    report_debug_event(
+        "B",
+        "scan_directory_recursive exited",
+        json!({
+            "path": path,
+            "filesCollected": result.len(),
+        }),
+    );
+    // #endregion
 
     Ok(())
 }
@@ -98,6 +222,16 @@ pub async fn compare_with_local(
     local_dir: &str,
 ) -> Result<Vec<SyncAction>, String> {
     let mut actions = Vec::new();
+    // #region debug-point C:compare-enter
+    report_debug_event(
+        "C",
+        "compare_with_local entered",
+        json!({
+            "remoteFileCount": remote_files.len(),
+            "localDir": local_dir,
+        }),
+    );
+    // #endregion
 
     for remote in remote_files {
         let local_path = format!("{}/{}", local_dir, remote.remote_path);
@@ -158,6 +292,16 @@ pub async fn compare_with_local(
             }
         }
     }
+
+    // #region debug-point C:compare-exit
+    report_debug_event(
+        "C",
+        "compare_with_local exited",
+        json!({
+            "actionCount": actions.len(),
+        }),
+    );
+    // #endregion
 
     Ok(actions)
 }

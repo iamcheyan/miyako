@@ -12,11 +12,13 @@
   padding: 8px 12px;
   background-color: var(--surface-variant);
   border-radius: 12px;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .path-nav {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 
@@ -81,7 +83,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid var(--outline-variant);
-  border-top-color: var(--primary);
+  border-top-color: var(--on-surface);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -89,7 +91,7 @@
 @media (prefers-color-scheme: dark) {
   .loading-spinner {
     border-color: var(--outline-variant-dark);
-    border-top-color: var(--primary-dark);
+    border-top-color: var(--on-surface-dark);
   }
 }
 
@@ -137,14 +139,14 @@
 .section-title {
   font-size: 14px;
   font-weight: 500;
-  color: var(--primary);
+  color: var(--on-surface);
   margin-bottom: 8px;
   padding-left: 4px;
 }
 
 @media (prefers-color-scheme: dark) {
   .section-title {
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
@@ -153,11 +155,13 @@
   background-color: var(--surface);
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .entry-list {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 
@@ -197,25 +201,12 @@
 
 .entry-icon {
   font-size: 24px;
-}
-
-.entry-icon.folder {
-  color: var(--primary);
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
-  .entry-icon.folder {
-    color: var(--primary-dark);
-  }
-}
-
-.entry-icon.music {
-  color: var(--secondary);
-}
-
-@media (prefers-color-scheme: dark) {
-  .entry-icon.music {
-    color: var(--secondary-dark);
+  .entry-icon {
+    color: var(--on-surface-dark);
   }
 }
 

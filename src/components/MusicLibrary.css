@@ -18,7 +18,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid var(--outline-variant);
-  border-top-color: var(--primary);
+  border-top-color: var(--on-surface);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -26,7 +26,7 @@
 @media (prefers-color-scheme: dark) {
   .loading-spinner {
     border-color: var(--outline-variant-dark);
-    border-top-color: var(--primary-dark);
+    border-top-color: var(--on-surface-dark);
   }
 }
 
@@ -43,11 +43,13 @@
   background-color: var(--surface-variant);
   border-radius: 28px;
   margin-bottom: 16px;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .search-bar {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 
@@ -123,12 +125,12 @@
 
 .action-icon {
   font-size: 32px;
-  color: var(--primary);
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .action-icon {
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
@@ -210,28 +212,28 @@
 }
 
 .empty-btn.primary {
-  background-color: var(--primary);
-  color: var(--on-primary);
+  background-color: var(--on-surface);
+  color: var(--surface);
   border: none;
 }
 
 @media (prefers-color-scheme: dark) {
   .empty-btn.primary {
-    background-color: var(--primary-dark);
-    color: var(--on-primary-dark);
+    background-color: var(--on-surface-dark);
+    color: var(--surface-dark);
   }
 }
 
 .empty-btn.secondary {
   background: none;
   border: 1px solid var(--outline);
-  color: var(--primary);
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .empty-btn.secondary {
     border-color: var(--outline-dark);
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
@@ -247,11 +249,13 @@
   background-color: var(--surface);
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .folder-list {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 
@@ -290,12 +294,12 @@
 
 .folder-icon {
   font-size: 32px;
-  color: var(--primary);
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .folder-icon {
-    color: var(--primary-dark);
+    color: var(--on-surface-dark);
   }
 }
 
@@ -400,11 +404,13 @@
   background-color: var(--surface);
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--outline-variant);
 }
 
 @media (prefers-color-scheme: dark) {
   .file-list {
     background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
   }
 }
 

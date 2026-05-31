@@ -21,6 +21,7 @@ function PlayerUI() {
   const activeRowRef = useRef<HTMLDivElement>(null);
 
   const [playlistTab, setPlaylistTab] = useState<'default' | 'favorites'>('default');
+  const [dragType, setDragType] = useState<'up' | 'down' | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handlePlaylistTouchStart = useCallback((e: React.TouchEvent) => {
@@ -45,29 +46,40 @@ function PlayerUI() {
     }
   }, []);
 
-  // 迷你播放器向上拖动拉起播放器手势
-  const miniDragStartRef = useRef<{ y: number; time: number } | null>(null);
-
+  // 迷你播放器向上拖动拉起播放器手势 (无缝平移跟随)
   const handleMiniTouchStart = useCallback((e: React.TouchEvent) => {
     const touch = e.touches[0];
-    miniDragStartRef.current = { y: touch.clientY, time: Date.now() };
+    dragStartRef.current = { y: touch.clientY, time: Date.now() };
+    setIsDragging(true);
+    setDragType('up');
   }, []);
 
   const handleMiniTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!miniDragStartRef.current) return;
+    if (!dragStartRef.current) return;
     const touch = e.touches[0];
-    const diffY = touch.clientY - miniDragStartRef.current.y;
+    const diffY = touch.clientY - dragStartRef.current.y;
 
-    // 向上滑动拉拽超过 15px，立即触发展开播放器
-    if (diffY < -15) {
-      setIsExpanded(true);
-      miniDragStartRef.current = null;
+    // 只允许向上拖动（负位移）
+    if (diffY < 0) {
+      setDragOffset(diffY);
     }
   }, []);
 
   const handleMiniTouchEnd = useCallback(() => {
-    miniDragStartRef.current = null;
-  }, []);
+    if (!dragStartRef.current) return;
+    const elapsed = Date.now() - dragStartRef.current.time;
+    // 向上滑动 dragOffset 是负数，我们取绝对速度
+    const velocity = Math.abs(dragOffset) / (elapsed || 1);
+
+    // 如果向上拉拽超过 100px 或者速度快，直接打开播放器
+    if (Math.abs(dragOffset) > 100 || velocity > 0.5) {
+      setIsExpanded(true);
+    }
+    setDragOffset(0);
+    setIsDragging(false);
+    setDragType(null);
+    dragStartRef.current = null;
+  }, [dragOffset]);
 
   useEffect(() => {
     setState(player.getState());
@@ -166,6 +178,7 @@ function PlayerUI() {
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     dragStartRef.current = { y: clientY, time: Date.now() };
     setIsDragging(true);
+    setDragType('down');
   }, []);
 
   const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
@@ -196,6 +209,7 @@ function PlayerUI() {
     
     dragStartRef.current = null;
     setIsDragging(false);
+    setDragType(null);
   }, [dragOffset, handleClosePlayer]);
 
   useEffect(() => {
@@ -306,11 +320,41 @@ function PlayerUI() {
   const hasHistory = state.playlist.length > 0 && state.currentIndex >= 0;
   const progress = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
 
-  // 迷你播放器
-  if (!isExpanded) {
-    return (
+  // 实时计算展开播放器的 Y 轴平移量，实现无缝拖拽跟随
+  let activeTranslateY = isExpanded ? 0 : window.innerHeight;
+  
+  if (isDragging) {
+    if (dragType === 'up') {
+      activeTranslateY = Math.max(0, window.innerHeight + dragOffset);
+    } else if (dragType === 'down') {
+      activeTranslateY = Math.max(0, dragOffset);
+    }
+  }
+
+  // 迷你播放器的 Y 平移量与透明度：往上拖拽时跟随手指隐退，往下拖拽时跟随手指从下方浮现
+  let miniTranslateY = isExpanded ? 100 : 0;
+  let miniOpacity = isExpanded ? 0 : 1;
+  if (isDragging && dragType === 'up') {
+    const progressLimit = Math.min(1, Math.abs(dragOffset) / 150);
+    miniTranslateY = progressLimit * 100;
+    miniOpacity = 1 - progressLimit;
+  } else if (isDragging && dragType === 'down') {
+    const progressLimit = Math.min(1, dragOffset / 150);
+    miniTranslateY = (1 - progressLimit) * 100;
+    miniOpacity = progressLimit;
+  }
+
+  return (
+    <div className="player-ui-system">
+      {/* 迷你播放器 (始终存在于 DOM，通过位移/淡出实现无缝交互) */}
       <div
         className="player-ui mini-only"
+        style={{
+          transform: `translateY(${miniTranslateY}%)`,
+          opacity: miniOpacity,
+          pointerEvents: isExpanded ? "none" : "auto",
+          transition: isDragging ? "none" : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease"
+        }}
         onTouchStart={handleMiniTouchStart}
         onTouchMove={handleMiniTouchMove}
         onTouchEnd={handleMiniTouchEnd}
@@ -354,187 +398,187 @@ function PlayerUI() {
           </div>
         </div>
       </div>
-    );
-  }
 
-  // 展开的播放器
-  const containerStyle: CSSProperties = isDragging
-    ? { transform: `translateY(${dragOffset}px)`, transition: 'none' }
-    : {};
-
-  return (
-    <div className={`player-ui expanded ${isDragging ? 'dragging' : ''}`}>
-      <div className="expanded-container" style={containerStyle}>
-        {/* 顶部：信号 + 歌曲名 + 关闭按钮 */}
-        <div
-          className="expanded-header"
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
-          onMouseDown={handleDragStart}
-          onMouseMove={isDragging ? handleDragMove : undefined}
-          onMouseUp={handleDragEnd}
-          onMouseLeave={isDragging ? handleDragEnd : undefined}
-        >
-          <div className={`signal-mark ${state.isPlaying ? 'playing' : 'paused'}`} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className="track-section">
-            <h2 ref={trackTitleRef} className={`track-title ${titleOverflow ? 'scrolling' : ''}`}>{currentTrackName}</h2>
-          </div>
-          <button className="expanded-close-btn" onClick={handleClosePlayer}>
-            <span className="material-symbols-outlined">expand_more</span>
-          </button>
-        </div>
-
-        {/* 中间：播放列表，填满剩余空间，可滚动，支持左右滑动手势切换默认/收藏 */}
-        <div
-          className="expanded-playlist"
-          onTouchStart={handlePlaylistTouchStart}
-          onTouchEnd={handlePlaylistTouchEnd}
-        >
-          <h3 className="playlist-header">
-            <div className="playlist-tabs">
-              <span
-                className={`playlist-tab ${playlistTab === 'default' ? 'active' : ''}`}
-                onClick={() => setPlaylistTab('default')}
-              >
-                {t("player.playlist")}
-              </span>
-              <span className="playlist-tab-separator">|</span>
-              <span
-                className={`playlist-tab ${playlistTab === 'favorites' ? 'active' : ''}`}
-                style={{ color: playlistTab === 'favorites' ? '#ff2d55' : undefined }}
-                onClick={() => setPlaylistTab('favorites')}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '14px', verticalAlign: 'middle', marginRight: '4px' }}>favorite</span>
-                {t("musicLibrary.quickActions.favorites")}
-              </span>
+      {/* 展开的播放器 (始终存在于 DOM，通过 CSS 实时平移实现无缝拉起/下拉折叠) */}
+      <div
+        className={`player-ui expanded ${isDragging ? 'dragging' : ''}`}
+        style={{
+          transform: `translateY(${activeTranslateY}px)`,
+          transition: isDragging ? "none" : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          pointerEvents: isExpanded || isDragging ? "auto" : "none"
+        }}
+      >
+        <div className="expanded-container">
+          {/* 顶部：信号 + 歌曲名 + 关闭按钮 */}
+          <div
+            className="expanded-header"
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+            onMouseDown={handleDragStart}
+            onMouseMove={isDragging ? handleDragMove : undefined}
+            onMouseUp={handleDragEnd}
+            onMouseLeave={isDragging ? handleDragEnd : undefined}
+          >
+            <div className={`signal-mark ${state.isPlaying ? 'playing' : 'paused'}`} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
             </div>
-          </h3>
-          
-          <div className="playlist-slider-wrapper">
-            <div
-              className="playlist-slider-content"
-              style={{ transform: `translateX(${playlistTab === 'default' ? '0%' : '-50%'})` }}
-            >
-              {/* 页面 1：默认全部歌曲 */}
-              <div className="playlist-slider-page">
-                <div className="playlist-scroll" ref={defaultScrollRef}>
-                  {state.playlist.length === 0 ? (
-                    <div className="playlist-empty">
-                      <span className="material-symbols-outlined">queue_music</span>
-                      <span>{t("player.emptyPlaylist")}</span>
-                    </div>
-                  ) : (
-                    state.playlist.map((track, index) => (
-                      <div
-                        key={index}
-                        ref={playlistTab === 'default' && index === state.currentIndex ? activeRowRef : undefined}
-                        className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
-                        onClick={() => player.playTrack(index)}
-                      >
-                        <span className="row-num">
-                          {index === state.currentIndex && state.isPlaying ? (
-                            <span className="material-symbols-outlined playing">equalizer</span>
-                          ) : (
-                            index + 1
-                          )}
-                        </span>
-                        <span className="row-name">{getFileName(track)}</span>
+            <div className="track-section">
+              <h2 ref={trackTitleRef} className={`track-title ${titleOverflow ? 'scrolling' : ''}`}>{currentTrackName}</h2>
+            </div>
+            <button className="expanded-close-btn" onClick={handleClosePlayer}>
+              <span className="material-symbols-outlined">expand_more</span>
+            </button>
+          </div>
+
+          {/* 中间：播放列表，填满剩余空间，可滚动，支持左右滑动手势切换默认/收藏 */}
+          <div
+            className="expanded-playlist"
+            onTouchStart={handlePlaylistTouchStart}
+            onTouchEnd={handlePlaylistTouchEnd}
+          >
+            <h3 className="playlist-header">
+              <div className="playlist-tabs">
+                <span
+                  className={`playlist-tab ${playlistTab === 'default' ? 'active' : ''}`}
+                  onClick={() => setPlaylistTab('default')}
+                >
+                  {t("player.playlist")}
+                </span>
+                <span className="playlist-tab-separator">|</span>
+                <span
+                  className={`playlist-tab ${playlistTab === 'favorites' ? 'active' : ''}`}
+                  style={{ color: playlistTab === 'favorites' ? '#ff2d55' : undefined }}
+                  onClick={() => setPlaylistTab('favorites')}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px', verticalAlign: 'middle', marginRight: '4px' }}>favorite</span>
+                  {t("musicLibrary.quickActions.favorites")}
+                </span>
+              </div>
+            </h3>
+            
+            <div className="playlist-slider-wrapper">
+              <div
+                className="playlist-slider-content"
+                style={{ transform: `translateX(${playlistTab === 'default' ? '0%' : '-50%'})` }}
+              >
+                {/* 页面 1：默认全部歌曲 */}
+                <div className="playlist-slider-page">
+                  <div className="playlist-scroll" ref={defaultScrollRef}>
+                    {state.playlist.length === 0 ? (
+                      <div className="playlist-empty">
+                        <span className="material-symbols-outlined">queue_music</span>
+                        <span>{t("player.emptyPlaylist")}</span>
                       </div>
-                    ))
-                  )}
+                    ) : (
+                      state.playlist.map((track, index) => (
+                        <div
+                          key={index}
+                          ref={playlistTab === 'default' && index === state.currentIndex ? activeRowRef : undefined}
+                          className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
+                          onClick={() => player.playTrack(index)}
+                        >
+                          <span className="row-num">
+                            {index === state.currentIndex && state.isPlaying ? (
+                              <span className="material-symbols-outlined playing">equalizer</span>
+                            ) : (
+                              index + 1
+                            )}
+                          </span>
+                          <span className="row-name">{getFileName(track)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* 页面 2：红心收藏歌曲 */}
+                <div className="playlist-slider-page">
+                  <div className="playlist-scroll" ref={favoritesScrollRef}>
+                    {favoritedItems.length === 0 ? (
+                      <div className="playlist-empty">
+                        <span className="material-symbols-outlined">favorite</span>
+                        <span>{t("musicLibrary.searchNoResults")}</span>
+                      </div>
+                    ) : (
+                      favoritedItems.map((item) => (
+                        <div
+                          key={item.originalIndex}
+                          ref={playlistTab === 'favorites' && item.originalIndex === state.currentIndex ? activeRowRef : undefined}
+                          className={`playlist-row ${item.originalIndex === state.currentIndex ? "active" : ""}`}
+                          onClick={() => player.playTrack(item.originalIndex)}
+                        >
+                          <span className="row-num">
+                            {item.originalIndex === state.currentIndex && state.isPlaying ? (
+                              <span className="material-symbols-outlined playing">equalizer</span>
+                            ) : (
+                              item.originalIndex + 1
+                            )}
+                          </span>
+                          <span className="row-name">{getFileName(item.track)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
-
-              {/* 页面 2：红心收藏歌曲 */}
-              <div className="playlist-slider-page">
-                <div className="playlist-scroll" ref={favoritesScrollRef}>
-                  {favoritedItems.length === 0 ? (
-                    <div className="playlist-empty">
-                      <span className="material-symbols-outlined">favorite</span>
-                      <span>{t("musicLibrary.searchNoResults")}</span>
-                    </div>
-                  ) : (
-                    favoritedItems.map((item) => (
-                      <div
-                        key={item.originalIndex}
-                        ref={playlistTab === 'favorites' && item.originalIndex === state.currentIndex ? activeRowRef : undefined}
-                        className={`playlist-row ${item.originalIndex === state.currentIndex ? "active" : ""}`}
-                        onClick={() => player.playTrack(item.originalIndex)}
-                      >
-                        <span className="row-num">
-                          {item.originalIndex === state.currentIndex && state.isPlaying ? (
-                            <span className="material-symbols-outlined playing">equalizer</span>
-                          ) : (
-                            item.originalIndex + 1
-                          )}
-                        </span>
-                        <span className="row-name">{getFileName(item.track)}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
             </div>
           </div>
-        </div>
 
-        {/* 底部：进度条 + 控制，固定在屏幕底部 */}
-        <div className="expanded-controls">
-          {/* 进度条 */}
-          <div className="seek-section">
-            <span className="seek-time">{formatTime(state.currentTime)}</span>
-            <input
-              type="range"
-              className="seek-bar"
-              style={{ "--seek-progress": `${progress}%` } as CSSProperties}
-              min={0}
-              max={state.duration || 0}
-              value={state.currentTime}
-              onInput={handleSeek}
-            />
-            <span className="seek-time">{formatTime(state.duration)}</span>
+          {/* 底部：进度条 + 控制，固定在屏幕底部 */}
+          <div className="expanded-controls">
+            {/* 进度条 */}
+            <div className="seek-section">
+              <span className="seek-time">{formatTime(state.currentTime)}</span>
+              <input
+                type="range"
+                className="seek-bar"
+                style={{ "--seek-progress": `${progress}%` } as CSSProperties}
+                min={0}
+                max={state.duration || 0}
+                value={state.currentTime}
+                onInput={handleSeek}
+              />
+              <span className="seek-time">{formatTime(state.duration)}</span>
+            </div>
+
+            {/* 主控制 */}
+            <div className="main-controls">
+              <button className="ctrl-btn mode" onClick={handleModeChange}>
+                <span className="material-symbols-outlined">{getModeIcon(state.playMode)}</span>
+              </button>
+
+              <button className="ctrl-btn" onClick={handlePrevious} disabled={!hasHistory}>
+                <span className="material-symbols-outlined">skip_previous</span>
+              </button>
+
+              <button className="ctrl-btn play" onClick={handlePlayPause}>
+                <span className="material-symbols-outlined">
+                  {state.isPlaying ? "pause" : "play_arrow"}
+                </span>
+              </button>
+
+              <button className="ctrl-btn" onClick={handleNext} disabled={!hasHistory}>
+                <span className="material-symbols-outlined">skip_next</span>
+              </button>
+
+              <button
+                className={`ctrl-btn favorite ${isFavorited ? "active" : ""}`}
+                onClick={handleToggleFavorite}
+                disabled={!state.currentTrack}
+              >
+                <span className="material-symbols-outlined">
+                  {isFavorited ? "favorite" : "favorite_border"}
+                </span>
+              </button>
+            </div>
           </div>
-
-          {/* 主控制 */}
-          <div className="main-controls">
-            <button className="ctrl-btn mode" onClick={handleModeChange}>
-              <span className="material-symbols-outlined">{getModeIcon(state.playMode)}</span>
-            </button>
-
-            <button className="ctrl-btn" onClick={handlePrevious} disabled={!hasHistory}>
-              <span className="material-symbols-outlined">skip_previous</span>
-            </button>
-
-            <button className="ctrl-btn play" onClick={handlePlayPause}>
-              <span className="material-symbols-outlined">
-                {state.isPlaying ? "pause" : "play_arrow"}
-              </span>
-            </button>
-
-            <button className="ctrl-btn" onClick={handleNext} disabled={!hasHistory}>
-              <span className="material-symbols-outlined">skip_next</span>
-            </button>
-
-            <button
-              className={`ctrl-btn favorite ${isFavorited ? "active" : ""}`}
-              onClick={handleToggleFavorite}
-              disabled={!state.currentTrack}
-            >
-              <span className="material-symbols-outlined">
-                {isFavorited ? "favorite" : "favorite_border"}
-              </span>
-            </button>
-          </div>
-
         </div>
       </div>
     </div>

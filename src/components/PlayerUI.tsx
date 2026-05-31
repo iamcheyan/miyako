@@ -331,29 +331,15 @@ function PlayerUI() {
     }
   }
 
-  // 迷你播放器的 Y 平移量与透明度：往上拖拽时跟随手指隐退，往下拖拽时跟随手指从下方浮现
-  let miniTranslateY = isExpanded ? 100 : 0;
-  let miniOpacity = isExpanded ? 0 : 1;
-  if (isDragging && dragType === 'up') {
-    const progressLimit = Math.min(1, Math.abs(dragOffset) / 150);
-    miniTranslateY = progressLimit * 100;
-    miniOpacity = 1 - progressLimit;
-  } else if (isDragging && dragType === 'down') {
-    const progressLimit = Math.min(1, dragOffset / 150);
-    miniTranslateY = (1 - progressLimit) * 100;
-    miniOpacity = progressLimit;
-  }
-
   return (
     <div className="player-ui-system">
-      {/* 迷你播放器 (始终存在于 DOM，通过位移/淡出实现无缝交互) */}
+      {/* 迷你播放器 (始终存在于 DOM，保持绝对静止安定，不进行位移，仅由详情页在上方完全覆盖) */}
       <div
         className="player-ui mini-only"
         style={{
-          transform: `translateY(${miniTranslateY}%)`,
-          opacity: miniOpacity,
+          opacity: isExpanded ? 0 : 1,
           pointerEvents: isExpanded ? "none" : "auto",
-          transition: isDragging ? "none" : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease"
+          transition: "opacity 0.25s ease"
         }}
         onTouchStart={handleMiniTouchStart}
         onTouchMove={handleMiniTouchMove}

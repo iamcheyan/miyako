@@ -77,7 +77,11 @@
       "title": "危险操作",
       "clearHistory": "清除播放历史",
       "clearHistoryDesc": "删除所有已同步的文件记录",
-      "confirmClearHistory": "确定要清除播放历史吗？此操作不可撤销。"
+      "confirmClearHistory": "确定要清除播放历史吗？此操作不可撤销。",
+      "cleanFavorites": "清理失效收藏",
+      "cleanFavoritesDesc": "对比本地音乐库，自动删除已被物理移除或改名的失效收藏记录",
+      "cleanFavoritesSuccess": "已自动扫描并清理 {{count}} 首因移除或改名失效的收藏记录。",
+      "cleanFavoritesEmpty": "收藏夹本就为空，无需清理。"
     },
     "stats": {
       "title": "统计信息",

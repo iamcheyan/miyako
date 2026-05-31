@@ -77,7 +77,11 @@
       "title": "Danger Zone",
       "clearHistory": "Clear Play History",
       "clearHistoryDesc": "Delete all synced file records",
-      "confirmClearHistory": "Are you sure you want to clear play history? This action cannot be undone."
+      "confirmClearHistory": "Are you sure you want to clear play history? This action cannot be undone.",
+      "cleanFavorites": "Clean Stale Favorites",
+      "cleanFavoritesDesc": "Compare with local library and automatically delete stale favorite records that were physically removed or renamed.",
+      "cleanFavoritesSuccess": "Successfully scanned and cleaned {{count}} stale favorite records.",
+      "cleanFavoritesEmpty": "Favorites list is already empty."
     },
     "stats": {
       "title": "Statistics",

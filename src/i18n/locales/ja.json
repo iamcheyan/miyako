@@ -74,10 +74,14 @@
       "testError": "接続失敗"
     },
     "dangerZone": {
-      "title": "危険ゾーン",
-      "clearHistory": "再生履歴を削除",
-      "clearHistoryDesc": "すべての同期済みファイル記録を削除",
-      "confirmClearHistory": "再生履歴を削除しますか？この操作は元に戻せません。"
+      "title": "危険操作",
+      "clearHistory": "再生履歴のクリア",
+      "clearHistoryDesc": "同期されたすべてのファイルレコードを削除します",
+      "confirmClearHistory": "再生履歴をクリアしてもよろしいですか？この操作は取り消せません。",
+      "cleanFavorites": "無効なお気に入りのクリーンアップ",
+      "cleanFavoritesDesc": "ローカルライブラリと比較し、物理的に削除または名前が変更された古いお気に入りレコードを自動的に削除します。",
+      "cleanFavoritesSuccess": "移動または名前変更によって無効になった {{count}} 個のお気に入りレコードを正常にスキャンしてクリーンアップしました。",
+      "cleanFavoritesEmpty": "お気に入りリストはすでに空です。"
     },
     "stats": {
       "title": "統計情報",

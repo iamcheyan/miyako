@@ -153,9 +153,9 @@ function Settings() {
         localStorage.setItem("miyako_favorites", JSON.stringify(validFavoritesList));
         
         const cleanedCount = favoritesList.length - validFavoritesList.length;
-        alert(t("common.success") + `: 已自动扫描并清理 ${cleanedCount} 首因移除或改名失效的收藏记录。`);
+        alert(t("settings.dangerZone.cleanFavoritesSuccess", { count: cleanedCount }));
       } else {
-        alert(t("common.success") + ": 收藏夹本就为空，无需清理。");
+        alert(t("settings.dangerZone.cleanFavoritesEmpty"));
       }
     } catch (e) {
       console.error("Failed to clean favorites:", e);
@@ -324,14 +324,13 @@ function Settings() {
             <button
               className="danger-item"
               onClick={handleCleanFavorites}
-              style={{ borderColor: "var(--outline-variant)" }}
             >
               <span className="material-symbols-outlined" style={{ color: "#ff2d55" }}>favorite</span>
               <div className="danger-info">
-                <span className="danger-title" style={{ color: "var(--on-surface)" }}>清理失效收藏</span>
-                <span className="danger-desc">对比本地音乐库，自动删除已被物理移除或改名的失效收藏记录</span>
+                <span className="danger-title">{t("settings.dangerZone.cleanFavorites")}</span>
+                <span className="danger-desc">{t("settings.dangerZone.cleanFavoritesDesc")}</span>
               </div>
-              <span className="material-symbols-outlined" style={{ color: "var(--on-surface-variant)" }}>chevron_right</span>
+              <span className="material-symbols-outlined">chevron_right</span>
             </button>
 
             <button

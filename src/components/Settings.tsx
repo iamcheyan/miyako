@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
 import { DEFAULT_SMB_CONFIG, loadSmbConfig, saveSmbConfig } from "../lib/smbConfig";
@@ -8,7 +9,14 @@ import "./Settings.css";
 
 const STATE_PATH = "sync_state.json";
 
+const LANGUAGES = [
+  { code: "zh", name: "中文" },
+  { code: "en", name: "English" },
+  { code: "ja", name: "日本語" },
+];
+
 function Settings() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [config, setConfig] = useState<SmbConfig>(DEFAULT_SMB_CONFIG);
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +62,11 @@ function Settings() {
     saveConfig({ ...config, [field]: value });
   };
 
+  // 切换语言
+  const handleLanguageChange = (langCode: string) => {
+    i18n.changeLanguage(langCode);
+  };
+
   // 测试连接
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -69,13 +82,13 @@ function Settings() {
 
       setTestResult({
         success: true,
-        message: "连接成功！",
+        message: t("settings.smb.testSuccess"),
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       setTestResult({
         success: false,
-        message: `连接失败: ${errorMessage}`,
+        message: `${t("settings.smb.testError")}: ${errorMessage}`,
       });
     } finally {
       setIsTesting(false);
@@ -98,10 +111,10 @@ function Settings() {
 
       setSyncStats({ fileCount: 0, totalSize: 0 });
       setShowConfirmDialog(null);
-      alert("同步数据已清除");
+      alert(t("common.success"));
     } catch (e) {
       console.error("Failed to clear sync data:", e);
-      alert("清除失败: " + (e instanceof Error ? e.message : String(e)));
+      alert(`${t("common.error")}: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 
@@ -113,10 +126,10 @@ function Settings() {
       await storage.clearHistory();
       await storage.clearPlaybackState();
       setShowConfirmDialog(null);
-      alert("播放历史已清除");
+      alert(t("common.success"));
     } catch (e) {
       console.error("Failed to clear history:", e);
-      alert("清除失败: " + (e instanceof Error ? e.message : String(e)));
+      alert(`${t("common.error")}: ${e instanceof Error ? e.message : String(e)}`);
     }
   };
 
@@ -135,73 +148,73 @@ function Settings() {
         <button className="back-btn" onClick={() => navigate(-1)}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 className="page-title">设置</h1>
+        <h1 className="page-title">{t("settings.title")}</h1>
       </div>
 
       {/* 可滚动内容 */}
       <div className="settings-scroll">
         {/* SMB 连接配置 */}
         <section className="settings-section">
-          <h2 className="section-title">SMB 服务器</h2>
+          <h2 className="section-title">{t("settings.smb.title")}</h2>
 
           <div className="settings-list">
             <div className="setting-item">
-              <label className="setting-label" htmlFor="server">服务器地址</label>
+              <label className="setting-label" htmlFor="server">{t("settings.smb.server")}</label>
               <input
                 type="text"
                 id="server"
                 className="setting-input"
-                placeholder="192.168.1.100"
+                placeholder={t("settings.smb.serverPlaceholder")}
                 value={config.server}
                 onChange={(e) => handleChange("server", e.target.value)}
               />
             </div>
 
             <div className="setting-item">
-              <label className="setting-label" htmlFor="share">共享目录</label>
+              <label className="setting-label" htmlFor="share">{t("settings.smb.share")}</label>
               <input
                 type="text"
                 id="share"
                 className="setting-input"
-                placeholder="NAS"
+                placeholder={t("settings.smb.sharePlaceholder")}
                 value={config.share}
                 onChange={(e) => handleChange("share", e.target.value)}
               />
             </div>
 
             <div className="setting-item">
-              <label className="setting-label" htmlFor="remotePath">远程子目录</label>
+              <label className="setting-label" htmlFor="remotePath">{t("settings.smb.remotePath")}</label>
               <input
                 type="text"
                 id="remotePath"
                 className="setting-input"
-                placeholder="Music"
+                placeholder={t("settings.smb.remotePathPlaceholder")}
                 value={config.remotePath}
                 onChange={(e) => handleChange("remotePath", e.target.value)}
               />
-              <span className="setting-hint">例如共享为 NAS、音乐在 NAS/Music 时，这里填 Music</span>
+              <span className="setting-hint">{t("settings.smb.remotePathPlaceholder")}</span>
             </div>
 
             <div className="setting-item">
-              <label className="setting-label" htmlFor="username">用户名</label>
+              <label className="setting-label" htmlFor="username">{t("settings.smb.username")}</label>
               <input
                 type="text"
                 id="username"
                 className="setting-input"
-                placeholder="留空表示匿名访问"
+                placeholder={t("settings.smb.usernamePlaceholder")}
                 value={config.username}
                 onChange={(e) => handleChange("username", e.target.value)}
               />
             </div>
 
             <div className="setting-item">
-              <label className="setting-label" htmlFor="password">密码</label>
+              <label className="setting-label" htmlFor="password">{t("settings.smb.password")}</label>
               <div className="password-field">
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
                   className="setting-input"
-                  placeholder="留空表示匿名访问"
+                  placeholder={t("settings.smb.usernamePlaceholder")}
                   value={config.password}
                   onChange={(e) => handleChange("password", e.target.value)}
                 />
@@ -218,7 +231,7 @@ function Settings() {
             </div>
 
             <div className="setting-item">
-              <label className="setting-label" htmlFor="localDir">本地同步目录</label>
+              <label className="setting-label" htmlFor="localDir">{t("settings.smb.localDir")}</label>
               <input
                 type="text"
                 id="localDir"
@@ -227,7 +240,7 @@ function Settings() {
                 value={config.localDir}
                 onChange={(e) => handleChange("localDir", e.target.value)}
               />
-              <span className="setting-hint">音乐文件将同步到此目录</span>
+              <span className="setting-hint">{t("settings.smb.localDir")}</span>
             </div>
           </div>
 
@@ -237,7 +250,7 @@ function Settings() {
             disabled={isTesting || !config.server || !config.share}
           >
             <span className="material-symbols-outlined">link</span>
-            {isTesting ? "测试中..." : "测试连接"}
+            {isTesting ? t("settings.smb.testing") : t("settings.smb.testConnection")}
           </button>
 
           {testResult && (
@@ -252,14 +265,14 @@ function Settings() {
 
         {/* 同步统计 */}
         <section className="settings-section">
-          <h2 className="section-title">同步数据</h2>
+          <h2 className="section-title">{t("settings.stats.title")}</h2>
 
           <div className="stats-grid">
             <div className="stat-card">
               <span className="material-symbols-outlined stat-icon">folder</span>
               <div className="stat-info">
                 <span className="stat-value">{syncStats.fileCount}</span>
-                <span className="stat-label">已同步文件</span>
+                <span className="stat-label">{t("settings.stats.syncedFiles")}</span>
               </div>
             </div>
 
@@ -267,7 +280,7 @@ function Settings() {
               <span className="material-symbols-outlined stat-icon">database</span>
               <div className="stat-info">
                 <span className="stat-value">{formatSize(syncStats.totalSize)}</span>
-                <span className="stat-label">总大小</span>
+                <span className="stat-label">{t("settings.stats.totalSize")}</span>
               </div>
             </div>
           </div>
@@ -275,7 +288,7 @@ function Settings() {
 
         {/* 数据管理 */}
         <section className="settings-section">
-          <h2 className="section-title">数据管理</h2>
+          <h2 className="section-title">{t("settings.dangerZone.title")}</h2>
 
           <div className="danger-list">
             <button
@@ -284,8 +297,8 @@ function Settings() {
             >
               <span className="material-symbols-outlined danger-icon">delete_sweep</span>
               <div className="danger-info">
-                <span className="danger-title">清除同步数据</span>
-                <span className="danger-desc">删除同步状态和本地文件</span>
+                <span className="danger-title">{t("settings.dangerZone.clearHistory")}</span>
+                <span className="danger-desc">{t("settings.dangerZone.clearHistoryDesc")}</span>
               </div>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
@@ -296,11 +309,31 @@ function Settings() {
             >
               <span className="material-symbols-outlined danger-icon">history</span>
               <div className="danger-info">
-                <span className="danger-title">清除播放历史</span>
-                <span className="danger-desc">删除最近播放和播放记录</span>
+                <span className="danger-title">{t("settings.dangerZone.clearHistory")}</span>
+                <span className="danger-desc">{t("settings.dangerZone.clearHistoryDesc")}</span>
               </div>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
+          </div>
+        </section>
+
+        {/* 语言设置 */}
+        <section className="settings-section">
+          <h2 className="section-title">{t("settings.language.title")}</h2>
+
+          <div className="language-options">
+            {LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                className={`language-btn ${i18n.language === lang.code ? "active" : ""}`}
+                onClick={() => handleLanguageChange(lang.code)}
+              >
+                <span className="language-name">{lang.name}</span>
+                {i18n.language === lang.code && (
+                  <span className="material-symbols-outlined">check</span>
+                )}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -312,18 +345,18 @@ function Settings() {
       {showConfirmDialog && (
         <div className="dialog-overlay" onClick={() => setShowConfirmDialog(null)}>
           <div className="dialog" onClick={(e) => e.stopPropagation()}>
-            <h3 className="dialog-title">确认操作</h3>
+            <h3 className="dialog-title">{t("common.confirm")}</h3>
             <p className="dialog-text">
               {showConfirmDialog === "sync"
-                ? "确定要清除所有同步数据吗？这将删除同步状态和本地音乐文件。"
-                : "确定要清除播放历史吗？这将删除所有播放记录。"}
+                ? t("settings.dangerZone.confirmClearHistory")
+                : t("settings.dangerZone.confirmClearHistory")}
             </p>
             <div className="dialog-actions">
               <button
                 className="dialog-btn cancel"
                 onClick={() => setShowConfirmDialog(null)}
               >
-                取消
+                {t("common.cancel")}
               </button>
               <button
                 className="dialog-btn confirm"
@@ -333,7 +366,7 @@ function Settings() {
                     : handleClearHistory
                 }
               >
-                确认
+                {t("common.confirm")}
               </button>
             </div>
           </div>

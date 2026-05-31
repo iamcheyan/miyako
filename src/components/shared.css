@@ -1,0 +1,64 @@
+/* 页面标题栏 - 共享样式 */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--outline-variant);
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header {
+    background-color: var(--surface-dark);
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.page-header .back-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header .back-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.page-header .back-btn:hover {
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-header .back-btn:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.page-title {
+  flex: 1;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--on-surface);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark) {
+  .page-title {
+    color: var(--on-surface-dark);
+  }
+}

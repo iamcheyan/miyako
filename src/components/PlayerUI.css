@@ -8,7 +8,9 @@
 .mini-only {
   background-color: var(--surface);
   border-top: 1px solid var(--outline-variant);
-  padding-bottom: calc(var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
+  padding-bottom: calc(
+    var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
+  );
 }
 
 @media (prefers-color-scheme: dark) {
@@ -104,20 +106,45 @@
 .mini-btn.play {
   width: 48px;
   height: 48px;
-  background-color: var(--on-surface);
-  color: var(--surface);
+  background: none;
+  color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
   .mini-btn.play {
-    background-color: var(--on-surface-dark);
-    color: var(--surface-dark);
+    color: var(--on-surface-dark);
   }
 }
 
 /* ==================== 展开播放器 ==================== */
-.expanded {
+.expanded-wrapper {
   position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.expanded-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--surface);
+  z-index: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .expanded-backdrop {
+    background-color: var(--surface-dark);
+  }
+}
+
+.expanded {
+  position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
@@ -127,6 +154,13 @@
   display: flex;
   flex-direction: column;
   padding-top: max(env(safe-area-inset-top, 0px), 36px);
+  touch-action: pan-y;
+  user-select: none;
+  z-index: 1;
+}
+
+.expanded.dragging {
+  background-color: transparent;
 }
 
 .expanded::before {
@@ -136,7 +170,12 @@
   left: 24px;
   right: 24px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--outline-variant), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--outline-variant),
+    transparent
+  );
   opacity: 0.8;
   pointer-events: none;
 }
@@ -147,7 +186,12 @@
   }
 
   .expanded::before {
-    background: linear-gradient(90deg, transparent, var(--outline-variant-dark), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--outline-variant-dark),
+      transparent
+    );
   }
 }
 
@@ -155,18 +199,80 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  transition:
+    transform 0.3s ease-out,
+    border-radius 0.3s ease-out;
+  overflow: hidden;
+  background-color: var(--surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .expanded-container {
+    background-color: var(--surface-dark);
+  }
 }
 
 /* 顶部：歌曲信息 */
 .expanded-header {
   flex-shrink: 0;
-  padding: 18px 24px 10px;
+  padding: 12px 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.expanded-header:active {
+  cursor: grabbing;
+}
+
+/* 关闭播放器按钮 */
+.expanded-close-btn {
+  width: 36px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  /*border-radius: 10px;*/
+  /*margin-bottom: 8px;*/
+  transition: background-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .expanded-close-btn {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.expanded-close-btn:hover {
+  background-color: var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .expanded-close-btn:hover {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.expanded-close-btn .material-symbols-outlined {
+  font-size: 20px;
 }
 
 /* 歌曲信息 */
 .track-section {
   text-align: center;
   margin-bottom: 8px;
+  overflow: hidden;
+  width: 100%;
+  padding: 0 24px;
+  box-sizing: border-box;
+  position: relative;
 }
 
 .signal-mark {
@@ -217,7 +323,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scaleY(1);
     opacity: 0.6;
   }
@@ -233,7 +340,9 @@
   border-radius: 999px;
   background-color: var(--on-surface);
   opacity: 0.78;
-  transition: height 0.3s ease, opacity 0.3s ease;
+  transition:
+    height 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .signal-mark span:nth-child(1),
@@ -265,13 +374,61 @@
 }
 
 .track-title {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--on-surface);
-  margin: 0 0 8px 0;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+/* 标题溢出时来回滚动 */
+.track-title.scrolling {
+  display: block;
+  text-align: left;
+  text-overflow: unset;
+  animation: scrollTitle 10s ease-in-out infinite;
+  /* 使用 clip-path 限制显示区域 */
+  clip-path: inset(0 0 0 0);
+}
+
+@keyframes scrollTitle {
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(calc(-100% + 100%));
+  }
+  85%,
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* 标题过长时自动滚动 */
+@keyframes marquee {
+  0%,
+  20% {
+    transform: translateX(0);
+  }
+  80%,
+  100% {
+    transform: translateX(max(-100%, -400px));
+  }
+}
+
+.track-title.scrolling {
+  animation: marquee 12s ease-in-out infinite;
+  width: max-content;
+}
+
+.track-title.scrolling:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -363,7 +520,10 @@
 /* 底部：进度条 + 控制按钮，固定在屏幕底部 */
 .expanded-controls {
   flex-shrink: 0;
-  padding: 12px 24px calc(10px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
+  padding: 12px 24px
+    calc(
+      10px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
+    );
   border-top: 1px solid var(--outline-variant);
   background-color: var(--surface);
   box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.06);
@@ -454,8 +614,7 @@
   margin-bottom: 8px;
 }
 
-.ctrl-btn,
-.ctrl-spacer {
+.ctrl-btn {
   width: 48px;
   height: 48px;
   flex: 0 0 48px;
@@ -489,6 +648,49 @@
 @media (prefers-color-scheme: dark) {
   .ctrl-btn.mode {
     color: var(--on-surface-variant-dark);
+  }
+}
+
+/* 红心按钮 */
+.ctrl-btn.favorite {
+  color: var(--on-surface-variant);
+  position: relative;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ctrl-btn.favorite {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.ctrl-btn.favorite.active {
+  color: #e91e63;
+  animation: heartBeat 0.4s ease-out;
+}
+
+.ctrl-btn.favorite.active .material-symbols-outlined {
+  font-variation-settings: "FILL" 1;
+}
+
+.ctrl-btn.favorite:active {
+  transform: scale(0.85);
+}
+
+@keyframes heartBeat {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.3);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
@@ -539,7 +741,10 @@
   }
 
   .expanded-controls {
-    padding: 6px 16px calc(6px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
+    padding: 6px 16px
+      calc(
+        6px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
+      );
   }
 
   .seek-section {
@@ -567,7 +772,10 @@
   }
 
   .expanded-controls {
-    padding: 4px 12px calc(4px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px));
+    padding: 4px 12px
+      calc(
+        4px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
+      );
   }
 
   .seek-section {
@@ -584,8 +792,7 @@
     height: 52px;
   }
 
-  .ctrl-btn,
-  .ctrl-spacer {
+  .ctrl-btn {
     width: 40px;
     height: 40px;
     flex-basis: 40px;
@@ -683,8 +890,13 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 
 .row-name {

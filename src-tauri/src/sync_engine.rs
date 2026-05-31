@@ -28,6 +28,7 @@ pub struct SyncAction {
 pub enum Action {
     Download,
     Skip,
+    Delete,
 }
 
 /// Sync state persisted to disk
@@ -207,6 +208,30 @@ async fn scan_directory_recursive(
     Ok(())
 }
 
+/// Recursively scan local directory for music files
+async fn scan_local_music_files(dir: &Path, result: &mut Vec<PathBuf>) -> Result<(), String> {
+    let mut entries = fs::read_dir(dir)
+        .await
+        .map_err(|e| format!("Failed to read local directory {}: {}", dir.display(), e))?;
+
+    while let Some(entry) = entries
+        .next_entry()
+        .await
+        .map_err(|e| format!("Failed to read directory entry: {}", e))?
+    {
+        let path = entry.path();
+        if path.is_dir() {
+            Box::pin(scan_local_music_files(&path, result)).await?;
+        } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+            if is_music_file(name) {
+                result.push(path);
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// Compare remote files with local directory to determine sync actions
 pub async fn compare_with_local(
     remote_files: &[RemoteFile],
@@ -214,6 +239,7 @@ pub async fn compare_with_local(
 ) -> Result<Vec<SyncAction>, String> {
     let mut actions = Vec::new();
 
+    // 1. 对比远程文件，决定下载/跳过
     for remote in remote_files {
         let local_path = build_local_path(local_dir, &remote.remote_path)?;
         let local = Path::new(&local_path);
@@ -270,6 +296,40 @@ pub async fn compare_with_local(
                     local_path: local_path_string,
                     action: Action::Skip,
                     reason: "文件相同，跳过".to_string(),
+                });
+            }
+        }
+    }
+
+    // 2. 扫描本地目录，找出不在远程列表中的文件 → 标记删除
+    let local_base = resolve_local_dir(local_dir)?;
+    if local_base.exists() {
+        let mut local_files = Vec::new();
+        scan_local_music_files(&local_base, &mut local_files).await?;
+
+        // 构建远程文件的本地路径集合
+        let remote_local_paths: std::collections::HashSet<String> = remote_files
+            .iter()
+            .filter_map(|r| build_local_path(local_dir, &r.remote_path).ok())
+            .map(|p| p.to_string_lossy().into_owned())
+            .collect();
+
+        for local_file in &local_files {
+            let local_str = local_file.to_string_lossy().into_owned();
+            if !remote_local_paths.contains(&local_str) {
+                // 本地文件不在远程列表中，需要删除
+                // remote_path 用相对于 local_dir 的路径作为标识
+                let remote_path = local_file
+                    .strip_prefix(&local_base)
+                    .unwrap_or(local_file)
+                    .to_string_lossy()
+                    .replace('\\', "/");
+
+                actions.push(SyncAction {
+                    remote_path,
+                    local_path: local_str,
+                    action: Action::Delete,
+                    reason: "NAS 上已删除".to_string(),
                 });
             }
         }
@@ -436,6 +496,24 @@ pub async fn sync_download(
                 if let Some(cb) = callback {
                     cb(index + 1, total, &format!("跳过: {}", action.remote_path));
                 }
+            }
+            Action::Delete => {
+                if let Some(cb) = callback {
+                    cb(index + 1, total, &format!("删除: {}", action.local_path));
+                }
+
+                // Delete the local file
+                let local_path = Path::new(&action.local_path);
+                if local_path.exists() {
+                    fs::remove_file(local_path)
+                        .await
+                        .map_err(|e| format!("Failed to delete {}: {}", action.local_path, e))?;
+                }
+
+                // Remove from synced_files state
+                state
+                    .synced_files
+                    .retain(|f| f.local_path != action.local_path);
             }
         }
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { DirEntry } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
@@ -10,6 +11,7 @@ import "./RemoteBrowser.css";
 const MUSIC_EXTENSIONS = [".mp3", ".flac", ".aac", ".wav"];
 
 function RemoteBrowser() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [currentPath, setCurrentPath] = useState("");
   const [entries, setEntries] = useState<DirEntry[]>([]);
@@ -20,6 +22,11 @@ function RemoteBrowser() {
 
   // 加载配置并连接
   useEffect(() => {
+    // 演示模式下不进行连接
+    if (isDemoMode()) {
+      return;
+    }
+    
     const config = loadSmbConfig();
     const unsubscribe = subscribeSmbSession((nextState) => {
       setConnectionState(nextState);
@@ -156,7 +163,7 @@ function RemoteBrowser() {
         <button className="back-btn" onClick={() => navigate(-1)}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 className="page-title">远程浏览</h1>
+        <h1 className="page-title">{t("remote.title")}</h1>
       </div>
 
       {/* 路径导航 */}
@@ -166,21 +173,20 @@ function RemoteBrowser() {
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <span className="current-path">
-            /{currentPath || "根目录"}
+            /{currentPath || t("remote.rootDir")}
           </span>
-        </div>
-      )}
-
-      {/* 错误提示 */}
-      {error && (
-        <div className="error-banner">
-          <span className="material-symbols-outlined">error</span>
-          <span>{error}</span>
         </div>
       )}
 
       {/* 可滚动内容 */}
       <div className="remote-scroll">
+        {/* 错误提示 */}
+        {error && (
+          <div className="error-banner">
+            <span className="material-symbols-outlined">error</span>
+            <span>{error}</span>
+          </div>
+        )}
         {/* 加载状态 */}
         {isLoading && (
           <div className="browser-loading">

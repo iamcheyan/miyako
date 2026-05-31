@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Miyako"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "save": "保存",
+    "delete": "削除",
+    "back": "戻る",
+    "search": "検索",
+    "noData": "データなし"
+  },
+  "musicLibrary": {
+    "title": "音楽ライブラリ",
+    "allSongs": "すべての曲",
+    "folders": "フォルダ",
+    "songs": "曲",
+    "searchPlaceholder": "音楽を検索...",
+    "quickActions": {
+      "nasSettings": "NAS設定",
+      "syncMusic": "音楽を同期",
+      "browseRemote": "リモート閲覧"
+    },
+    "empty": {
+      "title": "音楽がまだありません",
+      "description": "まずNAS接続を設定し、音楽をローカルに同期してください",
+      "configureNAS": "NASを設定",
+      "startSync": "同期を開始"
+    },
+    "searchNoResults": "一致する曲が見つかりません",
+    "emptyFolder": "このフォルダに音楽ファイルはありません"
+  },
+  "player": {
+    "playing": "再生中",
+    "paused": "一時停止",
+    "playlist": "プレイリスト",
+    "emptyPlaylist": "プレイリストなし"
+  },
+  "settings": {
+    "title": "設定",
+    "language": {
+      "title": "言語設定",
+      "zh": "中文",
+      "en": "English",
+      "ja": "日本語"
+    },
+    "smb": {
+      "title": "SMBサーバー",
+      "server": "サーバーアドレス",
+      "serverPlaceholder": "192.168.1.100",
+      "share": "共有名",
+      "sharePlaceholder": "music",
+      "username": "ユーザー名",
+      "usernamePlaceholder": "オプション",
+      "password": "パスワード",
+      "remotePath": "リモートパス",
+      "remotePathPlaceholder": "空にするとルート",
+      "localDir": "ローカル保存ディレクトリ",
+      "testConnection": "接続テスト",
+      "testing": "テスト中...",
+      "testSuccess": "接続成功",
+      "testError": "接続失敗"
+    },
+    "dangerZone": {
+      "title": "危険ゾーン",
+      "clearHistory": "再生履歴を削除",
+      "clearHistoryDesc": "すべての同期済みファイル記録を削除",
+      "confirmClearHistory": "再生履歴を削除しますか？この操作は元に戻せません。"
+    },
+    "stats": {
+      "title": "統計情報",
+      "syncedFiles": "同期済みファイル",
+      "totalSize": "合計サイズ"
+    }
+  },
+  "sync": {
+    "title": "同期管理",
+    "connected": "接続済み",
+    "connecting": "接続中",
+    "disconnected": "未接続",
+    "nasServer": "NASサーバー",
+    "connectingTo": "NASサーバーに接続中",
+    "configureFirst": "まずSMB接続を設定してください",
+    "settings": "設定",
+    "syncInfo": "同期情報",
+    "lastSync": "最終同期",
+    "syncedFiles": "同期済みファイル",
+    "never": "未実行",
+    "files": "件",
+    "syncLog": "同期ログ",
+    "noLogs": "ログなし",
+    "startSync": "同期を開始"
+  },
+  "remote": {
+    "title": "リモートブラウザ",
+    "empty": "ディレクトリは空です",
+    "folders": "フォルダ",
+    "musicFiles": "音楽ファイル",
+    "loading": "読み込み中...",
+    "notConnected": "SMBサーバーに接続していません",
+    "loadError": "ディレクトリの読み込みに失敗しました",
+    "rootDir": "ルート"
+  }
+}

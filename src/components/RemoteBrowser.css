@@ -8,68 +8,7 @@
 
 /* 页面标题栏 */
 .page-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background-color: var(--surface);
-  border-bottom: 1px solid var(--outline-variant);
-  flex-shrink: 0;
   margin-bottom: 20px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .page-header {
-    background-color: var(--surface-dark);
-    border-bottom-color: var(--outline-variant-dark);
-  }
-}
-
-.page-header .back-btn {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--on-surface);
-  cursor: pointer;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-@media (prefers-color-scheme: dark) {
-  .page-header .back-btn {
-    color: var(--on-surface-dark);
-  }
-}
-
-.page-header .back-btn:hover {
-  background-color: var(--outline-variant);
-}
-
-@media (prefers-color-scheme: dark) {
-  .page-header .back-btn:hover {
-    background-color: var(--outline-variant-dark);
-  }
-}
-
-.page-title {
-  flex: 1;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--on-surface);
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (prefers-color-scheme: dark) {
-  .page-title {
-    color: var(--on-surface-dark);
-  }
 }
 
 .remote-header {
@@ -83,7 +22,7 @@
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 100px;
+  padding: 12px 12px 100px 12px;
 }
 
 /* 路径导航 */
@@ -91,7 +30,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 16px 16px 0;
+  margin: 0 16px 0;
   padding: 8px 12px;
   background-color: var(--surface-variant);
   border-radius: 12px;
@@ -190,10 +129,10 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
+  margin: 0 16px 16px;
   background-color: var(--error-container);
   color: var(--error);
   border-radius: 12px;
-  margin-bottom: 16px;
 }
 
 /* 空状态 */

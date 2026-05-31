@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Miyako"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "back": "Back",
+    "search": "Search",
+    "noData": "No data"
+  },
+  "musicLibrary": {
+    "title": "Music Library",
+    "allSongs": "All Songs",
+    "folders": "Folders",
+    "songs": "songs",
+    "searchPlaceholder": "Search music...",
+    "quickActions": {
+      "nasSettings": "NAS Settings",
+      "syncMusic": "Sync Music",
+      "browseRemote": "Browse Remote"
+    },
+    "empty": {
+      "title": "No music yet",
+      "description": "Please configure NAS connection first, then sync music to local",
+      "configureNAS": "Configure NAS",
+      "startSync": "Start Sync"
+    },
+    "searchNoResults": "No matching songs found",
+    "emptyFolder": "No music files in this folder"
+  },
+  "player": {
+    "playing": "Playing",
+    "paused": "Paused",
+    "playlist": "Playlist",
+    "emptyPlaylist": "No playlist"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": {
+      "title": "Language",
+      "zh": "中文",
+      "en": "English",
+      "ja": "日本語"
+    },
+    "smb": {
+      "title": "SMB Server",
+      "server": "Server Address",
+      "serverPlaceholder": "192.168.1.100",
+      "share": "Share Name",
+      "sharePlaceholder": "music",
+      "username": "Username",
+      "usernamePlaceholder": "Optional",
+      "password": "Password",
+      "remotePath": "Remote Path",
+      "remotePathPlaceholder": "Leave empty for root",
+      "localDir": "Local Storage Directory",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testSuccess": "Connection successful",
+      "testError": "Connection failed"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "clearHistory": "Clear Play History",
+      "clearHistoryDesc": "Delete all synced file records",
+      "confirmClearHistory": "Are you sure you want to clear play history? This action cannot be undone."
+    },
+    "stats": {
+      "title": "Statistics",
+      "syncedFiles": "Synced Files",
+      "totalSize": "Total Size"
+    }
+  },
+  "sync": {
+    "title": "Sync Management",
+    "connected": "Connected",
+    "connecting": "Connecting",
+    "disconnected": "Disconnected",
+    "nasServer": "NAS Server",
+    "connectingTo": "Connecting to NAS server",
+    "configureFirst": "Please configure SMB connection first",
+    "settings": "Settings",
+    "syncInfo": "Sync Info",
+    "lastSync": "Last Sync",
+    "syncedFiles": "Synced Files",
+    "never": "Never",
+    "files": "files",
+    "syncLog": "Sync Log",
+    "noLogs": "No logs",
+    "startSync": "Start Sync"
+  },
+  "remote": {
+    "title": "Remote Browser",
+    "empty": "Directory is empty",
+    "folders": "Folders",
+    "musicFiles": "Music Files",
+    "loading": "Loading...",
+    "notConnected": "Not connected to SMB server",
+    "loadError": "Failed to load directory",
+    "rootDir": "Root"
+  }
+}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { SyncState } from "../types/tauri-commands";
 import { getAudioPlayer } from "../lib/audioPlayer";
 import { isDemoMode, getDemoFolders } from "../lib/demoData";
@@ -22,6 +23,7 @@ interface Folder {
 }
 
 function MusicLibrary() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [currentPath, setCurrentPath] = useState<string | null>(null);
@@ -176,7 +178,7 @@ function MusicLibrary() {
             <input
               type="text"
               className="search-input"
-              placeholder="搜索音乐..."
+              placeholder={t("musicLibrary.searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -188,7 +190,7 @@ function MusicLibrary() {
               onClick={() => navigate("/settings")}
             >
               <span className="material-symbols-outlined action-icon">settings_input_antenna</span>
-              <span className="action-label">NAS 设置</span>
+              <span className="action-label">{t("musicLibrary.quickActions.nasSettings")}</span>
             </button>
 
             <button
@@ -196,7 +198,7 @@ function MusicLibrary() {
               onClick={() => navigate("/sync")}
             >
               <span className="material-symbols-outlined action-icon">sync</span>
-              <span className="action-label">同步音乐</span>
+              <span className="action-label">{t("musicLibrary.quickActions.syncMusic")}</span>
             </button>
 
             <button
@@ -204,7 +206,7 @@ function MusicLibrary() {
               onClick={() => navigate("/remote")}
             >
               <span className="material-symbols-outlined action-icon">folder_open</span>
-              <span className="action-label">浏览远程</span>
+              <span className="action-label">{t("musicLibrary.quickActions.browseRemote")}</span>
             </button>
           </div>
         </div>
@@ -214,22 +216,22 @@ function MusicLibrary() {
           {folders.length === 0 ? (
             <div className="empty-state">
               <span className="material-symbols-outlined empty-icon">library_music</span>
-              <h3 className="empty-title">还没有音乐</h3>
+              <h3 className="empty-title">{t("musicLibrary.empty.title")}</h3>
               <p className="empty-desc">
-                请先配置 NAS 连接，然后同步音乐到本地
+                {t("musicLibrary.empty.description")}
               </p>
               <div className="empty-actions">
                 <button
                   className="empty-btn primary"
                   onClick={() => navigate("/sync")}
                 >
-                  配置 NAS
+                  {t("musicLibrary.empty.configureNAS")}
                 </button>
                 <button
                   className="empty-btn secondary"
                   onClick={() => navigate("/sync")}
                 >
-                  开始同步
+                  {t("musicLibrary.empty.startSync")}
                 </button>
               </div>
             </div>
@@ -242,8 +244,8 @@ function MusicLibrary() {
               >
                 <span className="material-symbols-outlined folder-icon">library_music</span>
                 <div className="folder-info">
-                  <span className="folder-name">全部歌曲</span>
-                  <span className="folder-count">{folders.reduce((sum, f) => sum + f.files.length, 0)} 首歌曲</span>
+                  <span className="folder-name">{t("musicLibrary.allSongs")}</span>
+                  <span className="folder-count">{folders.reduce((sum, f) => sum + f.files.length, 0)} {t("musicLibrary.songs")}</span>
                 </div>
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>
@@ -258,7 +260,7 @@ function MusicLibrary() {
                   <span className="material-symbols-outlined folder-icon">folder</span>
                   <div className="folder-info">
                     <span className="folder-name">{folder.name}</span>
-                    <span className="folder-count">{folder.files.length} 首歌曲</span>
+                    <span className="folder-count">{folder.files.length} {t("musicLibrary.songs")}</span>
                   </div>
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
@@ -281,7 +283,7 @@ function MusicLibrary() {
           </button>
           <div className="list-header-info">
             <h2 className="list-title">{currentPath.split("/").pop()}</h2>
-            <span className="list-subtitle">{currentFiles.length} 首歌曲</span>
+            <span className="list-subtitle">{currentFiles.length} {t("musicLibrary.songs")}</span>
           </div>
         </div>
 
@@ -290,7 +292,7 @@ function MusicLibrary() {
           <input
             type="text"
             className="search-input"
-            placeholder="搜索歌曲..."
+            placeholder={t("musicLibrary.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -303,7 +305,7 @@ function MusicLibrary() {
           <div className="empty-state small">
             <span className="material-symbols-outlined empty-icon">search_off</span>
             <p className="empty-desc">
-              {searchQuery ? "没有找到匹配的歌曲" : "此文件夹没有音乐文件"}
+              {searchQuery ? t("musicLibrary.searchNoResults") : t("musicLibrary.emptyFolder")}
             </p>
           </div>
         ) : (

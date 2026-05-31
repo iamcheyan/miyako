@@ -45,7 +45,7 @@ export interface RemoteFile {
   last_modified: number | null;
 }
 
-export type SyncActionType = "Download" | "Skip";
+export type SyncActionType = "Download" | "Skip" | "Delete";
 
 export interface SyncAction {
   remote_path: string;

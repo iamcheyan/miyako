@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type {
   RemoteFile,
   SyncAction,
@@ -27,6 +28,7 @@ interface SyncProgressPayload {
 }
 
 function SyncPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -156,22 +158,24 @@ function SyncPage() {
       });
 
       const toDownload = actions.filter((a) => a.action === "Download");
+      const toDelete = actions.filter((a) => a.action === "Delete");
       const toSkip = actions.filter((a) => a.action === "Skip");
-      addLog(`需要下载: ${toDownload.length} 个文件，跳过: ${toSkip.length} 个文件`);
+      addLog(`需要下载: ${toDownload.length} 个，删除: ${toDelete.length} 个，跳过: ${toSkip.length} 个`);
 
-      if (toDownload.length === 0) {
+      if (toDownload.length === 0 && toDelete.length === 0) {
         addLog("所有文件已是最新，无需同步", "success");
         setIsSyncing(false);
         return;
       }
 
-      // 步骤 3: 下载文件
-      setProgress({ current: 0, total: toDownload.length });
-      addLog("开始下载文件...");
+      // 步骤 3: 下载和删除文件
+      const totalActions = toDownload.length + toDelete.length;
+      setProgress({ current: 0, total: totalActions });
+      addLog("开始同步文件...");
 
       const state = await invoke<SyncState>("sync_download", {
         connectionId: activeConnectionId,
-        actions: toDownload,
+        actions: [...toDownload, ...toDelete],
         localDir,
         statePath: STATE_PATH,
       });
@@ -188,7 +192,7 @@ function SyncPage() {
   };
 
   const formatTime = (timestamp: number | null): string => {
-    if (!timestamp) return "从未";
+    if (!timestamp) return t("sync.never");
     return new Date(timestamp * 1000).toLocaleString();
   };
 
@@ -199,7 +203,7 @@ function SyncPage() {
         <button className="back-btn" onClick={() => navigate(-1)}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
-        <h1 className="page-title">同步管理</h1>
+        <h1 className="page-title">{t("sync.title")}</h1>
       </div>
 
       {/* 固定头部：状态卡片 + 错误提示 + 统计 */}
@@ -213,10 +217,10 @@ function SyncPage() {
               </span>
               <div className="status-text">
                 <span className="status-title">
-                  {connectionId ? "已连接" : connectionState.isConnecting ? "连接中" : "未连接"}
+                  {connectionId ? t("sync.connected") : connectionState.isConnecting ? t("sync.connecting") : t("sync.disconnected")}
                 </span>
                 <span className="status-subtitle">
-                  {connectionId ? "NAS 服务器" : connectionState.isConnecting ? "正在连接 NAS 服务器" : "请先配置 SMB 连接"}
+                  {connectionId ? t("sync.nasServer") : connectionState.isConnecting ? t("sync.connectingTo") : t("sync.configureFirst")}
                 </span>
               </div>
             </div>
@@ -225,7 +229,7 @@ function SyncPage() {
               <button
                 className="settings-btn"
                 onClick={() => navigate("/settings")}
-                aria-label="设置"
+                aria-label={t("sync.settings")}
               >
                 <span className="material-symbols-outlined">settings</span>
               </button>
@@ -268,20 +272,20 @@ function SyncPage() {
 
         {/* 同步统计 */}
         <div className="stats-section">
-          <h3 className="section-title">同步信息</h3>
+          <h3 className="section-title">{t("sync.syncInfo")}</h3>
           <div className="stats-list">
             <div className="stat-row">
               <span className="material-symbols-outlined stat-icon">schedule</span>
-              <span className="stat-label">上次同步</span>
+              <span className="stat-label">{t("sync.lastSync")}</span>
               <span className="stat-value">
                 {formatTime(syncState?.last_sync_time ?? null)}
               </span>
             </div>
             <div className="stat-row">
               <span className="material-symbols-outlined stat-icon">audio_file</span>
-              <span className="stat-label">已同步文件</span>
+              <span className="stat-label">{t("sync.syncedFiles")}</span>
               <span className="stat-value">
-                {syncState?.synced_files?.length ?? 0} 个
+                {syncState?.synced_files?.length ?? 0} {t("sync.files")}
               </span>
             </div>
           </div>
@@ -291,12 +295,12 @@ function SyncPage() {
       {/* 可滚动内容：同步日志 */}
       <div className="sync-scroll">
         <div className="log-section">
-          <h3 className="section-title">同步日志</h3>
+          <h3 className="section-title">{t("sync.syncLog")}</h3>
           <div className="log-list">
             {logs.length === 0 ? (
               <div className="log-empty">
                 <span className="material-symbols-outlined">terminal</span>
-                <span>暂无日志</span>
+                <span>{t("sync.noLogs")}</span>
               </div>
             ) : (
               logs.map((log, index) => (

@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build from'
+        required: false
+        default: 'main'
+        type: choice
+        options:
+          - main
+          - master
+          - ralph/github-actions-android-apk
 
 env:
   CARGO_TERM_COLOR: always
@@ -20,6 +30,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

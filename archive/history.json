@@ -2,6 +2,19 @@
   "version": 1,
   "entries": [
     {
+      "id": "20260531-082448-nas-music-sync",
+      "archiveDir": "20260531-082448-nas-music-sync",
+      "project": "NasMusicSync",
+      "branchName": "ralph/nas-music-sync",
+      "description": "Android 离线音乐播放器 - 将 NAS 上的音乐通过 SMB 同步到手机本地，支持离线播放",
+      "storiesCompleted": 15,
+      "storiesTotal": 15,
+      "status": "completed",
+      "reason": "replaced by a new task draft",
+      "createdAt": "2026-05-31 08:24:48",
+      "updatedAt": "2026-05-31 08:24:48"
+    },
+    {
       "id": "20260530-234413-nas-music-sync",
       "archiveDir": "20260530-234413-nas-music-sync",
       "project": "NasMusicSync",

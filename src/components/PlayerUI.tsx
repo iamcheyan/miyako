@@ -1,16 +1,32 @@
 import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/audioPlayer";
+import { isFavorite, toggleFavorite } from "../lib/favorites";
 import "./PlayerUI.css";
 
 function PlayerUI() {
+  const { t } = useTranslation();
   const player = getAudioPlayer();
   const [state, setState] = useState<AudioPlayerState>(player.getState());
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [titleOverflow, setTitleOverflow] = useState(false);
   const pushStateRef = useRef(false);
+  const trackTitleRef = useRef<HTMLHeadingElement>(null);
+  const dragStartRef = useRef<{ y: number; time: number } | null>(null);
 
   useEffect(() => {
     setState(player.getState());
   }, [player]);
+
+  // 更新收藏状态
+  useEffect(() => {
+    if (state.currentTrack) {
+      setIsFavorited(isFavorite(state.currentTrack));
+    }
+  }, [state.currentTrack]);
 
   // 展开播放器时拦截安卓返回键：先收起播放器，而不是退出页面
   useEffect(() => {
@@ -38,6 +54,50 @@ function PlayerUI() {
     };
   }, [isExpanded]);
 
+  // 处理关闭播放器
+  const handleClosePlayer = useCallback(() => {
+    setIsExpanded(false);
+    setDragOffset(0);
+    setIsDragging(false);
+  }, []);
+
+  // 拖拽手势处理
+  const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    dragStartRef.current = { y: clientY, time: Date.now() };
+    setIsDragging(true);
+  }, []);
+
+  const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const offset = clientY - dragStartRef.current.y;
+    
+    // 只允许向下拖拽
+    if (offset > 0) {
+      setDragOffset(offset);
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    if (!dragStartRef.current) return;
+    
+    const elapsed = Date.now() - dragStartRef.current.time;
+    const velocity = dragOffset / (elapsed || 1);
+    
+    // 如果拖拽超过 100px 或者速度够快，关闭播放器
+    if (dragOffset > 100 || velocity > 0.5) {
+      handleClosePlayer();
+    } else {
+      // 否则回弹
+      setDragOffset(0);
+    }
+    
+    dragStartRef.current = null;
+    setIsDragging(false);
+  }, [dragOffset, handleClosePlayer]);
+
   useEffect(() => {
     const updateState = () => {
       setState(player.getState());
@@ -59,6 +119,17 @@ function PlayerUI() {
       player.off("loadedmetadata", updateState);
     };
   }, [player]);
+
+  // 检测标题是否溢出（标题宽度超过容器宽度时自动滚动）
+  useEffect(() => {
+    if (trackTitleRef.current) {
+      const title = trackTitleRef.current;
+      const section = title.parentElement;
+      if (section) {
+        setTitleOverflow(title.scrollWidth > section.clientWidth);
+      }
+    }
+  }, [state.currentTrack]);
 
   const handlePlayPause = useCallback(async () => {
     if (state.isPlaying) {
@@ -91,6 +162,13 @@ function PlayerUI() {
     const nextMode = modes[(currentIndex + 1) % modes.length];
     player.setPlayMode(nextMode);
   }, [state.playMode, player]);
+
+  const handleToggleFavorite = useCallback(() => {
+    if (state.currentTrack) {
+      const newState = toggleFavorite(state.currentTrack);
+      setIsFavorited(newState);
+    }
+  }, [state.currentTrack]);
 
   const formatTime = (seconds: number): string => {
     if (isNaN(seconds)) return "0:00";
@@ -171,11 +249,24 @@ function PlayerUI() {
   }
 
   // 展开的播放器
+  const containerStyle: CSSProperties = isDragging
+    ? { transform: `translateY(${dragOffset}px)`, transition: 'none' }
+    : {};
+
   return (
-    <div className="player-ui expanded">
-      <div className="expanded-container">
-        {/* 顶部：歌曲名 + 状态 */}
-        <div className="expanded-header">
+    <div className={`player-ui expanded ${isDragging ? 'dragging' : ''}`}>
+      <div className="expanded-container" style={containerStyle}>
+        {/* 顶部：信号 + 歌曲名 + 关闭按钮 */}
+        <div
+          className="expanded-header"
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+          onMouseDown={handleDragStart}
+          onMouseMove={isDragging ? handleDragMove : undefined}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={isDragging ? handleDragEnd : undefined}
+        >
           <div className={`signal-mark ${state.isPlaying ? 'playing' : 'paused'}`} aria-hidden="true">
             <span />
             <span />
@@ -186,23 +277,21 @@ function PlayerUI() {
             <span />
           </div>
           <div className="track-section">
-            <h2 className="track-title">{currentTrackName}</h2>
-            {hasHistory && (
-              <p className="track-status">
-                {state.isPlaying ? "正在播放" : "已暂停"} · {formatTime(state.currentTime)}
-              </p>
-            )}
+            <h2 ref={trackTitleRef} className={`track-title ${titleOverflow ? 'scrolling' : ''}`}>{currentTrackName}</h2>
           </div>
+          <button className="expanded-close-btn" onClick={handleClosePlayer}>
+            <span className="material-symbols-outlined">expand_more</span>
+          </button>
         </div>
 
         {/* 中间：播放列表，填满剩余空间，可滚动 */}
         <div className="expanded-playlist">
-          <h3 className="playlist-header">播放列表</h3>
+          <h3 className="playlist-header">{t("player.playlist")}</h3>
           <div className="playlist-scroll">
             {state.playlist.length === 0 ? (
               <div className="playlist-empty">
                 <span className="material-symbols-outlined">queue_music</span>
-                <span>暂无播放列表</span>
+                <span>{t("player.emptyPlaylist")}</span>
               </div>
             ) : (
               state.playlist.map((track, index) => (
@@ -262,7 +351,15 @@ function PlayerUI() {
               <span className="material-symbols-outlined">skip_next</span>
             </button>
 
-            <div className="ctrl-spacer" aria-hidden="true" />
+            <button
+              className={`ctrl-btn favorite ${isFavorited ? "active" : ""}`}
+              onClick={handleToggleFavorite}
+              disabled={!state.currentTrack}
+            >
+              <span className="material-symbols-outlined">
+                {isFavorited ? "favorite" : "favorite_border"}
+              </span>
+            </button>
           </div>
 
         </div>

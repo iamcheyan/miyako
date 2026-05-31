@@ -1,0 +1,108 @@
+{
+  "app": {
+    "title": "Miyako"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "confirm": "确认",
+    "save": "保存",
+    "delete": "删除",
+    "back": "返回",
+    "search": "搜索",
+    "noData": "暂无数据"
+  },
+  "musicLibrary": {
+    "title": "音乐库",
+    "allSongs": "全部歌曲",
+    "folders": "文件夹",
+    "songs": "首歌曲",
+    "searchPlaceholder": "搜索音乐...",
+    "quickActions": {
+      "nasSettings": "NAS 设置",
+      "syncMusic": "同步音乐",
+      "browseRemote": "浏览远程"
+    },
+    "empty": {
+      "title": "还没有音乐",
+      "description": "请先配置 NAS 连接，然后同步音乐到本地",
+      "configureNAS": "配置 NAS",
+      "startSync": "开始同步"
+    },
+    "searchNoResults": "没有找到匹配的歌曲",
+    "emptyFolder": "此文件夹没有音乐文件"
+  },
+  "player": {
+    "playing": "正在播放",
+    "paused": "已暂停",
+    "playlist": "播放列表",
+    "emptyPlaylist": "暂无播放列表"
+  },
+  "settings": {
+    "title": "设置",
+    "language": {
+      "title": "语言设置",
+      "zh": "中文",
+      "en": "English",
+      "ja": "日本語"
+    },
+    "smb": {
+      "title": "SMB 服务器",
+      "server": "服务器地址",
+      "serverPlaceholder": "192.168.1.100",
+      "share": "共享目录",
+      "sharePlaceholder": "music",
+      "username": "用户名",
+      "usernamePlaceholder": "可选",
+      "password": "密码",
+      "remotePath": "远程路径",
+      "remotePathPlaceholder": "留空使用根目录",
+      "localDir": "本地存储目录",
+      "testConnection": "测试连接",
+      "testing": "测试中...",
+      "testSuccess": "连接成功",
+      "testError": "连接失败"
+    },
+    "dangerZone": {
+      "title": "危险操作",
+      "clearHistory": "清除播放历史",
+      "clearHistoryDesc": "删除所有已同步的文件记录",
+      "confirmClearHistory": "确定要清除播放历史吗？此操作不可撤销。"
+    },
+    "stats": {
+      "title": "统计信息",
+      "syncedFiles": "已同步文件",
+      "totalSize": "总大小"
+    }
+  },
+  "sync": {
+    "title": "同步管理",
+    "connected": "已连接",
+    "connecting": "连接中",
+    "disconnected": "未连接",
+    "nasServer": "NAS 服务器",
+    "connectingTo": "正在连接 NAS 服务器",
+    "configureFirst": "请先配置 SMB 连接",
+    "settings": "设置",
+    "syncInfo": "同步信息",
+    "lastSync": "上次同步",
+    "syncedFiles": "已同步文件",
+    "never": "从未",
+    "files": "个",
+    "syncLog": "同步日志",
+    "noLogs": "暂无日志",
+    "startSync": "开始同步"
+  },
+  "remote": {
+    "title": "远程浏览",
+    "empty": "目录为空",
+    "folders": "文件夹",
+    "musicFiles": "音乐文件",
+    "loading": "加载中...",
+    "notConnected": "未连接到 SMB 服务器",
+    "loadError": "加载目录失败",
+    "rootDir": "根目录"
+  }
+}

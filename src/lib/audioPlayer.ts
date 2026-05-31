@@ -40,6 +40,11 @@ export class AudioPlayer {
 
   // 加载保存的状态
   private async loadSavedState() {
+    // 演示模式下不加载保存的状态
+    if (isDemoMode()) {
+      return;
+    }
+    
     const saved = loadPlaybackState();
     if (saved) {
       this.playlist = saved.playlist;

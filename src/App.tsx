@@ -12,6 +12,7 @@ import PlayerUI from "./components/PlayerUI";
 import Toast, { useToast } from "./components/Toast";
 import { getMediaSessionManager } from "./lib/mediaSession";
 import "./App.css";
+import "./components/shared.css";
 
 // 页面内容区域
 function PageContent() {

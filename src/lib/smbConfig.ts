@@ -2,13 +2,14 @@ import type { SmbConfig } from "../types/tauri-commands";
 
 export const SMB_CONFIG_STORAGE_KEY = "smb-config";
 
+// Read from environment variables, fallback to empty strings
 export const DEFAULT_SMB_CONFIG: SmbConfig = {
-  server: "192.168.3.10",
-  share: "NAS",
-  remotePath: "Music",
-  username: "tetsuya",
-  password: "cccccc",
-  localDir: "~/Music/NasSync",
+  server: import.meta.env.VITE_SMB_SERVER || "",
+  share: import.meta.env.VITE_SMB_SHARE || "",
+  remotePath: import.meta.env.VITE_SMB_REMOTE_PATH || "",
+  username: import.meta.env.VITE_SMB_USERNAME || "",
+  password: import.meta.env.VITE_SMB_PASSWORD || "",
+  localDir: import.meta.env.VITE_SMB_LOCAL_DIR || "~/Music/NasSync",
 };
 
 export function loadSmbConfig(): SmbConfig {

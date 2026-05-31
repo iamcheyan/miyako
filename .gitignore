@@ -38,5 +38,10 @@ src-tauri/**/~/
 *.m4a
 *.aac
 
+# Environment variables (secrets)
+.env
+.env.local
+.env.*.local
+
 # Embedded repos
 ralph/

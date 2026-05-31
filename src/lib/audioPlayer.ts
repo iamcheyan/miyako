@@ -1,4 +1,3 @@
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { savePlaybackState, loadPlaybackState } from "./playbackStorage";
 
 export type PlayMode = "sequential" | "loop" | "shuffle";
@@ -40,7 +39,7 @@ export class AudioPlayer {
   }
 
   // 加载保存的状态
-  private loadSavedState() {
+  private async loadSavedState() {
     const saved = loadPlaybackState();
     if (saved) {
       this.playlist = saved.playlist;
@@ -50,8 +49,12 @@ export class AudioPlayer {
 
       // 恢复播放位置
       if (saved.currentIndex >= 0 && saved.currentIndex < saved.playlist.length) {
-        this.audio.src = this.toAssetUrl(saved.playlist[saved.currentIndex]);
-        this.audio.currentTime = saved.currentTime;
+        try {
+          this.audio.src = await this.toBlobUrl(saved.playlist[saved.currentIndex]);
+          this.audio.currentTime = saved.currentTime;
+        } catch (e) {
+          console.error("Failed to restore saved state:", e);
+        }
       }
     }
   }
@@ -144,26 +147,46 @@ export class AudioPlayer {
     }
   }
 
-  // 将本地文件路径转换为可播放的 URL
-  private toAssetUrl(filePath: string): string {
-    if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+  // 将本地文件路径转换为可播放的 blob URL
+  private async toBlobUrl(filePath: string): Promise<string> {
+    if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("blob:")) {
       return filePath;
     }
 
     try {
-      const url = convertFileSrc(filePath);
-      console.log("convertFileSrc:", filePath, "->", url);
+      // 使用 Tauri 的 readFile 读取文件
+      const { readFile } = await import("@tauri-apps/plugin-fs");
+      const fileBytes = await readFile(filePath);
+
+      // 创建 blob URL
+      const blob = new Blob([fileBytes], { type: this.getMimeType(filePath) });
+      const url = URL.createObjectURL(blob);
+
+      console.log("Created blob URL for:", filePath);
       return url;
     } catch (e) {
-      console.error("convertFileSrc failed:", e);
-      // 回退：直接返回原始路径
-      return filePath;
+      console.error("Failed to create blob URL:", e);
+      throw e;
+    }
+  }
+
+  // 根据文件扩展名获取 MIME 类型
+  private getMimeType(filePath: string): string {
+    const ext = filePath.toLowerCase().split('.').pop();
+    switch (ext) {
+      case 'mp3': return 'audio/mpeg';
+      case 'flac': return 'audio/flac';
+      case 'wav': return 'audio/wav';
+      case 'm4a': return 'audio/mp4';
+      case 'aac': return 'audio/aac';
+      case 'ogg': return 'audio/ogg';
+      default: return 'audio/mpeg';
     }
   }
 
   async play(src?: string) {
     if (src) {
-      this.audio.src = this.toAssetUrl(src);
+      this.audio.src = await this.toBlobUrl(src);
       console.log("Audio src set to:", this.audio.src);
     }
     try {
@@ -205,12 +228,12 @@ export class AudioPlayer {
     return this.playMode;
   }
 
-  loadPlaylist(tracks: string[], startIndex: number = 0) {
+  async loadPlaylist(tracks: string[], startIndex: number = 0) {
     this.playlist = tracks;
     this.currentIndex = startIndex;
 
     if (tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
-      this.audio.src = this.toAssetUrl(tracks[startIndex]);
+      this.audio.src = await this.toBlobUrl(tracks[startIndex]);
     }
     this.saveState();
   }
@@ -218,7 +241,7 @@ export class AudioPlayer {
   async playTrack(index: number) {
     if (index >= 0 && index < this.playlist.length) {
       this.currentIndex = index;
-      this.audio.src = this.toAssetUrl(this.playlist[index]);
+      this.audio.src = await this.toBlobUrl(this.playlist[index]);
       await this.audio.play();
       this.saveState();
     }

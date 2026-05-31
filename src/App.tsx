@@ -3,7 +3,6 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  useLocation,
 } from "react-router-dom";
 import Settings from "./components/Settings";
 import RemoteBrowser from "./components/RemoteBrowser";
@@ -15,34 +14,38 @@ import { getMediaSessionManager } from "./lib/mediaSession";
 import "./App.css";
 import "./components/shared.css";
 
+// 路由页面的快照生命周期容器，在页面即将卸载的一瞬间捕获 DOM 作为滑动返回底图
+function SwipeablePage({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    return () => {
+      const pageContent = document.querySelector(".page-content");
+      if (pageContent) {
+        const scrollEl = pageContent.querySelector(".library-scroll, .settings-scroll, .sync-scroll, .remote-scroll");
+        const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
+
+        window.dispatchEvent(new CustomEvent("update_underlay", {
+          detail: {
+            html: pageContent.innerHTML,
+            scrollTop: scrollTop
+          }
+        }));
+      }
+    };
+  }, []);
+
+  return <>{children}</>;
+}
+
 // 页面内容区域
 function PageContent() {
-  const location = useLocation();
-
-  useEffect(() => {
-    // 捕获当前页面的 DOM 结构与滚动快照，用于卡片滑动返回时的底图层级透出
-    const pageContent = document.querySelector(".page-content");
-    if (pageContent) {
-      const scrollEl = pageContent.querySelector(".library-scroll, .settings-scroll, .sync-scroll, .remote-scroll, .playlist-scroll");
-      const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
-
-      window.dispatchEvent(new CustomEvent("update_underlay", {
-        detail: {
-          html: pageContent.innerHTML,
-          scrollTop: scrollTop
-        }
-      }));
-    }
-  }, [location.pathname]);
-
   return (
     <div className="page-wrapper">
       <main className="page-content">
         <Routes>
-          <Route path="/" element={<MusicLibrary />} />
-          <Route path="/sync" element={<SyncPage />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/remote" element={<RemoteBrowser />} />
+          <Route path="/" element={<SwipeablePage><MusicLibrary /></SwipeablePage>} />
+          <Route path="/sync" element={<SwipeablePage><SyncPage /></SwipeablePage>} />
+          <Route path="/settings" element={<SwipeablePage><Settings /></SwipeablePage>} />
+          <Route path="/remote" element={<SwipeablePage><RemoteBrowser /></SwipeablePage>} />
         </Routes>
       </main>
     </div>

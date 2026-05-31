@@ -45,3 +45,7 @@ src-tauri/**/~/
 
 # Embedded repos
 ralph/
+
+# Android/Gradle build cache (large files, should not be in git)
+src-tauri/gen/android/.gradle-home/
+android-test-app/.gradle-home/

@@ -77,18 +77,13 @@ a, button, [role="button"] {
   touch-action: manipulation;
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 4px;
+/* 隐藏滚动条，保留滚动功能 */
+* {
+  scrollbar-width: none; /* Firefox */
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--outline-variant);
-  border-radius: 2px;
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge */
 }
 
 /* 输入框样式 */

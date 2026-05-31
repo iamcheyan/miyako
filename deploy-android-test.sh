@@ -209,8 +209,21 @@ printf 'Device ABI: %s\n' "$DEVICE_ABI"
 printf 'Tauri target: %s\n' "$TAURI_TARGET"
 printf 'Package: %s\n' "$PACKAGE_NAME"
 
+clean_gradle_locks() {
+  step "Cleaning Gradle locks"
+  # Stop any running Gradle daemons
+  if [ -x "$ANDROID_PROJECT_DIR/gradlew" ]; then
+    "$ANDROID_PROJECT_DIR/gradlew" --stop 2>/dev/null || true
+  fi
+  pkill -f "gradle.*daemon" 2>/dev/null || true
+  # Remove lock files
+  find "$GRADLE_USER_HOME" -name "*.lock" -delete 2>/dev/null || true
+  find "$ANDROID_PROJECT_DIR" -name "*.lock" -delete 2>/dev/null || true
+}
+
 step "Building Tauri Android APK"
 cd "$ROOT_DIR"
+clean_gradle_locks
 sync_android_icons
 clean_generated_jni_symlinks
 if [ "$BUILD_MODE" = "debug" ]; then

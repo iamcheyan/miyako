@@ -14,38 +14,16 @@ import { getMediaSessionManager } from "./lib/mediaSession";
 import "./App.css";
 import "./components/shared.css";
 
-// 路由页面的快照生命周期容器，在页面即将卸载的一瞬间捕获 DOM 作为滑动返回底图
-function SwipeablePage({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    return () => {
-      const pageContent = document.querySelector(".page-content");
-      if (pageContent) {
-        const scrollEl = pageContent.querySelector(".library-scroll, .settings-scroll, .sync-scroll, .remote-scroll");
-        const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
-
-        window.dispatchEvent(new CustomEvent("update_underlay", {
-          detail: {
-            html: pageContent.innerHTML,
-            scrollTop: scrollTop
-          }
-        }));
-      }
-    };
-  }, []);
-
-  return <>{children}</>;
-}
-
 // 页面内容区域
 function PageContent() {
   return (
     <div className="page-wrapper">
       <main className="page-content">
         <Routes>
-          <Route path="/" element={<SwipeablePage><MusicLibrary /></SwipeablePage>} />
-          <Route path="/sync" element={<SwipeablePage><SyncPage /></SwipeablePage>} />
-          <Route path="/settings" element={<SwipeablePage><Settings /></SwipeablePage>} />
-          <Route path="/remote" element={<SwipeablePage><RemoteBrowser /></SwipeablePage>} />
+          <Route path="/" element={<MusicLibrary />} />
+          <Route path="/sync" element={<SyncPage />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/remote" element={<RemoteBrowser />} />
         </Routes>
       </main>
     </div>
@@ -63,8 +41,30 @@ function App() {
       setUnderlayScrollTop(e.detail.scrollTop);
     };
     window.addEventListener("update_underlay" as any, handleUpdateUnderlay);
+
+    // 🚀 核心黑科技：通过猴子补丁拦截 window.history.pushState
+    // 在路由发生改变、页面即将开始销毁和切换的前一瞬间，100% 同步捕获当前完好无损的 DOM 结构和滚动状态！
+    // 这彻底解决了在慢速移动端设备上 React 卸载后 DOM 被提前清空导致底牌空白的系统级时序 Bug！
+    const originalPushState = window.history.pushState;
+    window.history.pushState = function(state, unused, url) {
+      const pageContent = document.querySelector(".page-content");
+      if (pageContent) {
+        const scrollEl = pageContent.querySelector(".library-scroll, .settings-scroll, .sync-scroll, .remote-scroll");
+        const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
+        
+        window.dispatchEvent(new CustomEvent("update_underlay", {
+          detail: {
+            html: pageContent.innerHTML,
+            scrollTop: scrollTop
+          }
+        }));
+      }
+      return originalPushState.apply(this, [state, unused, url]);
+    };
+
     return () => {
       window.removeEventListener("update_underlay" as any, handleUpdateUnderlay);
+      window.history.pushState = originalPushState;
     };
   }, []);
 

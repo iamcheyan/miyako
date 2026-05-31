@@ -5,7 +5,6 @@ export interface PlaybackState {
   playlist: string[];
   currentIndex: number;
   currentTime: number;
-  volume: number;
   playMode: "sequential" | "loop" | "shuffle";
   lastPlayedAt: number;
 }

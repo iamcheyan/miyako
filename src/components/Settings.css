@@ -1,11 +1,84 @@
 .settings-page {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* 顶部导航栏 */
+.settings-topbar {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-topbar {
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.settings-back-btn {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--on-surface);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-back-btn {
+    color: var(--on-surface-dark);
+  }
+}
+
+.settings-back-btn:active {
+  background-color: var(--surface-variant);
+}
+
+.settings-title {
+  flex: 1;
+  font-size: 22px;
+  font-weight: 400;
+  margin: 0;
+  padding: 0 12px;
+  color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-title {
+    color: var(--on-surface-dark);
+  }
+}
+
+/* 固定头部区域 */
+.settings-header {
+  flex-shrink: 0;
+  padding: 12px;
+}
+
+/* 可滚动内容区域 */
+.settings-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 12px;
   padding-bottom: 100px;
 }
 
 /* 设置区块 */
 .settings-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .section-title {
@@ -32,7 +105,7 @@
 }
 
 .setting-item {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--outline-variant);
 }
 
@@ -61,7 +134,7 @@
 
 .setting-input {
   width: 100%;
-  padding: 12px;
+  padding: 10px 12px;
   background-color: var(--surface);
   border: 1px solid var(--outline);
   border-radius: 8px;
@@ -142,8 +215,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 24px;
-  margin-top: 16px;
+  padding: 12px 24px;
+  margin-top: 12px;
   background-color: var(--on-surface);
   color: var(--surface);
   border: none;
@@ -216,7 +289,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 12px;
   background-color: var(--surface);
   border-radius: 12px;
   border: 1px solid var(--outline-variant);
@@ -288,7 +361,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 14px;
   background: none;
   border: none;
   border-bottom: 1px solid var(--outline-variant);

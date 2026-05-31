@@ -130,86 +130,89 @@ function MusicLibrary() {
   if (!currentPath) {
     return (
       <div className="library-page">
-        {/* 搜索栏 */}
-        <div className="search-bar">
-          <span className="material-symbols-outlined search-icon">search</span>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="搜索音乐..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        {/* 固定头部：搜索栏 + 快捷操作 */}
+        <div className="library-header">
+          <div className="search-bar">
+            <span className="material-symbols-outlined search-icon">search</span>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="搜索音乐..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="quick-actions">
+            <button
+              className="action-card"
+              onClick={() => navigate("/sync")}
+            >
+              <span className="material-symbols-outlined action-icon">settings_input_antenna</span>
+              <span className="action-label">NAS 设置</span>
+            </button>
+
+            <button
+              className="action-card"
+              onClick={() => navigate("/sync")}
+            >
+              <span className="material-symbols-outlined action-icon">sync</span>
+              <span className="action-label">同步音乐</span>
+            </button>
+
+            <button
+              className="action-card"
+              onClick={() => navigate("/remote")}
+            >
+              <span className="material-symbols-outlined action-icon">folder_open</span>
+              <span className="action-label">浏览远程</span>
+            </button>
+          </div>
         </div>
 
-        {/* 快捷操作 */}
-        <div className="quick-actions">
-          <button
-            className="action-card"
-            onClick={() => navigate("/settings")}
-          >
-            <span className="material-symbols-outlined action-icon">settings_input_antenna</span>
-            <span className="action-label">NAS 设置</span>
-          </button>
-
-          <button
-            className="action-card"
-            onClick={() => navigate("/sync")}
-          >
-            <span className="material-symbols-outlined action-icon">sync</span>
-            <span className="action-label">同步音乐</span>
-          </button>
-
-          <button
-            className="action-card"
-            onClick={() => navigate("/remote")}
-          >
-            <span className="material-symbols-outlined action-icon">folder_open</span>
-            <span className="action-label">浏览远程</span>
-          </button>
-        </div>
-
-        {/* 文件夹列表 */}
-        {folders.length === 0 ? (
-          <div className="empty-state">
-            <span className="material-symbols-outlined empty-icon">library_music</span>
-            <h3 className="empty-title">还没有音乐</h3>
-            <p className="empty-desc">
-              请先配置 NAS 连接，然后同步音乐到本地
-            </p>
-            <div className="empty-actions">
-              <button
-                className="empty-btn primary"
-                onClick={() => navigate("/settings")}
-              >
-                配置 NAS
-              </button>
-              <button
-                className="empty-btn secondary"
-                onClick={() => navigate("/sync")}
-              >
-                开始同步
-              </button>
+        {/* 可滚动内容：文件夹列表 */}
+        <div className="library-scroll">
+          {folders.length === 0 ? (
+            <div className="empty-state">
+              <span className="material-symbols-outlined empty-icon">library_music</span>
+              <h3 className="empty-title">还没有音乐</h3>
+              <p className="empty-desc">
+                请先配置 NAS 连接，然后同步音乐到本地
+              </p>
+              <div className="empty-actions">
+                <button
+                  className="empty-btn primary"
+                  onClick={() => navigate("/sync")}
+                >
+                  配置 NAS
+                </button>
+                <button
+                  className="empty-btn secondary"
+                  onClick={() => navigate("/sync")}
+                >
+                  开始同步
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="folder-list">
-            {folders.map((folder) => (
-              <button
-                key={folder.path}
-                className="folder-item"
-                onClick={() => handleFolderClick(folder)}
-              >
-                <span className="material-symbols-outlined folder-icon">folder</span>
-                <div className="folder-info">
-                  <span className="folder-name">{folder.name}</span>
-                  <span className="folder-count">{folder.files.length} 首歌曲</span>
-                </div>
-                <span className="material-symbols-outlined">chevron_right</span>
-              </button>
-            ))}
-          </div>
-        )}
+          ) : (
+            <div className="folder-list">
+              {folders.map((folder) => (
+                <button
+                  key={folder.path}
+                  className="folder-item"
+                  onClick={() => handleFolderClick(folder)}
+                >
+                  <span className="material-symbols-outlined folder-icon">folder</span>
+                  <div className="folder-info">
+                    <span className="folder-name">{folder.name}</span>
+                    <span className="folder-count">{folder.files.length} 首歌曲</span>
+                  </div>
+                  <span className="material-symbols-outlined">chevron_right</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -217,55 +220,58 @@ function MusicLibrary() {
   // 显示文件列表
   return (
     <div className="library-page">
-      {/* 顶部导航 */}
-      <div className="list-header">
-        <button className="back-btn-small" onClick={handleBackClick}>
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <div className="list-header-info">
-          <h2 className="list-title">{currentPath.split("/").pop()}</h2>
-          <span className="list-subtitle">{currentFiles.length} 首歌曲</span>
+      {/* 固定头部：返回导航 + 搜索栏 */}
+      <div className="library-header">
+        <div className="list-header">
+          <button className="back-btn-small" onClick={handleBackClick}>
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div className="list-header-info">
+            <h2 className="list-title">{currentPath.split("/").pop()}</h2>
+            <span className="list-subtitle">{currentFiles.length} 首歌曲</span>
+          </div>
+        </div>
+
+        <div className="search-bar">
+          <span className="material-symbols-outlined search-icon">search</span>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="搜索歌曲..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* 搜索栏 */}
-      <div className="search-bar">
-        <span className="material-symbols-outlined search-icon">search</span>
-        <input
-          type="text"
-          className="search-input"
-          placeholder="搜索歌曲..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      {/* 可滚动内容：文件列表 */}
+      <div className="library-scroll">
+        {filteredFiles.length === 0 ? (
+          <div className="empty-state small">
+            <span className="material-symbols-outlined empty-icon">search_off</span>
+            <p className="empty-desc">
+              {searchQuery ? "没有找到匹配的歌曲" : "此文件夹没有音乐文件"}
+            </p>
+          </div>
+        ) : (
+          <div className="file-list">
+            {filteredFiles.map((file, index) => (
+              <button
+                key={file.remotePath}
+                className="file-item"
+                onClick={() => handleFileClick(file)}
+              >
+                <span className="file-index">{index + 1}</span>
+                <div className="file-info">
+                  <span className="file-name">{formatFileName(file.name)}</span>
+                  <span className="file-size">{formatSize(file.size)}</span>
+                </div>
+                <span className="material-symbols-outlined">play_circle</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* 文件列表 */}
-      {filteredFiles.length === 0 ? (
-        <div className="empty-state small">
-          <span className="material-symbols-outlined empty-icon">search_off</span>
-          <p className="empty-desc">
-            {searchQuery ? "没有找到匹配的歌曲" : "此文件夹没有音乐文件"}
-          </p>
-        </div>
-      ) : (
-        <div className="file-list">
-          {filteredFiles.map((file, index) => (
-            <button
-              key={file.remotePath}
-              className="file-item"
-              onClick={() => handleFileClick(file)}
-            >
-              <span className="file-index">{index + 1}</span>
-              <div className="file-info">
-                <span className="file-name">{formatFileName(file.name)}</span>
-                <span className="file-size">{formatSize(file.size)}</span>
-              </div>
-              <span className="material-symbols-outlined">play_circle</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

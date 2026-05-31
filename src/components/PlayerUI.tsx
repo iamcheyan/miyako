@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/audioPlayer";
 import "./PlayerUI.css";
 
@@ -6,10 +6,36 @@ function PlayerUI() {
   const player = getAudioPlayer();
   const [state, setState] = useState<AudioPlayerState>(player.getState());
   const [isExpanded, setIsExpanded] = useState(false);
+  const pushStateRef = useRef(false);
 
   useEffect(() => {
     setState(player.getState());
   }, [player]);
+
+  // 展开播放器时拦截安卓返回键：先收起播放器，而不是退出页面
+  useEffect(() => {
+    if (!isExpanded) return;
+
+    // 压入一个假的历史记录，这样返回键会触发 popstate
+    window.history.pushState({ playerExpanded: true }, "");
+    pushStateRef.current = true;
+
+    const handlePopState = () => {
+      // 收起播放器，阻止默认的返回导航
+      setIsExpanded(false);
+      pushStateRef.current = false;
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      // 如果是通过关闭按钮收起的（不是返回键），需要清理多余的历史记录
+      if (pushStateRef.current) {
+        window.history.back();
+        pushStateRef.current = false;
+      }
+    };
+  }, [isExpanded]);
 
   useEffect(() => {
     const updateState = () => {
@@ -53,8 +79,8 @@ function PlayerUI() {
     await player.previous();
   }, [player]);
 
-  const handleSeek = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(e.target.value);
+  const handleSeek = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+    const time = parseFloat((e.target as HTMLInputElement).value);
     player.seekTo(time);
   }, [player]);
 
@@ -146,90 +172,29 @@ function PlayerUI() {
   return (
     <div className="player-ui expanded">
       <div className="expanded-container">
-        {/* 顶部拖拽条 + 关闭按钮 */}
+        {/* 顶部：歌曲名 + 状态 */}
         <div className="expanded-header">
-          <button className="close-btn" onClick={() => setIsExpanded(false)}>
-            <span className="material-symbols-outlined">keyboard_arrow_down</span>
-          </button>
-        </div>
-
-        {/* 封面区域 */}
-        <div className="cover-area">
-          <div className="cover-art">
-            <span className="material-symbols-outlined">music_note</span>
+          <div className="track-section">
+            <h2 className="track-title">{currentTrackName}</h2>
+            {hasHistory && (
+              <p className="track-status">
+                {state.isPlaying ? "正在播放" : "已暂停"} · {formatTime(state.currentTime)}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* 歌曲信息 */}
-        <div className="track-section">
-          <h2 className="track-title">{currentTrackName}</h2>
-          {hasHistory && (
-            <p className="track-status">
-              {state.isPlaying ? "正在播放" : "已暂停"} · 上次听到 {formatTime(state.currentTime)}
-            </p>
-          )}
-        </div>
-
-        {/* 进度条 */}
-        <div className="seek-section">
-          <span className="seek-time">{formatTime(state.currentTime)}</span>
-          <input
-            type="range"
-            className="seek-bar"
-            min={0}
-            max={state.duration || 0}
-            value={state.currentTime}
-            onChange={handleSeek}
-          />
-          <span className="seek-time">{formatTime(state.duration)}</span>
-        </div>
-
-        {/* 主控制 */}
-        <div className="main-controls">
-          <button className="ctrl-btn mode" onClick={handleModeChange}>
-            <span className="material-symbols-outlined">{getModeIcon(state.playMode)}</span>
-          </button>
-
-          <button className="ctrl-btn" onClick={handlePrevious} disabled={!hasHistory}>
-            <span className="material-symbols-outlined">skip_previous</span>
-          </button>
-
-          <button className="ctrl-btn play" onClick={handlePlayPause}>
-            <span className="material-symbols-outlined">
-              {state.isPlaying ? "pause" : "play_arrow"}
-            </span>
-          </button>
-
-          <button className="ctrl-btn" onClick={handleNext} disabled={!hasHistory}>
-            <span className="material-symbols-outlined">skip_next</span>
-          </button>
-
-          <button className="ctrl-btn mode" onClick={() => {}}>
-            <span className="material-symbols-outlined">queue_music</span>
-          </button>
-        </div>
-
-        {/* 音量控制 */}
-        <div className="volume-section">
-          <span className="material-symbols-outlined volume-icon">volume_down</span>
-          <input
-            type="range"
-            className="volume-bar"
-            min={0}
-            max={1}
-            step={0.01}
-            value={state.volume}
-            onChange={(e) => player.setVolume(parseFloat(e.target.value))}
-          />
-          <span className="material-symbols-outlined volume-icon">volume_up</span>
-        </div>
-
-        {/* 播放列表 */}
-        {state.playlist.length > 0 && (
-          <div className="playlist-area">
-            <h3 className="playlist-header">播放列表</h3>
-            <div className="playlist-scroll">
-              {state.playlist.map((track, index) => (
+        {/* 中间：播放列表，填满剩余空间，可滚动 */}
+        <div className="expanded-playlist">
+          <h3 className="playlist-header">播放列表</h3>
+          <div className="playlist-scroll">
+            {state.playlist.length === 0 ? (
+              <div className="playlist-empty">
+                <span className="material-symbols-outlined">queue_music</span>
+                <span>暂无播放列表</span>
+              </div>
+            ) : (
+              state.playlist.map((track, index) => (
                 <div
                   key={index}
                   className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
@@ -244,10 +209,51 @@ function PlayerUI() {
                   </span>
                   <span className="row-name">{getFileName(track)}</span>
                 </div>
-              ))}
-            </div>
+              ))
+            )}
           </div>
-        )}
+        </div>
+
+        {/* 底部：进度条 + 控制，固定在屏幕底部 */}
+        <div className="expanded-controls">
+          {/* 进度条 */}
+          <div className="seek-section">
+            <span className="seek-time">{formatTime(state.currentTime)}</span>
+            <input
+              type="range"
+              className="seek-bar"
+              min={0}
+              max={state.duration || 0}
+              value={state.currentTime}
+              onInput={handleSeek}
+            />
+            <span className="seek-time">{formatTime(state.duration)}</span>
+          </div>
+
+          {/* 主控制 */}
+          <div className="main-controls">
+            <button className="ctrl-btn mode" onClick={handleModeChange}>
+              <span className="material-symbols-outlined">{getModeIcon(state.playMode)}</span>
+            </button>
+
+            <button className="ctrl-btn" onClick={handlePrevious} disabled={!hasHistory}>
+              <span className="material-symbols-outlined">skip_previous</span>
+            </button>
+
+            <button className="ctrl-btn play" onClick={handlePlayPause}>
+              <span className="material-symbols-outlined">
+                {state.isPlaying ? "pause" : "play_arrow"}
+              </span>
+            </button>
+
+            <button className="ctrl-btn" onClick={handleNext} disabled={!hasHistory}>
+              <span className="material-symbols-outlined">skip_next</span>
+            </button>
+
+            <div className="ctrl-spacer" aria-hidden="true" />
+          </div>
+
+        </div>
       </div>
     </div>
   );

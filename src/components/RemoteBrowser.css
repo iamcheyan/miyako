@@ -1,5 +1,23 @@
 .remote-browser {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   padding: 16px;
+  box-sizing: border-box;
+}
+
+/* 固定头部区域 */
+.remote-header {
+  flex-shrink: 0;
+}
+
+/* 可滚动内容区域 */
+.remote-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 100px;
 }
 

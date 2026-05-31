@@ -125,10 +125,7 @@ fn is_music_file(filename: &str) -> bool {
 fn resolve_local_dir(local_dir: &str) -> Result<PathBuf, String> {
     // Android 上使用应用内部存储
     #[cfg(target_os = "android")]
-    let home = {
-        // Android: 使用 /sdcard/Android/data/com.nasmusic.sync/files/
-        PathBuf::from("/sdcard/Android/data/com.nasmusic.sync/files")
-    };
+    let home = crate::app_data_dir();
 
     #[cfg(not(target_os = "android"))]
     let home = dirs::home_dir().ok_or_else(|| "Failed to resolve home directory".to_string())?;
@@ -142,6 +139,23 @@ fn resolve_local_dir(local_dir: &str) -> Result<PathBuf, String> {
     }
 
     Ok(PathBuf::from(local_dir))
+}
+
+fn resolve_state_path(state_path: &str) -> Result<PathBuf, String> {
+    let path = PathBuf::from(state_path);
+    if path.is_absolute() {
+        return Ok(path);
+    }
+
+    #[cfg(target_os = "android")]
+    {
+        return Ok(crate::app_data_dir().join(path));
+    }
+
+    #[cfg(not(target_os = "android"))]
+    {
+        Ok(path)
+    }
 }
 
 fn build_local_path(local_dir: &str, remote_path: &str) -> Result<PathBuf, String> {
@@ -266,14 +280,15 @@ pub async fn compare_with_local(
 
 /// Load sync state from file
 pub async fn load_sync_state(state_path: &str) -> Result<SyncState, String> {
-    if !Path::new(state_path).exists() {
+    let state_path = resolve_state_path(state_path)?;
+    if !state_path.exists() {
         return Ok(SyncState {
             last_sync_time: None,
             synced_files: Vec::new(),
         });
     }
 
-    let content = fs::read_to_string(state_path)
+    let content = fs::read_to_string(&state_path)
         .await
         .map_err(|e| format!("Failed to read sync state: {}", e))?;
 
@@ -282,17 +297,18 @@ pub async fn load_sync_state(state_path: &str) -> Result<SyncState, String> {
 
 /// Save sync state to file
 pub async fn save_sync_state(state_path: &str, state: &SyncState) -> Result<(), String> {
+    let state_path = resolve_state_path(state_path)?;
     let content = serde_json::to_string_pretty(state)
         .map_err(|e| format!("Failed to serialize sync state: {}", e))?;
 
     // Ensure parent directory exists
-    if let Some(parent) = Path::new(state_path).parent() {
+    if let Some(parent) = state_path.parent() {
         fs::create_dir_all(parent)
             .await
             .map_err(|e| format!("Failed to create state directory: {}", e))?;
     }
 
-    fs::write(state_path, content)
+    fs::write(&state_path, content)
         .await
         .map_err(|e| format!("Failed to write sync state: {}", e))?;
 
@@ -399,6 +415,10 @@ pub async fn sync_download(
                         last_modified: file_info.last_modified,
                     });
                 }
+
+                // Save state after each file to support resume on interruption
+                save_sync_state(state_path, &state).await?;
+
                 // #region debug-point C:state-updated
                 report_debug_event(
                     "C",

@@ -128,169 +128,174 @@ function Settings() {
 
   return (
     <div className="settings-page">
-      {/* SMB 连接配置 */}
-      <section className="settings-section">
-        <h2 className="section-title">SMB 服务器</h2>
+      {/* 固定头部：SMB 连接配置 */}
+      <div className="settings-header">
+        <section className="settings-section">
+          <h2 className="section-title">SMB 服务器</h2>
 
-        <div className="settings-list">
-          <div className="setting-item">
-            <label className="setting-label" htmlFor="server">服务器地址</label>
-            <input
-              type="text"
-              id="server"
-              className="setting-input"
-              placeholder="192.168.1.100"
-              value={config.server}
-              onChange={(e) => handleChange("server", e.target.value)}
-            />
-          </div>
-
-          <div className="setting-item">
-            <label className="setting-label" htmlFor="share">共享目录</label>
-            <input
-              type="text"
-              id="share"
-              className="setting-input"
-              placeholder="NAS"
-              value={config.share}
-              onChange={(e) => handleChange("share", e.target.value)}
-            />
-          </div>
-
-          <div className="setting-item">
-            <label className="setting-label" htmlFor="remotePath">远程子目录</label>
-            <input
-              type="text"
-              id="remotePath"
-              className="setting-input"
-              placeholder="Music"
-              value={config.remotePath}
-              onChange={(e) => handleChange("remotePath", e.target.value)}
-            />
-            <span className="setting-hint">例如共享为 NAS、音乐在 NAS/Music 时，这里填 Music</span>
-          </div>
-
-          <div className="setting-item">
-            <label className="setting-label" htmlFor="username">用户名</label>
-            <input
-              type="text"
-              id="username"
-              className="setting-input"
-              placeholder="留空表示匿名访问"
-              value={config.username}
-              onChange={(e) => handleChange("username", e.target.value)}
-            />
-          </div>
-
-          <div className="setting-item">
-            <label className="setting-label" htmlFor="password">密码</label>
-            <div className="password-field">
+          <div className="settings-list">
+            <div className="setting-item">
+              <label className="setting-label" htmlFor="server">服务器地址</label>
               <input
-                type={showPassword ? "text" : "password"}
-                id="password"
+                type="text"
+                id="server"
+                className="setting-input"
+                placeholder="192.168.1.100"
+                value={config.server}
+                onChange={(e) => handleChange("server", e.target.value)}
+              />
+            </div>
+
+            <div className="setting-item">
+              <label className="setting-label" htmlFor="share">共享目录</label>
+              <input
+                type="text"
+                id="share"
+                className="setting-input"
+                placeholder="NAS"
+                value={config.share}
+                onChange={(e) => handleChange("share", e.target.value)}
+              />
+            </div>
+
+            <div className="setting-item">
+              <label className="setting-label" htmlFor="remotePath">远程子目录</label>
+              <input
+                type="text"
+                id="remotePath"
+                className="setting-input"
+                placeholder="Music"
+                value={config.remotePath}
+                onChange={(e) => handleChange("remotePath", e.target.value)}
+              />
+              <span className="setting-hint">例如共享为 NAS、音乐在 NAS/Music 时，这里填 Music</span>
+            </div>
+
+            <div className="setting-item">
+              <label className="setting-label" htmlFor="username">用户名</label>
+              <input
+                type="text"
+                id="username"
                 className="setting-input"
                 placeholder="留空表示匿名访问"
-                value={config.password}
-                onChange={(e) => handleChange("password", e.target.value)}
+                value={config.username}
+                onChange={(e) => handleChange("username", e.target.value)}
               />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                <span className="material-symbols-outlined">
-                  {showPassword ? "visibility_off" : "visibility"}
-                </span>
-              </button>
+            </div>
+
+            <div className="setting-item">
+              <label className="setting-label" htmlFor="password">密码</label>
+              <div className="password-field">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  className="setting-input"
+                  placeholder="留空表示匿名访问"
+                  value={config.password}
+                  onChange={(e) => handleChange("password", e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  <span className="material-symbols-outlined">
+                    {showPassword ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label className="setting-label" htmlFor="localDir">本地同步目录</label>
+              <input
+                type="text"
+                id="localDir"
+                className="setting-input"
+                placeholder="~/Music/NasSync"
+                value={config.localDir}
+                onChange={(e) => handleChange("localDir", e.target.value)}
+              />
+              <span className="setting-hint">音乐文件将同步到此目录</span>
             </div>
           </div>
-
-          <div className="setting-item">
-            <label className="setting-label" htmlFor="localDir">本地同步目录</label>
-            <input
-              type="text"
-              id="localDir"
-              className="setting-input"
-              placeholder="~/Music/NasSync"
-              value={config.localDir}
-              onChange={(e) => handleChange("localDir", e.target.value)}
-            />
-            <span className="setting-hint">音乐文件将同步到此目录</span>
-          </div>
-        </div>
-
-        <button
-          className="test-btn"
-          onClick={handleTestConnection}
-          disabled={isTesting || !config.server || !config.share}
-        >
-          <span className="material-symbols-outlined">link</span>
-          {isTesting ? "测试中..." : "测试连接"}
-        </button>
-
-        {testResult && (
-          <div className={`test-result ${testResult.success ? "success" : "error"}`}>
-            <span className="material-symbols-outlined">
-              {testResult.success ? "check_circle" : "error"}
-            </span>
-            {testResult.message}
-          </div>
-        )}
-      </section>
-
-      {/* 同步统计 */}
-      <section className="settings-section">
-        <h2 className="section-title">同步数据</h2>
-
-        <div className="stats-grid">
-          <div className="stat-card">
-            <span className="material-symbols-outlined stat-icon">folder</span>
-            <div className="stat-info">
-              <span className="stat-value">{syncStats.fileCount}</span>
-              <span className="stat-label">已同步文件</span>
-            </div>
-          </div>
-
-          <div className="stat-card">
-            <span className="material-symbols-outlined stat-icon">database</span>
-            <div className="stat-info">
-              <span className="stat-value">{formatSize(syncStats.totalSize)}</span>
-              <span className="stat-label">总大小</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 数据管理 */}
-      <section className="settings-section">
-        <h2 className="section-title">数据管理</h2>
-
-        <div className="danger-list">
-          <button
-            className="danger-item"
-            onClick={() => setShowConfirmDialog("sync")}
-          >
-            <span className="material-symbols-outlined danger-icon">delete_sweep</span>
-            <div className="danger-info">
-              <span className="danger-title">清除同步数据</span>
-              <span className="danger-desc">删除同步状态和本地文件</span>
-            </div>
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
 
           <button
-            className="danger-item"
-            onClick={() => setShowConfirmDialog("history")}
+            className="test-btn"
+            onClick={handleTestConnection}
+            disabled={isTesting || !config.server || !config.share}
           >
-            <span className="material-symbols-outlined danger-icon">history</span>
-            <div className="danger-info">
-              <span className="danger-title">清除播放历史</span>
-              <span className="danger-desc">删除最近播放和播放记录</span>
-            </div>
-            <span className="material-symbols-outlined">chevron_right</span>
+            <span className="material-symbols-outlined">link</span>
+            {isTesting ? "测试中..." : "测试连接"}
           </button>
-        </div>
-      </section>
+
+          {testResult && (
+            <div className={`test-result ${testResult.success ? "success" : "error"}`}>
+              <span className="material-symbols-outlined">
+                {testResult.success ? "check_circle" : "error"}
+              </span>
+              {testResult.message}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* 可滚动内容：统计 + 数据管理 */}
+      <div className="settings-scroll">
+        {/* 同步统计 */}
+        <section className="settings-section">
+          <h2 className="section-title">同步数据</h2>
+
+          <div className="stats-grid">
+            <div className="stat-card">
+              <span className="material-symbols-outlined stat-icon">folder</span>
+              <div className="stat-info">
+                <span className="stat-value">{syncStats.fileCount}</span>
+                <span className="stat-label">已同步文件</span>
+              </div>
+            </div>
+
+            <div className="stat-card">
+              <span className="material-symbols-outlined stat-icon">database</span>
+              <div className="stat-info">
+                <span className="stat-value">{formatSize(syncStats.totalSize)}</span>
+                <span className="stat-label">总大小</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 数据管理 */}
+        <section className="settings-section">
+          <h2 className="section-title">数据管理</h2>
+
+          <div className="danger-list">
+            <button
+              className="danger-item"
+              onClick={() => setShowConfirmDialog("sync")}
+            >
+              <span className="material-symbols-outlined danger-icon">delete_sweep</span>
+              <div className="danger-info">
+                <span className="danger-title">清除同步数据</span>
+                <span className="danger-desc">删除同步状态和本地文件</span>
+              </div>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+
+            <button
+              className="danger-item"
+              onClick={() => setShowConfirmDialog("history")}
+            >
+              <span className="material-symbols-outlined danger-icon">history</span>
+              <div className="danger-info">
+                <span className="danger-title">清除播放历史</span>
+                <span className="danger-desc">删除最近播放和播放记录</span>
+              </div>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        </section>
+      </div>
 
       {/* 确认对话框 */}
       {showConfirmDialog && (

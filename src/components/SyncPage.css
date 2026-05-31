@@ -1,5 +1,23 @@
 .sync-page {
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* 固定头部区域 */
+.sync-header {
+  flex-shrink: 0;
+}
+
+/* 可滚动内容区域 */
+.sync-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 100px;
 }
 
@@ -7,8 +25,8 @@
 .status-card {
   background-color: var(--surface);
   border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
   border: 1px solid var(--outline-variant);
 }
 
@@ -32,7 +50,7 @@
 }
 
 .status-icon {
-  font-size: 40px;
+  font-size: 36px;
   color: var(--on-surface);
 }
 
@@ -68,6 +86,48 @@
   .status-subtitle {
     color: var(--on-surface-variant-dark);
   }
+}
+
+/* 操作按钮容器 */
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 设置按钮 */
+.settings-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: var(--surface-variant);
+  color: var(--on-surface);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-btn {
+    background-color: var(--surface-variant-dark);
+    color: var(--on-surface-dark);
+  }
+}
+
+.settings-btn:hover {
+  transform: scale(1.05);
+  background-color: var(--outline-variant);
+}
+
+.settings-btn:active {
+  transform: scale(0.95);
+}
+
+.settings-btn .material-symbols-outlined {
+  font-size: 24px;
 }
 
 /* 同步按钮 */
@@ -113,7 +173,7 @@
 
 /* 同步进度 */
 .sync-progress {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .progress-bar {
@@ -177,7 +237,7 @@
 
 /* 统计列表 */
 .stats-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .stats-list {
@@ -198,7 +258,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--outline-variant);
 }
 
@@ -249,7 +309,7 @@
 
 /* 日志列表 */
 .log-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .log-list {
@@ -257,6 +317,8 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--outline-variant);
+  max-height: 40vh;
+  overflow-y: auto;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -335,4 +397,94 @@
 
 .log-error .log-message {
   color: var(--error);
+}
+
+/* 设置模态框 */
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.settings-modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  background-color: var(--surface);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-modal {
+    background-color: var(--surface-dark);
+  }
+}
+
+.settings-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-modal-header {
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.settings-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-modal-header h2 {
+    color: var(--on-surface-dark);
+  }
+}
+
+.settings-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface-variant);
+  transition: background-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .settings-modal-close {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.settings-modal-close:hover {
+  background-color: var(--surface-variant);
+}
+
+.settings-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }

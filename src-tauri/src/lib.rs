@@ -6,6 +6,17 @@ use sync_engine::{SyncAction, SyncProgress, SyncState};
 use std::fs;
 use tauri::Emitter;
 
+#[cfg(target_os = "android")]
+pub(crate) fn app_data_dir() -> std::path::PathBuf {
+    let identifier = option_env!("TAURI_APP_IDENTIFIER").unwrap_or("com.miyako.app");
+    std::path::PathBuf::from(format!("/data/user/0/{identifier}/files"))
+}
+
+#[cfg(not(target_os = "android"))]
+pub(crate) fn app_data_dir() -> Result<std::path::PathBuf, String> {
+    dirs::data_dir().ok_or("Failed to get app data directory".to_string())
+}
+
 /// 读取本地音频文件并返回 base64 编码
 #[tauri::command]
 async fn read_audio_file(path: String) -> Result<String, String> {
@@ -155,12 +166,12 @@ async fn storage_write(dir: String, filename: String, content: String) -> Result
 fn get_app_data_dir() -> Result<std::path::PathBuf, String> {
     #[cfg(target_os = "android")]
     {
-        Ok(std::path::PathBuf::from("/sdcard/Android/data/com.nasmusic.sync/files"))
+        Ok(app_data_dir())
     }
 
     #[cfg(not(target_os = "android"))]
     {
-        dirs::data_dir().ok_or("Failed to get app data directory".to_string())
+        app_data_dir()
     }
 }
 

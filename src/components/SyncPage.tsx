@@ -8,6 +8,7 @@ import type {
 } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
+import Settings from "./Settings";
 import "./SyncPage.css";
 
 const STATE_PATH = "sync_state.json";
@@ -32,6 +33,7 @@ function SyncPage() {
   const [logs, setLogs] = useState<SyncLog[]>([]);
   const [connectionState, setConnectionState] = useState(getSmbSessionState());
   const [error, setError] = useState<string | null>(getSmbSessionState().error);
+  const [showSettings, setShowSettings] = useState(false);
 
   const addLog = useCallback((message: string, type: SyncLog["type"] = "info") => {
     const time = new Date().toLocaleTimeString();
@@ -192,99 +194,134 @@ function SyncPage() {
 
   return (
     <div className="sync-page">
-      {/* 同步状态卡片 */}
-      <div className="status-card">
-        <div className="status-header">
-          <div className="status-info">
-            <span className="material-symbols-outlined status-icon">
-              {connectionId ? "cloud_done" : "cloud_off"}
-            </span>
-            <div className="status-text">
-              <span className="status-title">
-                {connectionId ? "已连接" : connectionState.isConnecting ? "连接中" : "未连接"}
+      {/* 固定头部：状态卡片 + 错误提示 + 统计 */}
+      <div className="sync-header">
+        {/* 同步状态卡片 */}
+        <div className="status-card">
+          <div className="status-header">
+            <div className="status-info">
+              <span className="material-symbols-outlined status-icon">
+                {connectionId ? "cloud_done" : "cloud_off"}
               </span>
-              <span className="status-subtitle">
-                {connectionId ? "NAS 服务器" : connectionState.isConnecting ? "正在连接 NAS 服务器" : "请先配置 SMB 连接"}
-              </span>
-            </div>
-          </div>
-
-          <button
-            className="sync-fab"
-            onClick={handleStartSync}
-            disabled={isSyncing || connectionState.isConnecting}
-          >
-            <span className="material-symbols-outlined">
-              {isSyncing ? "sync" : "sync"}
-            </span>
-          </button>
-        </div>
-
-        {isSyncing && (
-          <div className="sync-progress">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%`,
-                }}
-              />
-            </div>
-            <span className="progress-text">
-              {progress.current} / {progress.total}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* 错误提示 */}
-      {error && (
-        <div className="error-banner">
-          <span className="material-symbols-outlined">error</span>
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* 同步统计 */}
-      <div className="stats-section">
-        <h3 className="section-title">同步信息</h3>
-        <div className="stats-list">
-          <div className="stat-row">
-            <span className="material-symbols-outlined stat-icon">schedule</span>
-            <span className="stat-label">上次同步</span>
-            <span className="stat-value">
-              {formatTime(syncState?.last_sync_time ?? null)}
-            </span>
-          </div>
-          <div className="stat-row">
-            <span className="material-symbols-outlined stat-icon">audio_file</span>
-            <span className="stat-label">已同步文件</span>
-            <span className="stat-value">
-              {syncState?.synced_files?.length ?? 0} 个
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* 同步日志 */}
-      <div className="log-section">
-        <h3 className="section-title">同步日志</h3>
-        <div className="log-list">
-          {logs.length === 0 ? (
-            <div className="log-empty">
-              <span className="material-symbols-outlined">terminal</span>
-              <span>暂无日志</span>
-            </div>
-          ) : (
-            logs.map((log, index) => (
-              <div key={index} className={`log-item log-${log.type}`}>
-                <span className="log-time">{log.time}</span>
-                <span className="log-message">{log.message}</span>
+              <div className="status-text">
+                <span className="status-title">
+                  {connectionId ? "已连接" : connectionState.isConnecting ? "连接中" : "未连接"}
+                </span>
+                <span className="status-subtitle">
+                  {connectionId ? "NAS 服务器" : connectionState.isConnecting ? "正在连接 NAS 服务器" : "请先配置 SMB 连接"}
+                </span>
               </div>
-            ))
+            </div>
+
+            <div className="status-actions">
+              <button
+                className="settings-btn"
+                onClick={() => setShowSettings(true)}
+                aria-label="设置"
+              >
+                <span className="material-symbols-outlined">settings</span>
+              </button>
+              <button
+                className="sync-fab"
+                onClick={handleStartSync}
+                disabled={isSyncing || connectionState.isConnecting}
+              >
+                <span className="material-symbols-outlined">
+                  {isSyncing ? "sync" : "sync"}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {isSyncing && (
+            <div className="sync-progress">
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+              <span className="progress-text">
+                {progress.current} / {progress.total}
+              </span>
+            </div>
           )}
         </div>
+
+        {/* 错误提示 */}
+        {error && (
+          <div className="error-banner">
+            <span className="material-symbols-outlined">error</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* 同步统计 */}
+        <div className="stats-section">
+          <h3 className="section-title">同步信息</h3>
+          <div className="stats-list">
+            <div className="stat-row">
+              <span className="material-symbols-outlined stat-icon">schedule</span>
+              <span className="stat-label">上次同步</span>
+              <span className="stat-value">
+                {formatTime(syncState?.last_sync_time ?? null)}
+              </span>
+            </div>
+            <div className="stat-row">
+              <span className="material-symbols-outlined stat-icon">audio_file</span>
+              <span className="stat-label">已同步文件</span>
+              <span className="stat-value">
+                {syncState?.synced_files?.length ?? 0} 个
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* 可滚动内容：同步日志 */}
+      <div className="sync-scroll">
+        <div className="log-section">
+          <h3 className="section-title">同步日志</h3>
+          <div className="log-list">
+            {logs.length === 0 ? (
+              <div className="log-empty">
+                <span className="material-symbols-outlined">terminal</span>
+                <span>暂无日志</span>
+              </div>
+            ) : (
+              logs.map((log, index) => (
+                <div key={index} className={`log-item log-${log.type}`}>
+                  <span className="log-time">{log.time}</span>
+                  <span className="log-message">{log.message}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 设置模态框 */}
+      {showSettings && (
+        <div className="settings-modal-overlay" onClick={() => setShowSettings(false)}>
+          <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-modal-header">
+              <h2>设置</h2>
+              <button
+                className="settings-modal-close"
+                onClick={() => setShowSettings(false)}
+                aria-label="关闭"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="settings-modal-content">
+              <Settings />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

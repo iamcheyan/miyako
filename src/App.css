@@ -1,5 +1,13 @@
 .app {
-  height: 100%;
+  --system-top-inset: max(env(safe-area-inset-top, 0px), 36px);
+  --system-bottom-inset: env(safe-area-inset-bottom, 0px);
+  --mini-player-height: 62px;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   background-color: var(--surface);
   color: var(--on-surface);
   display: flex;
@@ -17,165 +25,21 @@
 /* 页面包装器 */
 .page-wrapper {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-/* 顶部栏 */
-.top-bar {
-  display: flex;
-  align-items: center;
-  height: 56px;
-  padding: 0 4px;
-  background-color: var(--surface);
-  border-bottom: 1px solid var(--outline-variant);
-  flex-shrink: 0;
-}
-
-@media (prefers-color-scheme: dark) {
-  .top-bar {
-    background-color: var(--surface-dark);
-    border-bottom-color: var(--outline-variant-dark);
-  }
-}
-
-.top-bar-title {
-  flex: 1;
-  font-size: 22px;
-  font-weight: 400;
-  margin: 0;
-  padding: 0 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.top-bar-spacer {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-}
-
-.back-btn {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--on-surface);
-  cursor: pointer;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-@media (prefers-color-scheme: dark) {
-  .back-btn {
-    color: var(--on-surface-dark);
-  }
-}
-
-.back-btn:hover {
-  background-color: var(--surface-variant);
-}
-
-@media (prefers-color-scheme: dark) {
-  .back-btn:hover {
-    background-color: var(--surface-variant-dark);
-  }
-}
-
-.back-btn:active {
-  background-color: var(--outline-variant);
 }
 
 /* 页面内容 */
 .page-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 底部导航栏 */
-.bottom-nav {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  height: 80px;
-  background-color: var(--surface);
-  border-top: 1px solid var(--outline-variant);
-  flex-shrink: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-@media (prefers-color-scheme: dark) {
-  .bottom-nav {
-    background-color: var(--surface-dark);
-    border-top-color: var(--outline-variant-dark);
-  }
-}
-
-.nav-item {
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  color: var(--on-surface-variant);
-  padding: 12px 0;
-  min-width: 64px;
-  position: relative;
-  transition: color 0.2s;
-}
-
-@media (prefers-color-scheme: dark) {
-  .nav-item {
-    color: var(--on-surface-variant-dark);
-  }
-}
-
-.nav-item.active {
-  color: var(--on-surface);
-}
-
-@media (prefers-color-scheme: dark) {
-  .nav-item.active {
-    color: var(--on-surface-dark);
-  }
-}
-
-/* 导航指示器 */
-.nav-item.active::before {
-  content: "";
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 32px;
-  background-color: var(--primary-container);
-  border-radius: 16px;
-  z-index: -1;
-}
-
-@media (prefers-color-scheme: dark) {
-  .nav-item.active::before {
-    background-color: var(--primary-container-dark);
-  }
-}
-
-.nav-icon {
-  font-size: 24px;
-  margin-bottom: 4px;
-}
-
-.nav-label {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding-top: var(--system-top-inset);
 }
 
 /* Material Symbols 图标 */

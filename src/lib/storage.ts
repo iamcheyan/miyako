@@ -8,7 +8,6 @@ export interface RecentTrack {
 export interface PlaybackState {
   currentTrack: string | null;
   currentTime: number;
-  volume: number;
   playMode: string;
 }
 

@@ -107,6 +107,20 @@ clean_generated_jni_symlinks() {
   find "$jni_dir" -type l -name '*.so' -print -delete
 }
 
+sync_android_icons() {
+  local icon_dir="$ROOT_DIR/src-tauri/icons/android"
+  local res_dir="$ANDROID_PROJECT_DIR/app/src/main/res"
+  [ -d "$icon_dir" ] || return 0
+  [ -d "$res_dir" ] || return 0
+
+  step "Syncing Android icons"
+  while IFS= read -r -d '' file; do
+    local rel="${file#$icon_dir/}"
+    mkdir -p "$res_dir/$(dirname "$rel")"
+    cp "$file" "$res_dir/$rel"
+  done < <(find "$icon_dir" -type f -print0)
+}
+
 target_for_abi() {
   case "$1" in
     arm64-v8a) printf 'aarch64' ;;
@@ -197,6 +211,7 @@ printf 'Package: %s\n' "$PACKAGE_NAME"
 
 step "Building Tauri Android APK"
 cd "$ROOT_DIR"
+sync_android_icons
 clean_generated_jni_symlinks
 if [ "$BUILD_MODE" = "debug" ]; then
   npx tauri android build --debug --target "$TAURI_TARGET" --apk

@@ -18,7 +18,6 @@ export interface AudioPlayerState {
   currentTrack: string | null;
   currentTime: number;
   duration: number;
-  volume: number;
   playMode: PlayMode;
   playlist: string[];
   currentIndex: number;
@@ -45,7 +44,6 @@ export class AudioPlayer {
       this.playlist = saved.playlist;
       this.currentIndex = saved.currentIndex;
       this.playMode = saved.playMode;
-      this.audio.volume = saved.volume;
 
       // 恢复播放位置
       if (saved.currentIndex >= 0 && saved.currentIndex < saved.playlist.length) {
@@ -71,7 +69,6 @@ export class AudioPlayer {
           playlist: this.playlist,
           currentIndex: this.currentIndex,
           currentTime: this.audio.currentTime,
-          volume: this.audio.volume,
           playMode: this.playMode,
         });
       }
@@ -220,10 +217,6 @@ export class AudioPlayer {
     this.saveState();
   }
 
-  setVolume(volume: number) {
-    this.audio.volume = Math.max(0, Math.min(1, volume));
-    this.saveState();
-  }
 
   setPlayMode(mode: PlayMode) {
     this.playMode = mode;
@@ -304,7 +297,6 @@ export class AudioPlayer {
         this.currentIndex >= 0 ? this.playlist[this.currentIndex] : null,
       currentTime: this.audio.currentTime,
       duration: this.audio.duration || 0,
-      volume: this.audio.volume,
       playMode: this.playMode,
       playlist: [...this.playlist],
       currentIndex: this.currentIndex,
@@ -324,9 +316,6 @@ export class AudioPlayer {
     return this.audio.duration || 0;
   }
 
-  getVolume(): number {
-    return this.audio.volume;
-  }
 
   isPlaying(): boolean {
     return !this.audio.paused;

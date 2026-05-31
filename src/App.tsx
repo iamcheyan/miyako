@@ -162,6 +162,14 @@ function App() {
   return (
     <BrowserRouter>
       <div className="app">
+        {/* 拟物化背景底牌 (Skeuomorphic underlay card) */}
+        <div className="app-swipe-underlay">
+          <div className="underlay-brand">
+            <span className="material-symbols-outlined brand-icon">library_music</span>
+            <span className="brand-text">Miyako Music</span>
+          </div>
+        </div>
+
         <Toast messages={messages} onRemove={removeToast} />
 
         <PageContent />

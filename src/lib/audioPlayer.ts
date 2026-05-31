@@ -141,7 +141,13 @@ export class AudioPlayer {
     if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
       return filePath;
     }
-    return convertFileSrc(filePath);
+
+    console.log("Original path:", filePath);
+
+    const url = convertFileSrc(filePath);
+    console.log("Asset URL:", url);
+
+    return url;
   }
 
   async play(src?: string) {

@@ -9,7 +9,8 @@ const STATE_PATH = "sync_state.json";
 
 interface MusicFile {
   name: string;
-  path: string;
+  remotePath: string;
+  localPath: string;
   size: number;
 }
 
@@ -52,7 +53,8 @@ function MusicLibrary() {
 
         folderMap.get(folderPath)!.push({
           name: fileName,
-          path: file.remote_path,
+          remotePath: file.remote_path,
+          localPath: file.local_path,
           size: file.size,
         });
       }
@@ -86,25 +88,12 @@ function MusicLibrary() {
 
   const handleFileClick = async (file: MusicFile) => {
     const player = getAudioPlayer();
-    // 获取本地同步目录
-    const savedConfig = localStorage.getItem("smb-config");
-    let localDir = "~/Music/NasSync";
-    if (savedConfig) {
-      try {
-        const config = JSON.parse(savedConfig);
-        localDir = config.localDir || localDir;
-      } catch (e) {
-        console.error("Failed to parse config:", e);
-      }
-    }
 
-    // 构建完整的本地文件路径
-    const localPath = `${localDir}/${file.path}`;
-    console.log("Playing file:", localPath);
+    console.log("Playing file:", file.localPath);
 
     // 加载播放列表（当前文件夹的所有音乐文件）
-    const trackPaths = currentFiles.map((f) => `${localDir}/${f.path}`);
-    const trackIndex = currentFiles.findIndex((f) => f.path === file.path);
+    const trackPaths = currentFiles.map((f) => f.localPath);
+    const trackIndex = currentFiles.findIndex((f) => f.localPath === file.localPath);
 
     player.loadPlaylist(trackPaths, trackIndex >= 0 ? trackIndex : 0);
     await player.play();
@@ -262,7 +251,7 @@ function MusicLibrary() {
         <div className="file-list">
           {filteredFiles.map((file, index) => (
             <button
-              key={file.path}
+              key={file.remotePath}
               className="file-item"
               onClick={() => handleFileClick(file)}
             >

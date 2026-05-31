@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Audio Test</title>
+</head>
+<body>
+  <h1>Audio Test</h1>
+  <div id="result"></div>
+  <script type="module">
+    import { convertFileSrc } from '@tauri-apps/api/core';
+
+    const testPath = "/Users/tetsuya/Music/NasSync/Music/faster-whisper-jpop-input/ガールフレンドは午前2時/ミッドナイト・レター.mp3";
+
+    const url = convertFileSrc(testPath);
+    document.getElementById('result').innerHTML = `
+      <p>Path: ${testPath}</p>
+      <p>URL: ${url}</p>
+    `;
+
+    const audio = new Audio();
+    audio.src = url;
+
+    audio.addEventListener('loadedmetadata', () => {
+      document.getElementById('result').innerHTML += '<p style="color:green">✅ 音频加载成功！时长: ' + audio.duration + '秒</p>';
+    });
+
+    audio.addEventListener('error', (e) => {
+      document.getElementById('result').innerHTML += '<p style="color:red">❌ 加载失败: ' + audio.error?.message + '</p>';
+    });
+  </script>
+</body>
+</html>

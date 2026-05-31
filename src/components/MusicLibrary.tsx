@@ -89,6 +89,7 @@ function MusicLibrary() {
   const handleFileClick = async (file: MusicFile) => {
     const player = getAudioPlayer();
 
+    // 使用 local_path (绝对路径)
     console.log("Playing file:", file.localPath);
 
     // 加载播放列表（当前文件夹的所有音乐文件）

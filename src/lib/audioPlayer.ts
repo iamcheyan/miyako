@@ -77,25 +77,33 @@ export class AudioPlayer {
 
   private setupAudioEvents() {
     this.audio.addEventListener("play", () => {
+      console.log("Audio: play event");
       this.emit("play");
       this.saveState();
     });
     this.audio.addEventListener("pause", () => {
+      console.log("Audio: pause event");
       this.emit("pause");
       this.saveState();
     });
-    this.audio.addEventListener("ended", () => this.handleEnded());
+    this.audio.addEventListener("ended", () => {
+      console.log("Audio: ended event");
+      this.handleEnded();
+    });
     this.audio.addEventListener("timeupdate", () => {
       this.emit("timeupdate", this.audio.currentTime);
-      // 每 3 秒保存一次播放位置
       if (Math.floor(this.audio.currentTime) % 3 === 0) {
         this.saveState();
       }
     });
-    this.audio.addEventListener("loadedmetadata", () =>
-      this.emit("loadedmetadata", this.audio.duration)
-    );
-    this.audio.addEventListener("error", (e) => this.emit("error", e));
+    this.audio.addEventListener("loadedmetadata", () => {
+      console.log("Audio: loadedmetadata, duration:", this.audio.duration);
+      this.emit("loadedmetadata", this.audio.duration);
+    });
+    this.audio.addEventListener("error", (e) => {
+      console.error("Audio error:", this.audio.error);
+      this.emit("error", e);
+    });
   }
 
   private handleEnded() {
@@ -142,19 +150,29 @@ export class AudioPlayer {
       return filePath;
     }
 
-    console.log("Original path:", filePath);
-
-    const url = convertFileSrc(filePath);
-    console.log("Asset URL:", url);
-
-    return url;
+    try {
+      const url = convertFileSrc(filePath);
+      console.log("convertFileSrc:", filePath, "->", url);
+      return url;
+    } catch (e) {
+      console.error("convertFileSrc failed:", e);
+      // 回退：直接返回原始路径
+      return filePath;
+    }
   }
 
   async play(src?: string) {
     if (src) {
       this.audio.src = this.toAssetUrl(src);
+      console.log("Audio src set to:", this.audio.src);
     }
-    await this.audio.play();
+    try {
+      await this.audio.play();
+      console.log("Audio play started");
+    } catch (e) {
+      console.error("Audio play failed:", e);
+      throw e;
+    }
   }
 
   pause() {

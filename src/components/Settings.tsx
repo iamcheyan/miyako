@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
@@ -17,7 +17,7 @@ const LANGUAGES = [
 
 function Settings() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [config, setConfig] = useState<SmbConfig>(DEFAULT_SMB_CONFIG);
   const [showPassword, setShowPassword] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -173,14 +173,6 @@ function Settings() {
 
   return (
     <div className="settings-page">
-      {/* 固定标题栏 */}
-      <div className="page-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h1 className="page-title">{t("settings.title")}</h1>
-      </div>
-
       {/* 可滚动内容 */}
       <div className="settings-scroll">
         {/* SMB 连接配置 */}

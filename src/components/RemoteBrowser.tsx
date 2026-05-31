@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { DirEntry } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
@@ -12,7 +12,7 @@ const MUSIC_EXTENSIONS = [".mp3", ".flac", ".aac", ".wav"];
 
 function RemoteBrowser() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [currentPath, setCurrentPath] = useState("");
   const [entries, setEntries] = useState<DirEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -158,14 +158,6 @@ function RemoteBrowser() {
 
   return (
     <div className="remote-browser">
-      {/* 固定标题栏 */}
-      <div className="page-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h1 className="page-title">{t("remote.title")}</h1>
-      </div>
-
       {/* 路径导航 */}
       {currentPath && (
         <div className="path-nav">

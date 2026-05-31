@@ -199,14 +199,6 @@ function SyncPage() {
 
   return (
     <div className="sync-page">
-      {/* 固定标题栏 */}
-      <div className="page-header">
-        <button className="back-btn" onClick={() => navigate(-1)}>
-          <span className="material-symbols-outlined">arrow_back</span>
-        </button>
-        <h1 className="page-title">{t("sync.title")}</h1>
-      </div>
-
       {/* 固定头部:状态卡片 + 错误提示 + 统计 */}
       <div className="sync-header">
         {/* 同步状态卡片 */}

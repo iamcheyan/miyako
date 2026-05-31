@@ -31,7 +31,7 @@ function MusicLibrary() {
   const [currentFiles, setCurrentFiles] = useState<MusicFile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [favoritesVersion, setFavoritesVersion] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
 

@@ -23,15 +23,23 @@ interface Folder {
   files: MusicFile[];
 }
 
+// 全局音乐库缓存，用于返回路由时瞬时还原 DOM 与滚动状态，实现完美秒开和滚动恢复！
+let globalLibraryCache: {
+  folders: Folder[];
+  currentPath: string | null;
+  currentFiles: MusicFile[];
+  scrollTop: number;
+} | null = null;
+
 function MusicLibrary() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [currentPath, setCurrentPath] = useState<string | null>(null);
-  const [currentFiles, setCurrentFiles] = useState<MusicFile[]>([]);
+  const [folders, setFolders] = useState<Folder[]>(globalLibraryCache?.folders || []);
+  const [currentPath, setCurrentPath] = useState<string | null>(globalLibraryCache?.currentPath || null);
+  const [currentFiles, setCurrentFiles] = useState<MusicFile[]>(globalLibraryCache?.currentFiles || []);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!globalLibraryCache);
   const [favoritesVersion, setFavoritesVersion] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,8 +47,40 @@ function MusicLibrary() {
     loadMusicLibrary();
   }, []);
 
+  // 监听滚动事件并更新缓存中的 scrollTop
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (globalLibraryCache) {
+      globalLibraryCache.scrollTop = e.currentTarget.scrollTop;
+    }
+  }, []);
+
+  // 实时同步页面的分类路径和歌曲状态到全局缓存中
+  useEffect(() => {
+    if (globalLibraryCache) {
+      globalLibraryCache.currentPath = currentPath;
+      globalLibraryCache.currentFiles = currentFiles;
+    }
+  }, [currentPath, currentFiles]);
+
+  // 当路径改变或页面加载完毕时，自动还原滚动条位置 (秒开恢复)
+  useEffect(() => {
+    if (globalLibraryCache && globalLibraryCache.scrollTop > 0) {
+      const scrollEl = document.querySelector(".library-scroll");
+      if (scrollEl) {
+        requestAnimationFrame(() => {
+          if (scrollEl && globalLibraryCache) {
+            scrollEl.scrollTop = globalLibraryCache.scrollTop;
+          }
+        });
+      }
+    }
+  }, [currentPath, isLoading]);
+
   const loadMusicLibrary = async () => {
-    setIsLoading(true);
+    // 只有在完全没有缓存的时候才显示加载动画，返回时直接静默后台加载，彻底消除加载闪屏
+    if (!globalLibraryCache) {
+      setIsLoading(true);
+    }
     
     // 演示模式：使用假数据
     if (isDemoMode()) {
@@ -83,6 +123,18 @@ function MusicLibrary() {
       }
 
       setFolders(folderArray);
+      
+      // 初始化或更新全局秒开缓存
+      if (!globalLibraryCache) {
+        globalLibraryCache = {
+          folders: folderArray,
+          currentPath: null,
+          currentFiles: [],
+          scrollTop: 0
+        };
+      } else {
+        globalLibraryCache.folders = folderArray;
+      }
     } catch (e) {
       console.error("Failed to load music library:", e);
     } finally {
@@ -223,7 +275,7 @@ function MusicLibrary() {
               </button>
             </div>
           </div>
-          <div className="library-scroll">
+          <div className="library-scroll" onScroll={handleScroll}>
             {folders.length === 0 ? (
               <div className="empty-state">
                 <span className="material-symbols-outlined empty-icon">library_music</span>
@@ -286,7 +338,7 @@ function MusicLibrary() {
               </button>
             </div>
           </div>
-          <div className="library-scroll">
+          <div className="library-scroll" onScroll={handleScroll}>
             {filteredFiles.length === 0 ? (
               <div className="empty-state small">
                 <span className="material-symbols-outlined empty-icon">search_off</span>

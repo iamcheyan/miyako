@@ -6,6 +6,20 @@ use sync_engine::{SyncAction, SyncProgress, SyncState};
 use std::fs;
 use tauri::Emitter;
 
+/// 读取本地音频文件并返回 base64 编码
+#[tauri::command]
+async fn read_audio_file(path: String) -> Result<String, String> {
+    use base64::Engine;
+    let data = fs::read(&path).map_err(|e| format!("Failed to read file: {}", e))?;
+    Ok(base64::engine::general_purpose::STANDARD.encode(&data))
+}
+
+/// 检查文件是否存在
+#[tauri::command]
+async fn file_exists(path: String) -> Result<bool, String> {
+    Ok(std::path::Path::new(&path).exists())
+}
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -154,7 +168,9 @@ pub fn run() {
             sync_download,
             sync_load_state,
             storage_read,
-            storage_write
+            storage_write,
+            read_audio_file,
+            file_exists
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

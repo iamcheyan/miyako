@@ -154,12 +154,18 @@ export class AudioPlayer {
     }
 
     try {
-      // 使用 Tauri 的 readFile 读取文件
-      const { readFile } = await import("@tauri-apps/plugin-fs");
-      const fileBytes = await readFile(filePath);
+      // 使用自定义 Rust 命令读取文件
+      const { invoke } = await import("@tauri-apps/api/core");
+      const base64Data = await invoke<string>("read_audio_file", { path: filePath });
 
-      // 创建 blob URL
-      const blob = new Blob([fileBytes], { type: this.getMimeType(filePath) });
+      // 将 base64 转换为 Blob
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const blob = new Blob([bytes], { type: this.getMimeType(filePath) });
       const url = URL.createObjectURL(blob);
 
       console.log("Created blob URL for:", filePath);

@@ -4,7 +4,6 @@
 // 运行方式：npx tsx test-playback.ts
 
 import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
 
 const TEST_FILE = '/Users/tetsuya/Music/NasSync/Music/faster-whisper-jpop-input/ガールフレンドは午前2時/ミッドナイト・レター.mp3';
 

@@ -146,15 +146,27 @@ jobs:
           retention-days: 30
           if-no-files-found: error
 
-      - name: Create Release (on tag)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Generate version tag
+        id: version
+        run: |
+          # 生成版本号：短 SHA + 时间戳
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          VERSION="v${TIMESTAMP}-${SHORT_SHA}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🏷️ Version: $VERSION"
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "Release ${{ steps.version.outputs.version }}"
           files: |
             release/miyako-arm64.apk
             release/miyako-armv7.apk
           draft: false
           prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

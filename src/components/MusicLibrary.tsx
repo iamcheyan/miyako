@@ -68,7 +68,7 @@ function MusicLibrary() {
 
     if (targetScrollTop > 0) {
       const restoreScroll = () => {
-        const scrollEl = document.querySelector(".library-scroll");
+        const scrollEl = document.querySelector(".page-wrapper .library-scroll");
         if (scrollEl) {
           scrollEl.scrollTop = targetScrollTop;
           

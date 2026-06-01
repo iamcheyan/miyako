@@ -311,7 +311,7 @@ function MusicLibrary() {
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
                 <button className="folder-item favorites" onClick={handleFavoritesClick}>
-                  <span className="material-symbols-outlined folder-icon" style={{ fontVariationSettings: "'FILL' 1", filter: "drop-shadow(0 2px 4px rgba(255, 45, 85, 0.4))" }}>favorite</span>
+                  <span className="material-symbols-outlined folder-icon" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                   <div className="folder-info">
                     <span className="folder-name">{t("musicLibrary.quickActions.favorites")}</span>
                     <span className="folder-count">{favorites.length} {t("musicLibrary.songs")}</span>
@@ -383,7 +383,6 @@ function MusicLibrary() {
                           style={{
                             fontVariationSettings: isFavorite(file.localPath) ? "'FILL' 1" : "'FILL' 0",
                             color: isFavorite(file.localPath) ? "#ff2d55" : undefined,
-                            filter: isFavorite(file.localPath) ? "drop-shadow(0 2px 4px rgba(255, 45, 85, 0.45)) drop-shadow(0 4px 10px rgba(255, 45, 85, 0.25))" : undefined,
                             textShadow: isFavorite(file.localPath) ? "0 1px 0 rgba(255, 255, 255, 0.4)" : undefined
                           }}
                         >

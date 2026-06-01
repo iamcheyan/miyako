@@ -882,7 +882,7 @@
 .row-name {
   flex: 1;
   font-size: 14px;
-  color: var(--on-surface);
+  /*color: var(--on-surface);*/
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -257,8 +257,6 @@
   border: none;
   color: var(--on-surface-variant);
   cursor: pointer;
-  /*border-radius: 10px;*/
-  /*margin-bottom: 8px;*/
   transition: background-color 0.2s;
 }
 
@@ -318,7 +316,7 @@
 
 /* 播放状态：脉冲动画 */
 .signal-mark.playing span {
-  animation: pulse 1.2s ease-in-out infinite;
+  animation: signalPulse 1.2s ease-in-out infinite;
 }
 
 .signal-mark.playing span:nth-child(1),
@@ -340,7 +338,7 @@
   animation-delay: 0.45s;
 }
 
-@keyframes pulse {
+@keyframes signalPulse {
   0%,
   100% {
     transform: scaleY(1);
@@ -404,31 +402,20 @@
   text-overflow: ellipsis;
 }
 
-/* 标题溢出时来回滚动 */
+/* 标题过长时自动滚动 */
 .track-title.scrolling {
   display: block;
   text-align: left;
   text-overflow: unset;
-  animation: scrollTitle 10s ease-in-out infinite;
-  /* 使用 clip-path 限制显示区域 */
+  width: max-content;
+  animation: marquee 12s ease-in-out infinite;
   clip-path: inset(0 0 0 0);
 }
 
-@keyframes scrollTitle {
-  0%,
-  15% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(calc(-100% + 100%));
-  }
-  85%,
-  100% {
-    transform: translateX(0);
-  }
+.track-title.scrolling:hover {
+  animation-play-state: paused;
 }
 
-/* 标题过长时自动滚动 */
 @keyframes marquee {
   0%,
   20% {
@@ -438,15 +425,6 @@
   100% {
     transform: translateX(max(-100%, -400px));
   }
-}
-
-.track-title.scrolling {
-  animation: marquee 12s ease-in-out infinite;
-  width: max-content;
-}
-
-.track-title.scrolling:hover {
-  animation-play-state: paused;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -489,8 +467,6 @@
   flex-shrink: 0;
   letter-spacing: 0.08em;
 }
-
-
 
 @media (prefers-color-scheme: dark) {
   .playlist-header {
@@ -710,9 +686,6 @@
   width: 48px;
   height: 48px;
   flex: 0 0 48px;
-}
-
-.ctrl-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -767,24 +740,12 @@
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
-
-
 @keyframes heartBeat {
-  0% {
-    transform: scale(1);
-  }
-  25% {
-    transform: scale(1.3);
-  }
-  50% {
-    transform: scale(0.95);
-  }
-  75% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(1); }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(0.95); }
+  75% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 .ctrl-btn.play {
@@ -883,16 +844,13 @@
   .ctrl-btn.play {
     width: 52px;
     height: 52px;
+    flex-basis: 52px;
   }
 
   .ctrl-btn {
     width: 40px;
     height: 40px;
     flex-basis: 40px;
-  }
-
-  .ctrl-btn.play {
-    flex-basis: 52px;
   }
 
   .ctrl-btn .material-symbols-outlined {
@@ -968,8 +926,6 @@
   }
 }
 
-
-
 .row-num {
   width: 24px;
   font-size: 13px;
@@ -983,22 +939,24 @@
   }
 }
 
-.playlist-row.active .row-num {
+.playlist-row.active .row-num,
+.playlist-row.active .row-name {
   color: var(--on-surface);
 }
 
 @media (prefers-color-scheme: dark) {
-  .playlist-row.active .row-num {
+  .playlist-row.active .row-num,
+  .playlist-row.active .row-name {
     color: var(--on-surface-dark);
   }
 }
 
 .row-num .playing {
   font-size: 16px;
-  animation: pulse 1s ease-in-out infinite;
+  animation: rowPulse 1s ease-in-out infinite;
 }
 
-@keyframes pulse {
+@keyframes rowPulse {
   0%,
   100% {
     opacity: 1;
@@ -1015,12 +973,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-@media (prefers-color-scheme: dark) {
-  .row-name {
-    color: var(--on-surface-dark);
-  }
 }
 
 .playlist-row.active .row-name {

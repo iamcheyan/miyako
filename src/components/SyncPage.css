@@ -115,44 +115,7 @@
   gap: 12px;
 }
 
-/* 设置按钮 */
-.settings-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background-color: var(--surface-variant);
-  color: var(--on-surface);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    transform 0.2s,
-    background-color 0.2s;
-}
-
-@media (prefers-color-scheme: dark) {
-  .settings-btn {
-    background-color: var(--surface-variant-dark);
-    color: var(--on-surface-dark);
-  }
-}
-
-.settings-btn:hover {
-  transform: scale(1.05);
-  background-color: var(--outline-variant);
-}
-
-.settings-btn:active {
-  transform: scale(0.95);
-}
-
-.settings-btn .material-symbols-outlined {
-  font-size: 24px;
-}
-
-/* 远程浏览按钮 */
+/* 浏览按钮 */
 .browse-btn {
   width: 44px;
   height: 44px;
@@ -232,11 +195,6 @@
   font-size: 28px;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .sync-fab.syncing .material-symbols-outlined {
   animation: spin 1s linear infinite;
 }
@@ -290,19 +248,9 @@
   border-radius: 12px;
 }
 
-/* 区块标题 */
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--on-surface);
+/* 日志区块标题 (覆盖全局 section-title) */
+.log-section .section-title {
   margin-bottom: 12px;
-  padding-left: 4px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .section-title {
-    color: var(--on-surface-dark);
-  }
 }
 
 /* 统计列表 */

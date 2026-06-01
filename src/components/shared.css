@@ -62,3 +62,18 @@
     color: var(--on-surface-dark);
   }
 }
+
+/* 区块标题 - 共享基础样式 */
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .section-title {
+    color: var(--on-surface-dark);
+  }
+}

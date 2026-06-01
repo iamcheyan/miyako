@@ -97,7 +97,6 @@
     color: var(--on-primary-container-dark);
   }
 }
-}
 
 /* 底部间距，确保最后一个内容不被遮挡 */
 .settings-bottom-spacer {
@@ -109,11 +108,8 @@
   margin-bottom: 16px;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--on-surface);
-  margin-bottom: 8px;
+/* 设置区块标题 (覆盖全局 section-title) */
+.settings-section .section-title {
   padding-left: 16px;
 }
 
@@ -330,43 +326,23 @@
   }
 }
 
-.stat-icon {
+/* 设置页统计卡片尺寸 (覆盖全局 stat-*) */
+.stat-card .stat-icon {
   font-size: 32px;
-  color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
-  .stat-icon {
-    color: var(--on-surface-dark);
-  }
+.stat-card .stat-value {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.stat-card .stat-label {
+  font-size: 12px;
 }
 
 .stat-info {
   display: flex;
   flex-direction: column;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--on-surface);
-}
-
-@media (prefers-color-scheme: dark) {
-  .stat-value {
-    color: var(--on-surface-dark);
-  }
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--on-surface-variant);
-}
-
-@media (prefers-color-scheme: dark) {
-  .stat-label {
-    color: var(--on-surface-variant-dark);
-  }
 }
 
 /* 危险操作列表 */

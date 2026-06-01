@@ -101,28 +101,6 @@
   color: var(--on-surface-variant);
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--outline-variant);
-  border-top-color: var(--on-surface);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@media (prefers-color-scheme: dark) {
-  .loading-spinner {
-    border-color: var(--outline-variant-dark);
-    border-top-color: var(--on-surface-dark);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* 错误提示 */
 .error-banner {
   display: flex;
@@ -158,20 +136,6 @@
 /* 区块 */
 .entry-section {
   margin-bottom: 24px;
-}
-
-.section-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--on-surface);
-  margin-bottom: 8px;
-  padding-left: 4px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .section-title {
-    color: var(--on-surface-dark);
-  }
 }
 
 /* 条目列表 */

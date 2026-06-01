@@ -228,13 +228,7 @@ function SyncPage() {
                   <span className="material-symbols-outlined">folder_open</span>
                 </button>
               )}
-              <button
-                className="settings-btn"
-                onClick={() => navigate("/settings")}
-                aria-label={t("sync.settings")}
-              >
-                <span className="material-symbols-outlined">settings</span>
-              </button>
+
               <button
                 className={`sync-fab ${isSyncing ? "syncing" : ""}`}
                 onClick={handleStartSync}

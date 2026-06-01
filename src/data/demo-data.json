@@ -1,6 +1,36 @@
 {
   "folders": [
     {
+      "name": "超长文件夹名测试 - 这是一个非常非常长的文件夹名称用来测试UI在极端情况下的表现",
+      "path": "超长文件夹名测试 - 这是一个非常非常长的文件夹名称用来测试UI在极端情况下的表现",
+      "files": [
+        {
+          "name": "周杰伦 - 超长歌曲名称测试：这是一首非常非常长的歌曲名称用来测试UI在极端情况下的表现是否会乱码或者溢出.mp3",
+          "remotePath": "超长文件夹名测试/周杰伦 - 超长歌曲名称测试.mp3",
+          "localPath": "/demo/超长文件夹名测试/周杰伦 - 超长歌曲名称测试.mp3",
+          "size": 8543210
+        },
+        {
+          "name": "这是一个超长的中文文件名测试-包含各种特殊字符！@#$%^&*()_+{}|:<>?~`-=[]\\;',./和emoji🎵🎶🎸🎹🎺🎻🥁🎷🎺🎻🎸🎹🎵🎶以及超长的歌手名字和专辑名称.mp3",
+          "remotePath": "超长文件夹名测试/超长中文文件名测试.mp3",
+          "localPath": "/demo/超长文件夹名测试/超长中文文件名测试.mp3",
+          "size": 7234567
+        },
+        {
+          "name": "This Is An Extremely Long English Song Name Test - Artist Name feat. Another Very Long Featured Artist Name From The Album Called Something Also Very Long That Goes On Forever.flac",
+          "remotePath": "超长文件夹名测试/超长英文歌曲名.flac",
+          "localPath": "/demo/超长文件夹名测试/超长英文歌曲名.flac",
+          "size": 32123456
+        },
+        {
+          "name": "混合语言测试-Mixed Language Test-混合テスト-혼합언어테스트-מבחן שפה מעורבת-اختبار اللغة المختلطة.mp3",
+          "remotePath": "超长文件夹名测试/混合语言测试.mp3",
+          "localPath": "/demo/超长文件夹名测试/混合语言测试.mp3",
+          "size": 6543210
+        }
+      ]
+    },
+    {
       "name": "流行",
       "path": "流行",
       "files": [
@@ -158,6 +188,11 @@
     }
   ],
   "remoteBrowser": {
+    "超长文件夹名测试 - 这是一个非常非常长的文件夹名称用来测试UI在极端情况下的表现": [
+      { "name": "这是一个超级无敌爆炸长的子文件夹名称-This Is An Extremely Long Subfolder Name-これは非常に長いサブフォルダ名です-이것은 매우 긴 하위 폴더 이름입니다", "is_directory": true, "size": 0 },
+      { "name": "包含特殊字符的文件夹 [测试] {验证} (检查) <确认>", "is_directory": true, "size": 0 },
+      { "name": "数字编号测试文件夹 001 002 003 004 005 006 007 008 009 010", "is_directory": true, "size": 0 }
+    ],
     "流行": [
       { "name": "周杰伦 (Jay Chou)", "is_directory": true, "size": 0 },
       { "name": "林俊杰 (JJ Lin)", "is_directory": true, "size": 0 },
@@ -180,44 +215,6 @@
       { "name": "东风破 - 2003年专辑《叶惠美》.mp3", "is_directory": false, "size": 7654321 },
       { "name": "告白气球 - 2016年专辑《周杰伦的床边故事》.mp3", "is_directory": false, "size": 6789012 }
     ],
-    "流行/林俊杰 (JJ Lin)": [
-      { "name": "江南 - 2004年专辑《第二天堂》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "她说 - 2010年专辑《她说》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "修炼爱情 - 2013年专辑《因你而在》.flac", "is_directory": false, "size": 38765432 },
-      { "name": "可惜没如果 - 2014年专辑《新地球》.mp3", "is_directory": false, "size": 7890123 },
-      { "name": "不为谁而作的歌 - 2015年专辑《和自己对话》.mp3", "is_directory": false, "size": 8901234 }
-    ],
-    "流行/陈奕迅 (Eason Chan)": [
-      { "name": "十年 - 2003年专辑《黑白灰》.mp3", "is_directory": false, "size": 4321098 },
-      { "name": "富士山下 - 2006年专辑《What's Going On...?》.mp3", "is_directory": false, "size": 5678901 },
-      { "name": "淘汰 - 2007年专辑《认了吧》.flac", "is_directory": false, "size": 42345678 },
-      { "name": "好久不见 - 2007年专辑《认了吧》.mp3", "is_directory": false, "size": 4567890 }
-    ],
-    "流行/邓紫棋 (G.E.M.)": [
-      { "name": "光年之外 - 2016年专辑《光年之外》.flac", "is_directory": false, "size": 45678901 },
-      { "name": "泡沫 - 2012年专辑《Xposed》.mp3", "is_directory": false, "size": 6789012 },
-      { "name": "句号 - 2019年专辑《摩天动物园》.mp3", "is_directory": false, "size": 7890123 }
-    ],
-    "流行/薛之谦": [
-      { "name": "演员 - 2015年单曲.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "认真的雪 - 2006年专辑《薛之谦》.mp3", "is_directory": false, "size": 4321098 },
-      { "name": "丑八怪 - 2013年专辑《意外》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "像风一样 - 2017年专辑《渡》.flac", "is_directory": false, "size": 35678901 }
-    ],
-    "流行/毛不易": [
-      { "name": "消愁 - 2017年专辑《平凡的一天》.mp3", "is_directory": false, "size": 5678901 },
-      { "name": "像我这样的人 - 2017年专辑《平凡的一天》.mp3", "is_directory": false, "size": 4567890 },
-      { "name": "无问 - 2018年专辑《平凡的一天》.mp3", "is_directory": false, "size": 6789012 }
-    ],
-    "流行/李荣浩": [
-      { "name": "李白 - 2013年专辑《模特》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "模特 - 2013年专辑《模特》.mp3", "is_directory": false, "size": 4321098 },
-      { "name": "年少有为 - 2018年专辑《耳朵》.flac", "is_directory": false, "size": 42345678 }
-    ],
-    "流行/华晨宇": [
-      { "name": "烟火里的尘埃 - 2014年专辑《卡西莫多的礼物》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "好想爱这个世界啊 - 2019年专辑《好想爱这个世界啊》.mp3", "is_directory": false, "size": 7654321 }
-    ],
     "摇滚": [
       { "name": "Beyond", "is_directory": true, "size": 0 },
       { "name": "五月天 (Mayday)", "is_directory": true, "size": 0 },
@@ -237,41 +234,6 @@
       { "name": "冷雨夜 - 1988年专辑《秘密警察》.mp3", "is_directory": false, "size": 5678901 },
       { "name": "大地 - 1990年专辑《命运派对》.mp3", "is_directory": false, "size": 6789012 }
     ],
-    "摇滚/五月天 (Mayday)": [
-      { "name": "倔强 - 2004年专辑《神的孩子都在跳舞》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "突然好想你 - 2008年专辑《后青春期的诗》.flac", "is_directory": false, "size": 38765432 },
-      { "name": "温柔 - 2000年专辑《爱情万岁》.mp3", "is_directory": false, "size": 4321098 },
-      { "name": "知足 - 2005年专辑《知足》.mp3", "is_directory": false, "size": 5678901 },
-      { "name": "后来的我们 - 2016年专辑《自传》.mp3", "is_directory": false, "size": 6789012 },
-      { "name": "入阵曲 - 2013年专辑《第二人生》.flac", "is_directory": false, "size": 42345678 }
-    ],
-    "摇滚/新裤子乐队": [
-      { "name": "生活因你而火热 - 2016年专辑《生活因你而火热》.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "没有理想的人不伤心 - 2016年专辑《生活因你而火热》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "你要跳舞吗 - 2016年专辑《生活因你而火热》.mp3", "is_directory": false, "size": 5432109 }
-    ],
-    "摇滚/痛仰乐队": [
-      { "name": "再见杰克 - 2014年专辑《愿爱无忧》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "公路之歌 - 2014年专辑《愿爱无忧》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "愿爱无忧 - 2014年专辑《愿爱无忧》.flac", "is_directory": false, "size": 45678901 }
-    ],
-    "摇滚/万能青年旅店": [
-      { "name": "杀死那个石家庄人 - 2010年专辑《万能青年旅店》.mp3", "is_directory": false, "size": 8765432 },
-      { "name": "揪心的玩笑与漫长的白日梦 - 2010年专辑《万能青年旅店》.mp3", "is_directory": false, "size": 9876543 },
-      { "name": "秦皇岛 - 2010年专辑《万能青年旅店》.flac", "is_directory": false, "size": 52345678 }
-    ],
-    "摇滚/逃跑计划": [
-      { "name": "夜空中最亮的星 - 2011年专辑《世界》.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "阳光彩虹小白马 - 2017年专辑《阳光彩虹小白马》.mp3", "is_directory": false, "size": 5432109 }
-    ],
-    "摇滚/黑豹乐队": [
-      { "name": "无地自容 - 1991年专辑《黑豹》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "Don't Break My Heart - 1991年专辑《黑豹》.mp3", "is_directory": false, "size": 5432109 }
-    ],
-    "摇滚/唐朝乐队": [
-      { "name": "梦回唐朝 - 1992年专辑《梦回唐朝》.flac", "is_directory": false, "size": 52345678 },
-      { "name": "太阳 - 1992年专辑《梦回唐朝》.mp3", "is_directory": false, "size": 7654321 }
-    ],
     "古典": [
       { "name": "贝多芬 (Ludwig van Beethoven)", "is_directory": true, "size": 0 },
       { "name": "莫扎特 (Wolfgang Amadeus Mozart)", "is_directory": true, "size": 0 },
@@ -281,190 +243,27 @@
       { "name": "德彪西 (Claude Debussy)", "is_directory": true, "size": 0 },
       { "name": "维瓦尔第 (Antonio Vivaldi)", "is_directory": true, "size": 0 }
     ],
-    "古典/贝多芬 (Ludwig van Beethoven)": [
-      { "name": "月光奏鸣曲 - 第14号钢琴奏鸣曲 Op.27 No.2.flac", "is_directory": false, "size": 52345678 },
-      { "name": "命运交响曲 - 第5号交响曲 Op.67.flac", "is_directory": false, "size": 67890123 },
-      { "name": "致爱丽丝 - Bagatelle No.25 WoO 59.flac", "is_directory": false, "size": 12345678 },
-      { "name": "欢乐颂 - 第9号交响曲 Op.125.flac", "is_directory": false, "size": 78901234 }
-    ],
-    "古典/莫扎特 (Wolfgang Amadeus Mozart)": [
-      { "name": "小夜曲 - 第13号小夜曲 K.525「Eine kleine Nachtmusik」.flac", "is_directory": false, "size": 41234567 },
-      { "name": "土耳其进行曲 - 第11号钢琴奏鸣曲 K.331.flac", "is_directory": false, "size": 15678901 },
-      { "name": "安魂曲 - Requiem in D minor K.626.flac", "is_directory": false, "size": 89012345 }
-    ],
-    "古典/肖邦 (Frédéric Chopin)": [
-      { "name": "夜曲 - 降E大调 Op.9 No.2.flac", "is_directory": false, "size": 35678901 },
-      { "name": "幻想即兴曲 - 升c小调 Op.66.flac", "is_directory": false, "size": 23456789 },
-      { "name": "革命练习曲 - 降c小调 Op.10 No.12.flac", "is_directory": false, "size": 18765432 },
-      { "name": "雨滴前奏曲 - 降D大调 Op.28 No.15.flac", "is_directory": false, "size": 21345678 }
-    ],
-    "古典/巴赫 (Johann Sebastian Bach)": [
-      { "name": "G弦上的咏叹调 - 管弦乐组曲 No.3 BWV 1068.flac", "is_directory": false, "size": 45678901 },
-      { "name": "平均律钢琴曲集 - 第1册 BWV 846-869.flac", "is_directory": false, "size": 156789012 },
-      { "name": "赋格的艺术 - BWV 1080.flac", "is_directory": false, "size": 98765432 }
-    ],
-    "古典/柴可夫斯基 (Pyotr Ilyich Tchaikovsky)": [
-      { "name": "天鹅湖 - 芭蕾组曲 Op.20.flac", "is_directory": false, "size": 134567890 },
-      { "name": "胡桃夹子 - 芭蕾组曲 Op.71a.flac", "is_directory": false, "size": 112345678 },
-      { "name": "1812序曲 - Op.49.flac", "is_directory": false, "size": 67890123 }
-    ],
-    "古典/德彪西 (Claude Debussy)": [
-      { "name": "月光 - 《贝加莫组曲》第三首 L.75.flac", "is_directory": false, "size": 34567890 },
-      { "name": "牧神午后前奏曲 - L.86.flac", "is_directory": false, "size": 45678901 },
-      { "name": "大海 - 交响诗 L.109.flac", "is_directory": false, "size": 78901234 }
-    ],
-    "古典/维瓦尔第 (Antonio Vivaldi)": [
-      { "name": "四季 - 小提琴协奏曲 RV 269-332.flac", "is_directory": false, "size": 89012345 },
-      { "name": "春 - 《四季》第一首 RV 269.flac", "is_directory": false, "size": 23456789 }
-    ],
     "爵士": [
       { "name": "Norah Jones", "is_directory": true, "size": 0 },
       { "name": "Louis Armstrong", "is_directory": true, "size": 0 },
       { "name": "Miles Davis", "is_directory": true, "size": 0 },
-      { "name": "John Coltrane", "is_directory": true, "size": 0 },
-      { "name": "Bill Evans", "is_directory": true, "size": 0 },
-      { "name": "Chet Baker", "is_directory": true, "size": 0 },
-      { "name": "Dave Brubeck", "is_directory": true, "size": 0 }
-    ],
-    "爵士/Norah Jones": [
-      { "name": "Don't Know Why - 2002年专辑《Come Away With Me》.mp3", "is_directory": false, "size": 8765432 },
-      { "name": "Come Away With Me - 2002年专辑《Come Away With Me》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "Sunrise - 2004年专辑《Feels Like Home》.mp3", "is_directory": false, "size": 5432109 }
-    ],
-    "爵士/Louis Armstrong": [
-      { "name": "What A Wonderful World - 1967年单曲.mp3", "is_directory": false, "size": 4321098 },
-      { "name": "Hello, Dolly! - 1964年单曲.mp3", "is_directory": false, "size": 3456789 },
-      { "name": "La Vie En Rose - 1950年单曲.mp3", "is_directory": false, "size": 3210987 }
-    ],
-    "爵士/Miles Davis": [
-      { "name": "So What - 1959年专辑《Kind of Blue》.flac", "is_directory": false, "size": 56789012 },
-      { "name": "Blue in Green - 1959年专辑《Kind of Blue》.flac", "is_directory": false, "size": 34567890 },
-      { "name": "Take Five - 1959年专辑《Time Out》.flac", "is_directory": false, "size": 45678901 }
-    ],
-    "爵士/John Coltrane": [
-      { "name": "A Love Supreme - 1965年专辑《A Love Supreme》.flac", "is_directory": false, "size": 78901234 },
-      { "name": "My Favorite Things - 1961年专辑《My Favorite Things》.flac", "is_directory": false, "size": 56789012 }
-    ],
-    "爵士/Bill Evans": [
-      { "name": "Waltz for Debby - 1961年专辑《Waltz for Debby》.flac", "is_directory": false, "size": 45678901 },
-      { "name": "Peace Piece - 1958年专辑《Everybody Digs Bill Evans》.flac", "is_directory": false, "size": 34567890 }
-    ],
-    "爵士/Chet Baker": [
-      { "name": "My Funny Valentine - 1954年单曲.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "Almost Blue - 1988年专辑《Almost Blue》.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "爵士/Dave Brubeck": [
-      { "name": "Take Five - 1959年专辑《Time Out》.flac", "is_directory": false, "size": 56789012 },
-      { "name": "Blue Rondo à la Turk - 1959年专辑《Time Out》.flac", "is_directory": false, "size": 45678901 }
+      { "name": "John Coltrane", "is_directory": true, "size": 0 }
     ],
     "电子": [
       { "name": "Daft Punk", "is_directory": true, "size": 0 },
       { "name": "The Weeknd", "is_directory": true, "size": 0 },
       { "name": "Kygo", "is_directory": true, "size": 0 },
-      { "name": "Calvin Harris", "is_directory": true, "size": 0 },
-      { "name": "Marshmello", "is_directory": true, "size": 0 },
-      { "name": "Alan Walker", "is_directory": true, "size": 0 },
-      { "name": "Skrillex", "is_directory": true, "size": 0 },
-      { "name": "Deadmau5", "is_directory": true, "size": 0 }
-    ],
-    "电子/Daft Punk": [
-      { "name": "Get Lucky - 2013年专辑《Random Access Memories》.mp3", "is_directory": false, "size": 9876543 },
-      { "name": "Around The World - 1997年专辑《Homework》.mp3", "is_directory": false, "size": 8765432 },
-      { "name": "One More Time - 2000年专辑《Discovery》.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "Harder, Better, Faster, Stronger - 2001年专辑《Discovery》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "Instant Crush - 2013年专辑《Random Access Memories》.mp3", "is_directory": false, "size": 7890123 }
-    ],
-    "电子/The Weeknd": [
-      { "name": "Blinding Lights - 2020年专辑《After Hours》.flac", "is_directory": false, "size": 42345678 },
-      { "name": "Save Your Tears - 2020年专辑《After Hours》.mp3", "is_directory": false, "size": 8765432 },
-      { "name": "Starboy - 2016年专辑《Starboy》.mp3", "is_directory": false, "size": 9876543 },
-      { "name": "The Hills - 2015年专辑《Beauty Behind the Madness》.mp3", "is_directory": false, "size": 7654321 }
-    ],
-    "电子/Kygo": [
-      { "name": "Firestone - 2015年专辑《Cloud Nine》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "Stole the Show - 2015年专辑《Cloud Nine》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "It Ain't Me - 2017年单曲.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "电子/Calvin Harris": [
-      { "name": "Summer - 2014年单曲.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "Feel So Close - 2012年专辑《18 Months》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "This Is What You Came For - 2016年单曲.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "电子/Marshmello": [
-      { "name": "Alone - 2016年专辑《Alone》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "Wolves - 2017年单曲.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "电子/Alan Walker": [
-      { "name": "Faded - 2015年单曲.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "On My Way - 2019年单曲.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "Alone - 2016年单曲.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "电子/Skrillex": [
-      { "name": "Bangarang - 2011年EP《Bangarang》.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "Scary Monsters and Nice Sprites - 2010年专辑《Scary Monsters and Nice Sprites》.mp3", "is_directory": false, "size": 8765432 }
-    ],
-    "电子/Deadmau5": [
-      { "name": "Strobe - 2009年专辑《For Lack of a Better Name》.flac", "is_directory": false, "size": 67890123 },
-      { "name": "Ghosts 'n' Stuff - 2009年专辑《For Lack of a Better Name》.mp3", "is_directory": false, "size": 7654321 }
+      { "name": "Calvin Harris", "is_directory": true, "size": 0 }
     ],
     "日语": [
       { "name": "米津玄師 (Kenshi Yonezu)", "is_directory": true, "size": 0 },
       { "name": "YOASOBI", "is_directory": true, "size": 0 },
       { "name": "Official髭男dism", "is_directory": true, "size": 0 },
-      { "name": "King Gnu", "is_directory": true, "size": 0 },
-      { "name": "LiSA", "is_directory": true, "size": 0 },
-      { "name": "Aimer", "is_directory": true, "size": 0 },
-      { "name": "Ado", "is_directory": true, "size": 0 },
-      { "name": "Vaundy", "is_directory": true, "size": 0 }
-    ],
-    "日语/米津玄師 (Kenshi Yonezu)": [
-      { "name": "Lemon - 2018年专辑《STRAY SHEEP》.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "打上花火 - 2017年单曲.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "KICK BACK - 2022年专辑《BEST AWARD》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "ピースサイン - 2017年单曲.mp3", "is_directory": false, "size": 4321098 },
-      { "name": "Flamingo - 2018年专辑《STRAY SHEEP》.mp3", "is_directory": false, "size": 5678901 },
-      { "name": "パプリカ - 2018年专辑《STRAY SHEEP》.mp3", "is_directory": false, "size": 4567890 }
-    ],
-    "日语/YOASOBI": [
-      { "name": "夜に駆ける (Racing into the Night) - 2019年单曲.mp3", "is_directory": false, "size": 8765432 },
-      { "name": "怪物 - 2021年单曲.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "群青 (Gunjou) - 2020年单曲.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "たぶん - 2020年单曲.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "ハルジオン - 2020年单曲.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "日语/Official髭男dism": [
-      { "name": "Pretender - 2019年专辑《Traveler》.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "I LOVE... - 2020年专辑《Editorial》.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "115万キロのフィルム - 2019年专辑《Traveler》.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "Subtitle - 2020年专辑《Editorial》.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "日语/King Gnu": [
-      { "name": "白日 - 2019年专辑《Ceremony》.mp3", "is_directory": false, "size": 8765432 },
-      { "name": "Tokyo Rendez-Vous - 2020年单曲.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "ダダダダ天使 - 2019年专辑《Ceremony》.mp3", "is_directory": false, "size": 6543210 }
-    ],
-    "日语/LiSA": [
-      { "name": "红莲华 - 2020年单曲.mp3", "is_directory": false, "size": 7654321 },
-      { "name": "炎 - 2020年单曲.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "realize - 2020年单曲.mp3", "is_directory": false, "size": 5432109 }
-    ],
-    "日语/Aimer": [
-      { "name": "残响散歌 - 2021年单曲.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "カタオモイ - 2019年单曲.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "ref:rain - 2019年单曲.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "日语/Ado": [
-      { "name": "うっせぇわ - 2020年单曲.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "唱 - 2024年单曲.mp3", "is_directory": false, "size": 6543210 },
-      { "name": "新時代 - 2022年单曲.mp3", "is_directory": false, "size": 4321098 }
-    ],
-    "日语/Vaundy": [
-      { "name": "不可幸力 - 2020年单曲.mp3", "is_directory": false, "size": 5432109 },
-      { "name": "napori - 2021年单曲.mp3", "is_directory": false, "size": 4321098 },
-      { "name": "odoriko - 2022年单曲.mp3", "is_directory": false, "size": 6543210 }
+      { "name": "King Gnu", "is_directory": true, "size": 0 }
     ]
   },
   "rootEntries": [
+    { "name": "超长文件夹名测试 - 这是一个非常非常长的文件夹名称用来测试UI在极端情况下的表现", "is_directory": true, "size": 0 },
     { "name": "流行音乐合集 (Popular Music Collection)", "is_directory": true, "size": 0 },
     { "name": "经典摇滚乐队精选 (Classic Rock Bands)", "is_directory": true, "size": 0 },
     { "name": "古典音乐大师作品 (Classical Music Masters)", "is_directory": true, "size": 0 },

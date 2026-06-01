@@ -288,7 +288,7 @@
   padding: 14px;
   background: none;
   border: none;
-  border-bottom: 1px solid var(--outline-variant);
+  /*border-bottom: 1px solid var(--outline-variant);*/
   cursor: pointer;
   text-align: left;
   transition: background-color 0.2s;
@@ -384,7 +384,7 @@
 }
 
 .back-btn-small {
-  width: 40px;
+  /*width: 40px;*/
   height: 40px;
   display: flex;
   align-items: center;
@@ -462,7 +462,7 @@
   display: flex;
   align-items: center;
   padding: 0 16px;
-  border-bottom: 1px solid var(--outline-variant);
+  /*border-bottom: 1px solid var(--outline-variant);*/
   transition: background-color 0.2s;
 }
 
@@ -1030,10 +1030,6 @@
 
 :root[data-theme="light"] .search-result-item:hover {
   background-color: var(--surface-variant);
-}
-
-:root[data-theme="light"] .material-symbols-outlined {
-  color: var(--on-surface-variant);
 }
 
 :root[data-theme="light"] .search-result-name {

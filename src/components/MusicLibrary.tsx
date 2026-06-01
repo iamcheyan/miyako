@@ -74,7 +74,7 @@ function MusicLibrary() {
         });
       }
     }
-  }, [currentPath, isLoading]);
+  }, [currentPath, isLoading, folders]);
 
   const loadMusicLibrary = async () => {
     // 只有在完全没有缓存的时候才显示加载动画，返回时直接静默后台加载，彻底消除加载闪屏

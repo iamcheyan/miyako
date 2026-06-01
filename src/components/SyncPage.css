@@ -442,11 +442,6 @@
   color: var(--on-surface);
 }
 
-:root[data-theme="light"] .sync-fab {
-  background-color: var(--on-surface);
-  color: var(--surface);
-}
-
 :root[data-theme="light"] .progress-bar {
   background-color: var(--outline-variant);
 }

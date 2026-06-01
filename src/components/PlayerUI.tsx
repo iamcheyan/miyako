@@ -4,16 +4,6 @@ import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/aud
 import { isFavorite, toggleFavorite } from "../lib/favorites";
 import "./PlayerUI.css";
 
-function EqualizerIcon() {
-  return (
-    <svg className="eq-icon" viewBox="0 0 24 24" width="1em" height="1em">
-      <rect className="eq-bar eq-bar-1" x="3" y="14" width="4" height="6" rx="1" />
-      <rect className="eq-bar eq-bar-2" x="10" y="6" width="4" height="14" rx="1" />
-      <rect className="eq-bar eq-bar-3" x="17" y="10" width="4" height="10" rx="1" />
-    </svg>
-  );
-}
-
 function PlayerUI() {
   const { t } = useTranslation();
   const player = getAudioPlayer();
@@ -397,7 +387,7 @@ function PlayerUI() {
 
       {/* 展开的播放器 (始终存在于 DOM，通过 CSS 实时平移实现无缝拉起/下拉折叠) */}
       <div
-        className={`player-ui expanded ${isDragging ? 'dragging' : ''}`}
+        className={`player-ui expanded ${isDragging ? 'dragging' : ''} ${!isExpanded && !isDragging ? 'collapsed' : ''}`}
         style={{
           transform: `translateY(${activeTranslateY}px)`,
           transition: isDragging ? "none" : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -480,13 +470,7 @@ function PlayerUI() {
                           className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
                           onClick={() => player.playTrack(index)}
                         >
-                          <span className="row-num">
-                            {index === state.currentIndex && state.isPlaying ? (
-                              <EqualizerIcon />
-                            ) : (
-                              index + 1
-                            )}
-                          </span>
+                          <span className="row-num">{index + 1}</span>
                           <span className="row-name">{getFileName(track)}</span>
                         </div>
                       ))
@@ -510,13 +494,7 @@ function PlayerUI() {
                           className={`playlist-row ${item.originalIndex === state.currentIndex ? "active" : ""}`}
                           onClick={() => player.playTrack(item.originalIndex)}
                         >
-                          <span className="row-num">
-                            {item.originalIndex === state.currentIndex && state.isPlaying ? (
-                              <EqualizerIcon />
-                            ) : (
-                              item.originalIndex + 1
-                            )}
-                          </span>
+                          <span className="row-num">{item.originalIndex + 1}</span>
                           <span className="row-name">{getFileName(item.track)}</span>
                         </div>
                       ))

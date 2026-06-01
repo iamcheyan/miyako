@@ -1,4 +1,24 @@
 /* ==================== 基础布局 ==================== */
+.player-ui-system {
+  --player-light-surface: #f7f7f8;
+  --player-light-surface-raised: #ffffff;
+  --player-light-surface-muted: #ececef;
+  --player-light-text: #3a3a3c;
+  --player-light-text-muted: #737377;
+  --player-light-outline: #dedee3;
+  --player-light-signal: #8a8a90;
+  --player-light-control-bg: #e5e5e8;
+  position: relative;
+  z-index: 2;
+  background-color: var(--surface);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .player-ui-system {
+    background-color: var(--surface-dark);
+  }
+}
+
 .player-ui {
   flex-shrink: 0;
   z-index: 1000;
@@ -159,39 +179,17 @@
   z-index: 1;
 }
 
-.expanded.dragging {
-  background-color: transparent;
+.expanded.collapsed {
+  display: none;
 }
 
-.expanded::before {
-  content: "";
-  position: absolute;
-  top: calc(max(env(safe-area-inset-top, 0px), 36px) + 8px);
-  left: 24px;
-  right: 24px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--outline-variant),
-    transparent
-  );
-  opacity: 0.8;
-  pointer-events: none;
+.expanded.dragging {
+  background-color: transparent;
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded {
     background-color: var(--surface-dark);
-  }
-
-  .expanded::before {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--outline-variant-dark),
-      transparent
-    );
   }
 }
 
@@ -884,47 +882,6 @@
   }
 }
 
-.row-num .eq-icon {
-  font-size: 16px;
-  display: inline-block;
-  vertical-align: middle;
-  fill: var(--on-surface);
-}
-
-@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
-  .row-num .eq-icon {
-    fill: var(--on-surface-dark);
-  }
-}
-
-.eq-bar {
-  animation: eqBounce 0.8s ease-in-out infinite alternate;
-  transform-origin: bottom;
-}
-
-.eq-bar-1 {
-  animation-delay: 0s;
-}
-
-.eq-bar-2 {
-  animation-delay: 0.2s;
-}
-
-.eq-bar-3 {
-  animation-delay: 0.4s;
-}
-
-@keyframes eqBounce {
-  0% {
-    transform: scaleY(0.35);
-    opacity: 0.5;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
 .row-name {
   flex: 1;
   font-size: 14px;
@@ -940,118 +897,154 @@
 
 /* ==================== 亮色模式强制覆盖 ==================== */
 :root[data-theme="light"] .mini-progress {
-  background-color: var(--outline-variant);
+  background-color: var(--player-light-outline);
+}
+
+:root[data-theme="light"] .player-ui-system {
+  color-scheme: light;
+  background-color: var(--player-light-surface);
 }
 
 :root[data-theme="light"] .mini-progress-fill {
-  background-color: var(--on-surface);
+  background-color: var(--player-light-signal);
 }
 
 :root[data-theme="light"] .mini-track-name {
-  color: var(--on-surface);
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .mini-btn {
-  color: var(--on-surface);
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .mini-btn.play {
-  color: var(--on-surface);
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .mini-only {
-  border-top-color: var(--outline-variant);
-  background-color: var(--surface);
+  border-top-color: var(--player-light-outline);
+  background: var(--player-light-surface) !important;
+  background-color: var(--player-light-surface) !important;
+  color: var(--player-light-text);
+  box-shadow: 0 -8px 24px rgb(122 122 122 / 8%);
+}
+
+@media (prefers-color-scheme: light) {
+  .mini-only {
+    border-top-color: var(--player-light-outline);
+    background: var(--player-light-surface) !important;
+    background-color: var(--player-light-surface) !important;
+    color: var(--player-light-text);
+    box-shadow: 0 -8px 24px rgb(122 122 122 / 8%);
+  }
 }
 
 :root[data-theme="light"] .expanded-backdrop {
-  background-color: var(--surface);
+  background-color: var(--player-light-surface) !important;
 }
 
 :root[data-theme="light"] .expanded {
-  background-color: var(--surface);
+  background-color: var(--player-light-surface) !important;
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .expanded-container {
-  background-color: var(--surface);
+  background-color: var(--player-light-surface) !important;
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .expanded-close-btn {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
 }
 
 :root[data-theme="light"] .expanded-close-btn:hover {
-  background-color: var(--outline-variant);
+  background-color: var(--player-light-surface-muted);
+}
+
+:root[data-theme="light"] .signal-mark span {
+  background-color: var(--player-light-signal);
 }
 
 :root[data-theme="light"] .track-title {
-  color: var(--on-surface);
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .track-status {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
 }
 
 :root[data-theme="light"] .playlist-header {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
 }
 
 :root[data-theme="light"] .playlist-header::after {
-  background-color: var(--outline-variant);
+  background-color: var(--player-light-outline);
 }
 
 :root[data-theme="light"] .playlist-empty {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
 }
 
 :root[data-theme="light"] .expanded-controls {
-  border-top-color: var(--outline-variant);
-  background-color: var(--surface);
+  border-top-color: var(--player-light-outline);
+  background-color: var(--player-light-surface-raised) !important;
+  box-shadow: 0 -16px 32px rgb(122 122 122 / 8%);
 }
 
 :root[data-theme="light"] .seek-time {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
+}
+
+:root[data-theme="light"] .seek-bar {
+  background: linear-gradient(
+    90deg,
+    var(--player-light-signal) 0%,
+    var(--player-light-signal) var(--seek-progress, 0%),
+    var(--player-light-outline) var(--seek-progress, 0%),
+    var(--player-light-outline) 100%
+  );
 }
 
 :root[data-theme="light"] .seek-bar::-webkit-slider-thumb {
-  background-color: var(--on-surface);
-  border-color: var(--surface);
-  box-shadow: 0 0 0 1px var(--outline-variant);
+  background-color: var(--player-light-signal);
+  border-color: var(--player-light-surface-raised);
+  box-shadow: 0 0 0 1px var(--player-light-outline);
 }
 
 :root[data-theme="light"] .ctrl-btn {
-  color: var(--on-surface);
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .ctrl-btn.mode {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
 }
 
 :root[data-theme="light"] .ctrl-btn.favorite {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
 }
 
 :root[data-theme="light"] .ctrl-btn.play {
-  background-color: #f0f0f0;
-  color: var(--surface);
+  background-color: #f5f5f5;
+  color: var(--player-light-text);
 }
 
 :root[data-theme="light"] .playlist-row:hover {
-  background-color: var(--surface-variant);
+  background-color: var(--player-light-surface-muted);
 }
 
 :root[data-theme="light"] .playlist-row.active {
-  background-color: var(--surface-variant);
+  background-color: var(--player-light-surface-muted);
 }
 
 :root[data-theme="light"] .row-num {
-  color: var(--on-surface-variant);
+  color: var(--player-light-text-muted);
 }
 
 :root[data-theme="light"] .row-name {
-  color: var(--on-surface);
+  color: var(--player-light-text);
 }
 
-:root[data-theme="light"] .eq-icon {
-  fill: var(--on-surface);
+:root[data-theme="light"] .playlist-row.active .row-num,
+:root[data-theme="light"] .playlist-row.active .row-name {
+  color: var(--player-light-text);
 }

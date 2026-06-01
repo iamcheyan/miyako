@@ -3,6 +3,7 @@ import {
   BrowserRouter,
   Routes,
   Route,
+  useLocation,
 } from "react-router-dom";
 import Settings from "./components/Settings";
 import RemoteBrowser from "./components/RemoteBrowser";
@@ -16,6 +17,31 @@ import "./components/shared.css";
 
 // 页面内容区域
 function PageContent() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // 每次路由变化成功挂载新页面后，在这里将 page-wrapper 重置为 0 状态！
+    // 此时新页面已经完全在 DOM 中就绪并开始重新渲染，此时重置 transform 绝对不会发生旧页面的重置闪回！
+    const wrapper = document.querySelector<HTMLElement>(".page-wrapper");
+    const uPage = document.querySelector<HTMLElement>(".underlay-page-content");
+    const uMask = document.querySelector<HTMLElement>(".underlay-dim-mask");
+    
+    if (wrapper) {
+      wrapper.style.transition = "none";
+      wrapper.style.transform = "translateX(0)";
+      wrapper.style.boxShadow = "none";
+    }
+    if (uPage) {
+      uPage.style.transition = "none";
+      uPage.style.transform = "scale(0.97)";
+      uPage.style.filter = "brightness(0.7) blur(0.5px)";
+    }
+    if (uMask) {
+      uMask.style.transition = "none";
+      uMask.style.opacity = "1";
+    }
+  }, [location.pathname]);
+
   return (
     <div className="page-wrapper">
       <main className="page-content">
@@ -205,24 +231,6 @@ function App() {
 
         setTimeout(() => {
           window.history.back();
-          // 返回路由变更后，静默将容器复原，为新页面入场做好准备
-          const wrapper = document.querySelector<HTMLElement>(".page-wrapper");
-          const uPage = document.querySelector<HTMLElement>(".underlay-page-content");
-          const uMask = document.querySelector<HTMLElement>(".underlay-dim-mask");
-          if (wrapper) {
-            wrapper.style.transition = "none";
-            wrapper.style.transform = "translateX(0)";
-            wrapper.style.boxShadow = "none";
-          }
-          if (uPage) {
-            uPage.style.transition = "none";
-            uPage.style.transform = "scale(0.97)";
-            uPage.style.filter = "brightness(0.7) blur(0.5px)";
-          }
-          if (uMask) {
-            uMask.style.transition = "none";
-            uMask.style.opacity = "1";
-          }
         }, 300);
       } else {
         // 2. 撤销返回：Q弹回弹原位，底牌回归 0.97 视差，遮罩恢复

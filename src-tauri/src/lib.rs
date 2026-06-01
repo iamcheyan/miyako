@@ -175,6 +175,17 @@ fn get_app_data_dir() -> Result<std::path::PathBuf, String> {
     }
 }
 
+/// 控制 Android 状态栏显示/隐藏
+#[tauri::command]
+async fn set_status_bar_visible(window: tauri::WebviewWindow, visible: bool) -> Result<(), String> {
+    #[cfg(target_os = "android")]
+    {
+        window.emit("status-bar-change", visible).map_err(|e| e.to_string())?;
+    }
+    let _ = visible;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -194,7 +205,8 @@ pub fn run() {
             storage_read,
             storage_write,
             read_audio_file,
-            file_exists
+            file_exists,
+            set_status_bar_visible
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

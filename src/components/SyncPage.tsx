@@ -10,6 +10,7 @@ import type {
 } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
+import { showStatusBar, hideStatusBar } from "../lib/androidStatusBar";
 import "./SyncPage.css";
 
 const STATE_PATH = "sync_state.json";
@@ -40,6 +41,12 @@ function SyncPage() {
   const addLog = useCallback((message: string, type: SyncLog["type"] = "info") => {
     const time = new Date().toLocaleTimeString();
     setLogs((prev) => [...prev, { time, message, type }]);
+  }, []);
+
+  // 显示状态栏
+  useEffect(() => {
+    showStatusBar();
+    return () => hideStatusBar();
   }, []);
 
   // 加载配置并连接

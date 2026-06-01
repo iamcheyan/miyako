@@ -20,7 +20,7 @@
     "folders": "Folders",
     "songs": "songs",
     "loading": "Loading...",
-    "searchPlaceholder": "Search music...", 
+    "searchPlaceholder": "Search music...",
     "quickActions": {
       "nasSettings": "NAS Settings",
       "syncMusic": "Sync Music",
@@ -87,6 +87,12 @@
       "title": "Statistics",
       "syncedFiles": "Synced Files",
       "totalSize": "Total Size"
+    },
+    "theme": {
+      "title": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
     }
   },
   "sync": {

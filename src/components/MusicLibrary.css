@@ -43,7 +43,7 @@
   animation: spin 1s linear infinite;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .loading-spinner {
     border-color: var(--outline-variant-dark);
     border-top-color: var(--on-surface-dark);
@@ -68,7 +68,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-bar {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -79,7 +79,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-icon {
     color: var(--on-surface-variant-dark);
   }
@@ -93,7 +93,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-input {
     color: var(--on-surface-dark);
   }
@@ -128,7 +128,7 @@
   transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .action-card {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -139,7 +139,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .action-card:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -150,7 +150,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .action-icon {
     color: var(--on-surface-dark);
   }
@@ -162,7 +162,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .action-label {
     color: var(--on-surface-dark);
   }
@@ -187,7 +187,7 @@
   margin-bottom: 12px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .empty-icon {
     color: var(--outline-dark);
   }
@@ -200,7 +200,7 @@
   margin: 0 0 8px 0;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .empty-title {
     color: var(--on-surface-dark);
   }
@@ -213,7 +213,7 @@
   max-width: 280px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .empty-desc {
     color: var(--on-surface-variant-dark);
   }
@@ -239,7 +239,7 @@
   border: none;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .empty-btn.primary {
     background-color: var(--on-surface-dark);
     color: var(--surface-dark);
@@ -252,7 +252,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .empty-btn.secondary {
     border-color: var(--outline-dark);
     color: var(--on-surface-dark);
@@ -274,7 +274,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-list {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -294,7 +294,7 @@
   transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-item {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -308,7 +308,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-item:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -322,7 +322,7 @@
   color: var(--on-primary-container);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-item.all-files .folder-icon {
     color: var(--on-primary-container-dark);
   }
@@ -333,7 +333,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-icon {
     color: var(--on-surface-dark);
   }
@@ -350,7 +350,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-name {
     color: var(--on-surface-dark);
   }
@@ -361,7 +361,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-count {
     color: var(--on-surface-variant-dark);
   }
@@ -388,7 +388,7 @@
   border-radius: 50%;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .back-btn-small {
     color: var(--on-surface-dark);
   }
@@ -398,7 +398,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .back-btn-small:hover {
     background-color: var(--surface-variant-dark);
   }
@@ -415,7 +415,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .list-title {
     color: var(--on-surface-dark);
   }
@@ -426,7 +426,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .list-subtitle {
     color: var(--on-surface-variant-dark);
   }
@@ -443,7 +443,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-list {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -458,7 +458,7 @@
   transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-item {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -472,7 +472,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-item:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -509,7 +509,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-fav-btn:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -522,7 +522,7 @@
   text-align: center;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-index {
     color: var(--on-surface-variant-dark);
   }
@@ -543,7 +543,7 @@
   text-overflow: ellipsis;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-name {
     color: var(--on-surface-dark);
   }
@@ -554,7 +554,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-size {
     color: var(--on-surface-variant-dark);
   }
@@ -576,7 +576,7 @@
   margin-right: 4px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .play-all-btn {
     color: var(--on-surface-dark);
   }
@@ -586,7 +586,7 @@
   background-color: var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .play-all-btn:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -607,7 +607,7 @@
   flex-shrink: 0;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-btn {
     color: var(--on-surface-dark);
   }
@@ -617,7 +617,7 @@
   background-color: var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-btn:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -637,7 +637,7 @@
   animation: slideInFromTop 0.2s ease-out;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-overlay {
     background-color: var(--surface-dark);
   }
@@ -665,7 +665,7 @@
   flex-shrink: 0;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-overlay-header {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -675,7 +675,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-overlay-icon {
     color: var(--on-surface-variant-dark);
   }
@@ -690,7 +690,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-overlay-input {
     color: var(--on-surface-dark);
   }
@@ -700,7 +700,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-overlay-input::placeholder {
     color: var(--on-surface-variant-dark);
   }
@@ -719,7 +719,7 @@
   border-radius: 50%;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-overlay-close {
     color: var(--on-surface-dark);
   }
@@ -729,7 +729,7 @@
   background-color: var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-overlay-close:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -751,7 +751,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-no-results {
     color: var(--on-surface-variant-dark);
   }
@@ -770,7 +770,7 @@
   cursor: pointer;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-result-item {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -780,7 +780,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-result-item:hover {
     background-color: var(--surface-variant-dark);
   }
@@ -790,7 +790,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-result-item .material-symbols-outlined {
     color: var(--on-surface-variant-dark);
   }
@@ -812,7 +812,7 @@
   white-space: nowrap;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-result-name {
     color: var(--on-surface-dark);
   }
@@ -826,7 +826,7 @@
   white-space: nowrap;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .search-result-path {
     color: var(--on-surface-variant-dark);
   }

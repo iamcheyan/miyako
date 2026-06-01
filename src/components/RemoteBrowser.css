@@ -37,7 +37,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .path-nav {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -58,7 +58,7 @@
   flex-shrink: 0;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .path-nav .back-btn {
     color: var(--on-surface-dark);
   }
@@ -68,7 +68,7 @@
   background-color: var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .path-nav .back-btn:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -84,7 +84,7 @@
   white-space: nowrap;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .current-path {
     color: var(--on-surface-variant-dark);
   }
@@ -123,7 +123,7 @@
   color: var(--outline);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .empty-state {
     color: var(--outline-dark);
   }
@@ -146,7 +146,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .entry-list {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -167,7 +167,7 @@
   transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .entry-item {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -181,7 +181,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .entry-item:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -192,7 +192,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .entry-icon {
     color: var(--on-surface-dark);
   }
@@ -213,7 +213,7 @@
   white-space: nowrap;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .entry-name {
     color: var(--on-surface-dark);
   }
@@ -224,7 +224,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .entry-size {
     color: var(--on-surface-variant-dark);
   }

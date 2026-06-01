@@ -16,28 +16,12 @@
   ) !important;*/
   backdrop-filter: blur(20px) saturate(120%);
   -webkit-backdrop-filter: blur(20px) saturate(120%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 -4px 16px rgba(0, 0, 0, 0.06);
   padding-bottom: calc(
     var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
   );
 }
 
-@media (prefers-color-scheme: dark) {
-  .mini-only {
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    /*background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.04) 49.9%,
-      rgba(0, 0, 0, 0.2) 50%,
-      rgba(255, 255, 255, 0.02) 100%
-    ) !important;*/
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 -4px 16px rgba(0, 0, 0, 0.12);
-  }
+
 }
 
 .mini-progress {
@@ -45,7 +29,7 @@
   background-color: var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .mini-progress {
     background-color: var(--outline-variant-dark);
   }
@@ -57,7 +41,7 @@
   transition: width 0.1s linear;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .mini-progress-fill {
     background-color: var(--on-surface-dark);
   }
@@ -88,7 +72,7 @@
   display: block;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .mini-track-name {
     color: var(--on-surface-dark);
   }
@@ -113,7 +97,7 @@
   border-radius: 50%;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .mini-btn {
     color: var(--on-surface-dark);
   }
@@ -130,7 +114,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .mini-btn.play {
     color: var(--on-surface-dark);
   }
@@ -157,7 +141,7 @@
   z-index: 0;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded-backdrop {
     background-color: var(--surface-dark);
   }
@@ -200,7 +184,7 @@
   pointer-events: none;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded {
     background-color: var(--surface-dark);
   }
@@ -226,7 +210,7 @@
   background-color: var(--surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded-container {
     background-color: var(--surface-dark);
   }
@@ -262,7 +246,7 @@
   transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded-close-btn {
     color: var(--on-surface-variant-dark);
   }
@@ -272,7 +256,7 @@
   background-color: var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded-close-btn:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -385,7 +369,7 @@
   height: 30px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .signal-mark span {
     background-color: var(--on-surface-dark);
   }
@@ -429,7 +413,7 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .track-title {
     color: var(--on-surface-dark);
   }
@@ -442,7 +426,7 @@
   padding-top: 2px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .track-status {
     color: var(--on-surface-variant-dark);
   }
@@ -470,7 +454,7 @@
   letter-spacing: 0.08em;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .playlist-header {
     color: var(--on-surface-variant-dark);
   }
@@ -548,7 +532,7 @@
   font-size: 14px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .playlist-empty {
     color: var(--on-surface-variant-dark);
   }
@@ -571,7 +555,7 @@
   box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.06);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded-controls {
     border-top-color: var(--outline-variant-dark);
     background-color: var(--surface-dark);
@@ -594,7 +578,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .seek-time {
     color: var(--on-surface-variant-dark);
   }
@@ -616,7 +600,7 @@
   cursor: pointer;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .seek-bar {
     background: linear-gradient(
       90deg,
@@ -639,7 +623,7 @@
   box-shadow: 0 0 0 1px var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .seek-bar::-webkit-slider-thumb {
     background-color: var(--on-surface-dark);
     border-color: var(--surface-dark);
@@ -670,7 +654,7 @@
   border-radius: 50%;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .ctrl-btn {
     color: var(--on-surface-dark);
   }
@@ -684,7 +668,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .ctrl-btn.mode {
     color: var(--on-surface-variant-dark);
   }
@@ -696,7 +680,7 @@
   position: relative;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .ctrl-btn.favorite {
     color: var(--on-surface-variant-dark);
   }
@@ -741,7 +725,7 @@
   color: var(--surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .ctrl-btn.play {
     background-color: var(--on-surface-dark);
     color: var(--surface-dark);
@@ -862,7 +846,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .playlist-row:hover {
     background-color: var(--surface-variant-dark);
   }
@@ -878,7 +862,7 @@
   padding-right: 38px;*/
 }
 
-/*@media (prefers-color-scheme: dark) {
+/*@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .playlist-row.active {
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     border-bottom: 1px solid rgba(0, 0, 0, 0.4);
@@ -900,7 +884,7 @@
   text-align: center;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .row-num {
     color: var(--on-surface-variant-dark);
   }
@@ -911,7 +895,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .playlist-row.active .row-num,
   .playlist-row.active .row-name {
     color: var(--on-surface-dark);
@@ -925,7 +909,7 @@
   fill: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .row-num .eq-icon {
     fill: var(--on-surface-dark);
   }

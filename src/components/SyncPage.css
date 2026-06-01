@@ -31,7 +31,7 @@
   font-size: 13px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .last-sync-info {
     color: var(--on-surface-variant-dark);
   }
@@ -50,7 +50,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .status-card {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -74,7 +74,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .status-icon {
     color: var(--on-surface-dark);
   }
@@ -91,7 +91,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .status-title {
     color: var(--on-surface-dark);
   }
@@ -102,7 +102,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .status-subtitle {
     color: var(--on-surface-variant-dark);
   }
@@ -132,7 +132,7 @@
     background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .browse-btn {
     background-color: var(--surface-variant-dark);
     color: var(--on-surface-dark);
@@ -170,7 +170,7 @@
     box-shadow 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .sync-fab {
     background-color: var(--on-surface-dark);
     color: var(--surface-dark);
@@ -212,7 +212,7 @@
   margin-bottom: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .progress-bar {
     background-color: var(--outline-variant-dark);
   }
@@ -224,7 +224,7 @@
   transition: width 0.3s ease;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .progress-fill {
     background-color: var(--on-surface-dark);
   }
@@ -265,7 +265,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .stats-list {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -280,7 +280,7 @@
   border-bottom: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .stat-row {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -295,7 +295,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .stat-icon {
     color: var(--on-surface-dark);
   }
@@ -307,7 +307,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .stat-label {
     color: var(--on-surface-variant-dark);
   }
@@ -319,7 +319,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .stat-value {
     color: var(--on-surface-dark);
   }
@@ -337,7 +337,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .log-list {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -353,7 +353,7 @@
   color: var(--outline);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .log-empty {
     color: var(--outline-dark);
   }
@@ -368,7 +368,7 @@
   font-size: 13px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .log-item {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -383,7 +383,7 @@
   min-width: 70px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .log-time {
     color: var(--outline-dark);
   }
@@ -394,7 +394,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .log-message {
     color: var(--on-surface-variant-dark);
   }
@@ -405,7 +405,7 @@
   font-weight: 500;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .log-success .log-message {
     color: var(--on-surface-dark);
   }

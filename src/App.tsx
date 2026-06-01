@@ -61,6 +61,17 @@ function App() {
   const [underlayHtml, setUnderlayHtml] = useState("");
   const [underlayScrollTop, setUnderlayScrollTop] = useState(0);
 
+  // 主题初始化
+  useEffect(() => {
+    const saved = localStorage.getItem("miyako_theme") as "light" | "dark" | "system" | null;
+    const theme = saved || "system";
+    if (theme === "light" || theme === "dark") {
+      document.documentElement.setAttribute("data-theme", theme);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  }, []);
+
   useEffect(() => {
     const handleUpdateUnderlay = (e: any) => {
       setUnderlayHtml(e.detail.html);

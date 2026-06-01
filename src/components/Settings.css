@@ -26,7 +26,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .language-options {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -46,7 +46,7 @@
   transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .language-btn {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -60,7 +60,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .language-btn:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -70,7 +70,7 @@
   background-color: var(--primary-container);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .language-btn.active {
     background-color: var(--primary-container-dark);
   }
@@ -81,7 +81,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .language-name {
     color: var(--on-surface-dark);
   }
@@ -92,7 +92,7 @@
   font-weight: 500;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .language-btn.active .language-name {
     color: var(--on-primary-container-dark);
   }
@@ -121,7 +121,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .settings-list {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -133,7 +133,7 @@
   border-bottom: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .setting-item {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -150,7 +150,7 @@
   margin-bottom: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .setting-label {
     color: var(--on-surface-variant-dark);
   }
@@ -167,7 +167,7 @@
   transition: border-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .setting-input {
     background-color: var(--surface-dark);
     border-color: var(--outline-dark);
@@ -180,7 +180,7 @@
   border-color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .setting-input:focus {
     border-color: var(--on-surface-dark);
   }
@@ -222,7 +222,7 @@
   flex-shrink: 0;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .password-toggle {
     color: var(--on-surface-variant-dark);
   }
@@ -251,7 +251,7 @@
   transition: opacity 0.2s, transform 0.1s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .test-btn {
     background-color: var(--on-surface-dark);
     color: var(--surface-dark);
@@ -288,7 +288,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .test-result.success {
     background-color: var(--primary-container-dark);
     color: var(--on-primary-container-dark);
@@ -319,7 +319,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .stat-card {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -353,7 +353,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .danger-list {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -374,7 +374,7 @@
   transition: background-color 0.2s;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .danger-item {
     border-bottom-color: var(--outline-variant-dark);
   }
@@ -388,7 +388,7 @@
   background-color: var(--surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .danger-item:hover {
     background-color: var(--outline-variant-dark);
   }
@@ -410,7 +410,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .danger-title {
     color: var(--on-surface-dark);
   }
@@ -421,7 +421,7 @@
   color: var(--on-surface-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .danger-desc {
     color: var(--on-surface-variant-dark);
   }
@@ -451,7 +451,7 @@
   border: 1px solid var(--outline-variant);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .dialog {
     background-color: var(--surface-variant-dark);
     border-color: var(--outline-variant-dark);
@@ -465,7 +465,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .dialog-title {
     color: var(--on-surface-dark);
   }
@@ -478,7 +478,7 @@
   margin: 0 0 24px 0;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .dialog-text {
     color: var(--on-surface-variant-dark);
   }
@@ -505,7 +505,7 @@
   color: var(--on-surface);
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .dialog-btn.cancel {
     border-color: var(--outline-dark);
     color: var(--on-surface-dark);
@@ -518,7 +518,7 @@
   border: none;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .dialog-btn.confirm {
     background-color: var(--on-surface-dark);
     color: var(--surface-dark);

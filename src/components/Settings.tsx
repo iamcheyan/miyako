@@ -67,6 +67,21 @@ function Settings() {
     i18n.changeLanguage(langCode);
   };
 
+  // 主题切换
+  const [theme, setTheme] = useState<"light" | "dark" | "system">(() => {
+    return (localStorage.getItem("miyako_theme") as "light" | "dark" | "system") || "system";
+  });
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+    localStorage.setItem("miyako_theme", newTheme);
+    if (newTheme === "light" || newTheme === "dark") {
+      document.documentElement.setAttribute("data-theme", newTheme);
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  };
+
   // 测试连接
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -348,6 +363,33 @@ function Settings() {
               </div>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
+          </div>
+        </section>
+
+        {/* 主题设置 */}
+        <section className="settings-section">
+          <h2 className="section-title">{t("settings.theme.title")}</h2>
+
+          <div className="language-options">
+            {([
+              { key: "light" as const, icon: "light_mode", label: t("settings.theme.light") },
+              { key: "dark" as const, icon: "dark_mode", label: t("settings.theme.dark") },
+              { key: "system" as const, icon: "contrast", label: t("settings.theme.system") },
+            ]).map((opt) => (
+              <button
+                key={opt.key}
+                className={`language-btn ${theme === opt.key ? "active" : ""}`}
+                onClick={() => handleThemeChange(opt.key)}
+              >
+                <span className="language-name">
+                  <span className="material-symbols-outlined" style={{ fontSize: 20, verticalAlign: "middle", marginRight: 8 }}>{opt.icon}</span>
+                  {opt.label}
+                </span>
+                {theme === opt.key && (
+                  <span className="material-symbols-outlined">check</span>
+                )}
+              </button>
+            ))}
           </div>
         </section>
 

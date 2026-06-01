@@ -15,7 +15,7 @@
   overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .app {
     background-color: var(--surface-dark);
     color: var(--on-surface-dark);
@@ -34,7 +34,7 @@
   overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .page-wrapper {
     background-color: var(--surface-dark);
   }

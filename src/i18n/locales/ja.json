@@ -20,7 +20,7 @@
     "folders": "フォルダ",
     "songs": "曲",
     "loading": "読み込み中...",
-    "searchPlaceholder": "音楽を検索...", 
+    "searchPlaceholder": "音楽を検索...",
     "quickActions": {
       "nasSettings": "NAS設定",
       "syncMusic": "音乐を同期",
@@ -87,6 +87,12 @@
       "title": "統計情報",
       "syncedFiles": "同期済みファイル",
       "totalSize": "合計サイズ"
+    },
+    "theme": {
+      "title": "テーマ設定",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システム"
     }
   },
   "sync": {

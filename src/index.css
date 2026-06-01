@@ -46,7 +46,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   :root {
     color: var(--on-surface-dark);
     background-color: var(--surface-dark);

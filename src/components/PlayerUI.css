@@ -10,7 +10,7 @@
   --player-light-control-bg: #e5e5e8;
   position: fixed;
   right: 0;
-  bottom: 0;
+  bottom: var(--system-bottom-inset, 0px);
   left: 0;
   z-index: 1000;
   background: transparent;
@@ -28,9 +28,7 @@
   z-index: 1;
   border-top: 1px solid var(--outline-variant);
   background-color: var(--surface);
-  padding-bottom: calc(
-    var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
-  );
+  padding-bottom: 0;
   pointer-events: auto;
 }
 
@@ -180,7 +178,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  bottom: 0;
+  bottom: var(--system-bottom-inset, 0px);
   left: 0;
   background-color: var(--surface);
   overflow: hidden;
@@ -550,10 +548,7 @@
 /* 底部：进度条 + 控制按钮，固定在屏幕底部 */
 .expanded-controls {
   flex-shrink: 0;
-  padding: 12px 24px
-    calc(
-      10px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
-    );
+  padding: 12px 24px 10px;
   /*border-top: 1px solid var(--outline-variant);*/
   background-color: var(--surface);
   /*box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.06);*/
@@ -767,10 +762,7 @@
   }
 
   .expanded-controls {
-    padding: 6px 16px
-      calc(
-        6px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
-      );
+    padding: 6px 16px;
   }
 
   .seek-section {
@@ -798,10 +790,7 @@
   }
 
   .expanded-controls {
-    padding: 4px 12px
-      calc(
-        4px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
-      );
+    padding: 4px 12px;
   }
 
   .seek-section {

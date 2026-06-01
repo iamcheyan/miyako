@@ -4,13 +4,15 @@ declare global {
   interface Window {
     StatusBarAndroid?: {
       setVisible: (visible: boolean) => void;
+      getTopInset?: () => number;
+      getBottomInset?: () => number;
     };
   }
 }
 
 /**
- * 设置 Android 状态栏可见性
- * @param visible true 显示状态栏，false 隐藏状态栏
+ * 设置 Android 状态栏可见性。
+ * 当前应用统一保持状态栏显示，visible=false 会被原生层忽略。
  */
 export function setStatusBarVisible(visible: boolean): void {
   if (window.StatusBarAndroid) {
@@ -26,8 +28,8 @@ export function showStatusBar(): void {
 }
 
 /**
- * 隐藏 Android 状态栏
+ * 状态栏现在全局保持显示，此函数保留为兼容旧调用。
  */
 export function hideStatusBar(): void {
-  setStatusBarVisible(false);
+  setStatusBarVisible(true);
 }

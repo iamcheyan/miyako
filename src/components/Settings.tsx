@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
 import { DEFAULT_SMB_CONFIG, loadSmbConfig, saveSmbConfig } from "../lib/smbConfig";
-import { showStatusBar, hideStatusBar } from "../lib/androidStatusBar";
+import { showStatusBar } from "../lib/androidStatusBar";
 import "./Settings.css";
 
 const STATE_PATH = "sync_state.json";
@@ -35,7 +35,6 @@ function Settings() {
   // 显示状态栏
   useEffect(() => {
     showStatusBar();
-    return () => hideStatusBar();
   }, []);
 
   // 加载保存的配置

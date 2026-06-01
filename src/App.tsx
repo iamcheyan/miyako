@@ -48,44 +48,36 @@ function App() {
     const mediaSession = getMediaSessionManager();
     mediaSession.initialize();
 
-    // Keep system-bar spacing adaptive. Do not force a fixed Android
-    // navigation height: gesture-navigation devices often need 0px.
-    const detectAndroidNavHeight = () => {
+    const applySystemInsets = () => {
       const root = document.documentElement;
       const app = document.querySelector<HTMLElement>(".app");
       const isAndroid = /Android/i.test(navigator.userAgent);
-      const visualViewport = window.visualViewport;
-      const viewportHeight = visualViewport?.height ?? window.innerHeight;
-      const screenDiff = window.screen.height - window.innerHeight;
-      const visualDiff =
-        window.innerHeight - viewportHeight - (visualViewport?.offsetTop ?? 0);
-      const navHeight = isAndroid
-        ? Math.max(
-            ...[screenDiff, visualDiff]
-              .filter((value) => value > 0 && value < 160)
-              .map((value) => Math.round(value))
-          )
-        : 0;
-      const navHeightPx = Number.isFinite(navHeight) ? navHeight : 0;
+      const androidTopInset = window.StatusBarAndroid?.getTopInset?.();
+      const androidBottomInset = window.StatusBarAndroid?.getBottomInset?.();
       const topInset = isAndroid
-        ? "0px"
+        ? `${androidTopInset && androidTopInset > 0 ? androidTopInset : 24}px`
         : "max(env(safe-area-inset-top, 0px), 36px)";
+      const bottomInset = isAndroid
+        ? `${androidBottomInset && androidBottomInset > 0 ? androidBottomInset : 0}px`
+        : "env(safe-area-inset-bottom, 0px)";
 
+      if (isAndroid) {
+        root.style.setProperty("--android-native-insets", "1");
+        app?.style.setProperty("--android-native-insets", "1");
+      }
       root.style.setProperty("--system-top-inset", topInset);
-      root.style.setProperty("--android-nav-height", `${navHeightPx}px`);
+      root.style.setProperty("--system-bottom-inset", bottomInset);
+      root.style.setProperty("--android-nav-height", "0px");
       app?.style.setProperty("--system-top-inset", topInset);
-      app?.style.setProperty("--android-nav-height", `${navHeightPx}px`);
+      app?.style.setProperty("--system-bottom-inset", bottomInset);
+      app?.style.setProperty("--android-nav-height", "0px");
     };
 
-    detectAndroidNavHeight();
-    window.addEventListener("resize", detectAndroidNavHeight);
-    window.visualViewport?.addEventListener("resize", detectAndroidNavHeight);
-    window.visualViewport?.addEventListener("scroll", detectAndroidNavHeight);
+    applySystemInsets();
+    window.addEventListener("resize", applySystemInsets);
 
     return () => {
-      window.removeEventListener("resize", detectAndroidNavHeight);
-      window.visualViewport?.removeEventListener("resize", detectAndroidNavHeight);
-      window.visualViewport?.removeEventListener("scroll", detectAndroidNavHeight);
+      window.removeEventListener("resize", applySystemInsets);
     };
   }, []);
 

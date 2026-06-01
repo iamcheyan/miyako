@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  /*padding: 12px 16px;*/
+  padding: 0 0 10px 0;
   background-color: var(--surface);
   /*border-bottom: 1px solid var(--outline-variant);*/
   flex-shrink: 0;
@@ -35,8 +35,6 @@
     color: var(--on-surface-dark);
   }
 }
-
-
 
 .page-title {
   flex: 1;

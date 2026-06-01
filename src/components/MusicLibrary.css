@@ -4,7 +4,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  padding: 12px 12px 0 12px;
+  padding: 0 12px 0 12px;
   box-sizing: border-box;
 }
 
@@ -840,207 +840,206 @@
   }
 }
 
-
 /* ==================== 亮色模式强制覆盖 ==================== */
 :root[data-theme="light"] .loading-spinner {
-    border-color: var(--outline-variant);
-    border-top-color: var(--on-surface);
-  }
+  border-color: var(--outline-variant);
+  border-top-color: var(--on-surface);
+}
 
 :root[data-theme="light"] .search-bar {
-    background-color: var(--surface-variant);
-    border-color: var(--outline-variant);
-  }
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .search-icon {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .search-input {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .action-card {
-    background-color: var(--surface-variant);
-    border-color: var(--outline-variant);
-  }
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .action-card:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .action-icon {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .action-label {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .empty-icon {
-    color: var(--outline);
-  }
+  color: var(--outline);
+}
 
 :root[data-theme="light"] .empty-title {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .empty-desc {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .empty-btn.primary {
-    background-color: var(--on-surface);
-    color: var(--surface);
-  }
+  background-color: var(--on-surface);
+  color: var(--surface);
+}
 
 :root[data-theme="light"] .empty-btn.secondary {
-    border-color: var(--outline);
-    color: var(--on-surface);
-  }
+  border-color: var(--outline);
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .folder-list {
-    background-color: var(--surface-variant);
-    border-color: var(--outline-variant);
-  }
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .folder-item {
-    border-bottom-color: var(--outline-variant);
-  }
+  border-bottom-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .folder-item:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .folder-icon {
-    color: var(--on-primary-container);
-  }
+  color: var(--on-primary-container);
+}
 
 :root[data-theme="light"] .folder-icon {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .folder-item.favorites .folder-icon {
-    color: #ff2d55 !important;
-  }
+  color: #ff2d55 !important;
+}
 
 :root[data-theme="light"] .folder-name {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .folder-count {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .back-btn-small {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .back-btn-small:hover {
-    background-color: var(--surface-variant);
-  }
+  background-color: var(--surface-variant);
+}
 
 :root[data-theme="light"] .list-title {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .list-subtitle {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .file-list {
-    background-color: var(--surface-variant);
-    border-color: var(--outline-variant);
-  }
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .file-item {
-    border-bottom-color: var(--outline-variant);
-  }
+  border-bottom-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .file-item:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .file-fav-btn:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .file-index {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .file-name {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .file-size {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .play-all-btn {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .play-all-btn:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .search-btn {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .search-btn:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .search-overlay {
-    background-color: var(--surface);
-  }
+  background-color: var(--surface);
+}
 
 :root[data-theme="light"] .search-overlay-header {
-    border-bottom-color: var(--outline-variant);
-  }
+  border-bottom-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .search-overlay-icon {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .search-overlay-input {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .search-overlay-input::placeholder {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .search-overlay-close {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .search-overlay-close:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .search-no-results {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .search-result-item {
-    border-bottom-color: var(--outline-variant);
-  }
+  border-bottom-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .search-result-item:hover {
-    background-color: var(--surface-variant);
-  }
+  background-color: var(--surface-variant);
+}
 
 :root[data-theme="light"] .material-symbols-outlined {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}
 
 :root[data-theme="light"] .search-result-name {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .search-result-path {
-    color: var(--on-surface-variant);
-  }
+  color: var(--on-surface-variant);
+}

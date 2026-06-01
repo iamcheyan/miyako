@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  /*padding: 12px 16px;*/
   background-color: var(--surface);
   border-bottom: 1px solid var(--outline-variant);
   flex-shrink: 0;
@@ -78,25 +78,24 @@
   }
 }
 
-
 /* ==================== 亮色模式强制覆盖 ==================== */
 :root[data-theme="light"] .page-header {
-    background-color: var(--surface);
-    border-bottom-color: var(--outline-variant);
-  }
+  background-color: var(--surface);
+  border-bottom-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .back-btn {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .back-btn:hover {
-    background-color: var(--outline-variant);
-  }
+  background-color: var(--outline-variant);
+}
 
 :root[data-theme="light"] .page-title {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .section-title {
-    color: var(--on-surface);
-  }
+  color: var(--on-surface);
+}

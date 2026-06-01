@@ -197,78 +197,99 @@ function SyncPage() {
     return new Date(timestamp * 1000).toLocaleString();
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/");
+  };
+
   return (
     <div className="sync-page">
-      {/* 固定头部:状态卡片 + 错误提示 + 统计 */}
-      <div className="sync-header">
-        {/* 同步状态卡片 */}
-        <div className="status-card">
-          <div className="status-header">
-            <div className="status-info">
-              <span className="material-symbols-outlined status-icon">
-                {connectionId ? "cloud_done" : "cloud_off"}
-              </span>
-              <div className="status-text">
-                <span className="status-title">
-                  {connectionId ? t("sync.connected") : connectionState.isConnecting ? t("sync.connecting") : t("sync.disconnected")}
+      {/* 可滚动内容 */}
+      <div className="sync-scroll">
+        <header className="page-header">
+          <button
+            className="back-btn"
+            type="button"
+            onClick={handleBack}
+            aria-label={t("common.back")}
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 className="page-title">{t("sync.title")}</h1>
+        </header>
+
+        {/* 同步状态 + 错误提示 */}
+        <div className="sync-header">
+          {/* 同步状态卡片 */}
+          <div className="status-card">
+            <div className="status-header">
+              <div className="status-info">
+                <span className="material-symbols-outlined status-icon">
+                  {connectionId ? "cloud_done" : "cloud_off"}
                 </span>
-                <span className="status-subtitle">
-                  {connectionId ? t("sync.nasServer") : connectionState.isConnecting ? t("sync.connectingTo") : t("sync.configureFirst")}
-                </span>
+                <div className="status-text">
+                  <span className="status-title">
+                    {connectionId ? t("sync.connected") : connectionState.isConnecting ? t("sync.connecting") : t("sync.disconnected")}
+                  </span>
+                  <span className="status-subtitle">
+                    {connectionId ? t("sync.nasServer") : connectionState.isConnecting ? t("sync.connectingTo") : t("sync.configureFirst")}
+                  </span>
+                </div>
+              </div>
+
+              <div className="status-actions">
+                {connectionId && (
+                  <button
+                    className="browse-btn"
+                    onClick={() => navigate("/remote")}
+                    aria-label={t("sync.browseRemote")}
+                  >
+                    <span className="material-symbols-outlined">folder_open</span>
+                  </button>
+                )}
+
+                <button
+                  className={`sync-fab ${isSyncing ? "syncing" : ""}`}
+                  onClick={handleStartSync}
+                  disabled={isSyncing || connectionState.isConnecting}
+                >
+                  <span className="material-symbols-outlined">
+                    {isSyncing ? "sync" : "sync"}
+                  </span>
+                </button>
               </div>
             </div>
 
-            <div className="status-actions">
-              {connectionId && (
-                <button
-                  className="browse-btn"
-                  onClick={() => navigate("/remote")}
-                  aria-label={t("sync.browseRemote")}
-                >
-                  <span className="material-symbols-outlined">folder_open</span>
-                </button>
-              )}
-
-              <button
-                className={`sync-fab ${isSyncing ? "syncing" : ""}`}
-                onClick={handleStartSync}
-                disabled={isSyncing || connectionState.isConnecting}
-              >
-                <span className="material-symbols-outlined">
-                  {isSyncing ? "sync" : "sync"}
+            {isSyncing && (
+              <div className="sync-progress">
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+                <span className="progress-text">
+                  {progress.current} / {progress.total}
                 </span>
-              </button>
-            </div>
+              </div>
+            )}
           </div>
 
-          {isSyncing && (
-            <div className="sync-progress">
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{
-                    width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%`,
-                  }}
-                />
-              </div>
-              <span className="progress-text">
-                {progress.current} / {progress.total}
-              </span>
+          {/* 错误提示 */}
+          {error && (
+            <div className="error-banner">
+              <span className="material-symbols-outlined">error</span>
+              <span>{error}</span>
             </div>
           )}
         </div>
 
-        {/* 错误提示 */}
-        {error && (
-          <div className="error-banner">
-            <span className="material-symbols-outlined">error</span>
-            <span>{error}</span>
-          </div>
-        )}
-      </div>
-
-      {/* 可滚动内容：同步日志 */}
-      <div className="sync-scroll">
         <div className="log-section">
           <h3 className="section-title">{t("sync.syncLog")}</h3>
           <div className="log-list">

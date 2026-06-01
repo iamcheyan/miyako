@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
@@ -17,7 +17,7 @@ const LANGUAGES = [
 
 function Settings() {
   const { t, i18n } = useTranslation();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const [config, setConfig] = useState<SmbConfig>(DEFAULT_SMB_CONFIG);
   const [showPassword, setShowPassword] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -186,10 +186,31 @@ function Settings() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    navigate("/");
+  };
+
   return (
     <div className="settings-page">
       {/* 可滚动内容 */}
       <div className="settings-scroll">
+        <header className="page-header">
+          <button
+            className="back-btn"
+            type="button"
+            onClick={handleBack}
+            aria-label={t("common.back")}
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <h1 className="page-title">{t("settings.title")}</h1>
+        </header>
+
         {/* SMB 连接配置 */}
         <section className="settings-section">
           <h2 className="section-title">{t("settings.smb.title")}</h2>

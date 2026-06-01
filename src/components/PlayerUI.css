@@ -543,14 +543,13 @@
     );
   border-top: 1px solid var(--outline-variant);
   background-color: var(--surface);
-  box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.06);
+  /*box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.06);*/
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .expanded-controls {
     border-top-color: var(--outline-variant-dark);
     background-color: var(--surface-dark);
-    box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.22);
   }
 }
 
@@ -985,7 +984,7 @@
 :root[data-theme="light"] .expanded-controls {
   border-top-color: var(--player-light-outline);
   background-color: var(--player-light-surface-raised) !important;
-  box-shadow: 0 -16px 32px rgb(122 122 122 / 8%);
+  /*box-shadow: 0 -16px 32px rgb(122 122 122 / 8%);*/
 }
 
 :root[data-theme="light"] .seek-time {

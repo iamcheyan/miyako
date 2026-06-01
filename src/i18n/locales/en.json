@@ -34,7 +34,14 @@
       "startSync": "Start Sync"
     },
     "searchNoResults": "No matching songs found",
-    "emptyFolder": "No music files in this folder"
+    "emptyFolder": "No music files in this folder",
+    "rootDir": "Root Files",
+    "sort": {
+      "default": "Default",
+      "playCount": "Play Count (Most)",
+      "syncTimeNew": "Sync Time (Newest)",
+      "syncTimeOld": "Sync Time (Oldest)"
+    }
   },
   "player": {
     "playing": "Playing",
@@ -133,7 +140,9 @@
     "files": "files",
     "syncLog": "Sync Log",
     "noLogs": "No logs",
-    "startSync": "Start Sync"
+    "startSync": "Start Sync",
+    "recentSync": "Recently Synced Songs",
+    "noRecentSync": "No synced songs yet"
   },
   "remote": {
     "title": "Remote Browser",

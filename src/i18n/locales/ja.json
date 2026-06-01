@@ -34,7 +34,14 @@
       "startSync": "同期を開始"
     },
     "searchNoResults": "一致する曲が見つかりません",
-    "emptyFolder": "このフォルダに音楽ファイルはありません"
+    "emptyFolder": "このフォルダに音楽ファイルはありません",
+    "rootDir": "ルートファイル",
+    "sort": {
+      "default": "デフォルト",
+      "playCount": "再生回数 (多い順)",
+      "syncTimeNew": "同期時間 (新しい順)",
+      "syncTimeOld": "同期時間 (古い順)"
+    }
   },
   "player": {
     "playing": "再生中",
@@ -133,7 +140,9 @@
     "files": "件",
     "syncLog": "同期ログ",
     "noLogs": "ログなし",
-    "startSync": "同期を開始"
+    "startSync": "同期を開始",
+    "recentSync": "最近同期した曲",
+    "noRecentSync": "まだ同期された曲はありません"
   },
   "remote": {
     "title": "リモートブラウザ",

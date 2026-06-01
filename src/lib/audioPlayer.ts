@@ -1,5 +1,6 @@
 import { savePlaybackState, loadPlaybackState } from "./playbackStorage";
 import { isDemoMode, getDemoPlaylist, getDemoCurrentIndex } from "./demoData";
+import { incrementPlayCount } from "./playCount";
 
 export type PlayMode = "sequential" | "loop" | "shuffle";
 
@@ -305,10 +306,15 @@ export class AudioPlayer {
       this.startDemoPlayback();
       return;
     }
-    
+
     if (src) {
       this.audio.src = await this.toBlobUrl(src);
       console.log("Audio src set to:", this.audio.src);
+      // 记录播放次数
+      incrementPlayCount(src);
+    } else if (this.currentIndex >= 0 && this.currentIndex < this.playlist.length) {
+      // 记录当前播放列表中歌曲的播放次数
+      incrementPlayCount(this.playlist[this.currentIndex]);
     }
     try {
       await this.audio.play();

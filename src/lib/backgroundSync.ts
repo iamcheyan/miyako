@@ -2,31 +2,19 @@ import { invoke } from "@tauri-apps/api/core";
 import type { RemoteFile, SyncAction, SyncState } from "../types/tauri-commands";
 import { loadSmbConfig } from "./smbConfig";
 import { ensureSmbConnection, getSmbSessionState } from "./smbSession";
+import { shouldAutoSyncAsync } from "./deviceStatus";
 
-const STORAGE_KEY = "background-sync-enabled";
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const STATE_PATH = "sync_state.json";
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let isRunning = false;
 
-export function isBackgroundSyncEnabled(): boolean {
-  return localStorage.getItem(STORAGE_KEY) === "true";
-}
-
-export function setBackgroundSyncEnabled(enabled: boolean): void {
-  localStorage.setItem(STORAGE_KEY, String(enabled));
-  if (enabled) {
-    startBackgroundSync();
-  } else {
-    stopBackgroundSync();
-  }
-}
-
+/**
+ * 初始化后台同步 - 自动启用，根据设备状态决定是否同步
+ */
 export function initBackgroundSync(): void {
-  if (isBackgroundSyncEnabled()) {
-    startBackgroundSync();
-  }
+  startBackgroundSync();
 }
 
 export function startBackgroundSync(): void {
@@ -46,6 +34,12 @@ export function stopBackgroundSync(): void {
 
 async function runSync(): Promise<void> {
   if (isRunning) return; // skip if already syncing
+
+  // 检查设备状态：充电 + WiFi + 可访问 NAS
+  if (!(await shouldAutoSyncAsync())) {
+    console.log("[BackgroundSync] Device conditions not met, skipping sync");
+    return;
+  }
 
   const config = loadSmbConfig();
   if (!config.server || !config.share) return; // incomplete config, skip

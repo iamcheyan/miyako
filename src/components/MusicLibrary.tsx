@@ -6,6 +6,7 @@ import type { SyncState } from "../types/tauri-commands";
 import { getAudioPlayer } from "../lib/audioPlayer";
 import { isDemoMode, getDemoFolders } from "../lib/demoData";
 import { getFavorites, isFavorite, toggleFavorite } from "../lib/favorites";
+import { getPlayCount } from "../lib/playCount";
 import { usePullToRefresh } from "../lib/usePullToRefresh";
 import { PullToRefresh } from "./PullToRefresh";
 import "./MusicLibrary.css";
@@ -17,6 +18,8 @@ interface MusicFile {
   remotePath: string;
   localPath: string;
   size: number;
+  playCount: number;
+  lastModified: number;
 }
 
 interface Folder {
@@ -28,15 +31,19 @@ interface Folder {
 // 全局音乐库缓存，用于返回路由时瞬时还原 DOM 与滚动状态，实现完美秒开和滚动恢复！
 let globalLibraryCache: {
   folders: Folder[];
+  rootFiles: MusicFile[];
   currentPath: string | null;
   currentFiles: MusicFile[];
   scrollTop: number;
 } | null = null;
 
+type SortMode = "default" | "playCount" | "syncTimeAsc" | "syncTimeDesc";
+
 function MusicLibrary() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [folders, setFolders] = useState<Folder[]>(globalLibraryCache?.folders || []);
+  const [rootFiles, setRootFiles] = useState<MusicFile[]>(globalLibraryCache?.rootFiles || []);
   const [currentPath, setCurrentPath] = useState<string | null>(globalLibraryCache?.currentPath || null);
   const [currentFiles, setCurrentFiles] = useState<MusicFile[]>(globalLibraryCache?.currentFiles || []);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,6 +51,8 @@ function MusicLibrary() {
   const [isLoading, setIsLoading] = useState(!globalLibraryCache);
   const [favoritesVersion, setFavoritesVersion] = useState(0);
   const [titleOverflow, setTitleOverflow] = useState(false);
+  const [sortMode, setSortMode] = useState<SortMode>("default");
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listTitleRef = useRef<HTMLHeadingElement>(null);
 
@@ -155,28 +164,38 @@ function MusicLibrary() {
           remotePath: file.remote_path,
           localPath: file.local_path,
           size: file.size,
+          playCount: getPlayCount(file.local_path),
+          lastModified: file.last_modified || 0,
         });
       }
 
-      // 转换为文件夹数组
+      // 转换为文件夹数组，分离根目录文件
       const folderArray: Folder[] = [];
+      let rootFiles: MusicFile[] = [];
       for (const [path, files] of folderMap.entries()) {
-        const name = path === "根目录" ? "根目录" : path.split("/").pop()!;
-        folderArray.push({ name, path, files });
+        if (path === "根目录") {
+          rootFiles = files;
+        } else {
+          const name = path.split("/").pop()!;
+          folderArray.push({ name, path, files });
+        }
       }
 
       setFolders(folderArray);
-      
+      setRootFiles(rootFiles);
+
       // 初始化或更新全局秒开缓存
       if (!globalLibraryCache) {
         globalLibraryCache = {
           folders: folderArray,
+          rootFiles,
           currentPath: null,
           currentFiles: [],
           scrollTop: 0
         };
       } else {
         globalLibraryCache.folders = folderArray;
+        globalLibraryCache.rootFiles = rootFiles;
       }
     } catch (e) {
       console.error("Failed to load music library:", e);
@@ -243,6 +262,21 @@ function MusicLibrary() {
     };
   }, [currentPath, handleBackClick]);
 
+  // 点击外部关闭排序菜单
+  useEffect(() => {
+    if (!showSortMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".sort-container")) {
+        setShowSortMenu(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showSortMenu]);
+
   // 播放器展开时按返回键，强制回到主界面文件夹列表
   useEffect(() => {
     const handleForceHome = () => {
@@ -300,10 +334,28 @@ function MusicLibrary() {
         file.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
-  
+
+  // 排序函数
+  const sortFiles = useCallback((files: MusicFile[], mode: SortMode): MusicFile[] => {
+    const sorted = [...files];
+    switch (mode) {
+      case "playCount":
+        return sorted.sort((a, b) => b.playCount - a.playCount);
+      case "syncTimeAsc":
+        return sorted.sort((a, b) => a.lastModified - b.lastModified);
+      case "syncTimeDesc":
+        return sorted.sort((a, b) => b.lastModified - a.lastModified);
+      default:
+        return sorted;
+    }
+  }, []);
+
   // 当前文件夹的过滤结果（用于文件列表页面）
-  const filteredFiles = currentFiles.filter((file) =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredFiles = sortFiles(
+    currentFiles.filter((file) =>
+      file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    sortMode
   );
 
   // 加载状态
@@ -374,6 +426,21 @@ function MusicLibrary() {
                   </div>
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
+                {rootFiles.length > 0 && (
+                  <button className="folder-item root-files" onClick={() => {
+                    setCurrentPath(t("musicLibrary.rootDir"));
+                    setCurrentFiles(rootFiles);
+                    setSearchQuery("");
+                    window.history.pushState({ path: t("musicLibrary.rootDir") }, "");
+                  }}>
+                    <span className="material-symbols-outlined folder-icon">audio_file</span>
+                    <div className="folder-info">
+                      <span className="folder-name">{t("musicLibrary.rootDir")}</span>
+                      <span className="folder-count">{rootFiles.length} {t("musicLibrary.songs")}</span>
+                    </div>
+                    <span className="material-symbols-outlined">chevron_right</span>
+                  </button>
+                )}
                 {folders.map((folder) => (
                   <button key={folder.path} className="folder-item" onClick={() => handleFolderClick(folder)}>
                     <span className="material-symbols-outlined folder-icon">folder</span>
@@ -407,6 +474,43 @@ function MusicLibrary() {
               <button className="search-btn" onClick={() => setIsSearchOpen(true)}>
                 <span className="material-symbols-outlined">search</span>
               </button>
+              <div className="sort-container">
+                <button className="sort-btn" onClick={() => setShowSortMenu(!showSortMenu)}>
+                  <span className="material-symbols-outlined">sort</span>
+                </button>
+                {showSortMenu && (
+                  <div className="sort-menu">
+                    <button
+                      className={`sort-menu-item ${sortMode === "default" ? "active" : ""}`}
+                      onClick={() => { setSortMode("default"); setShowSortMenu(false); }}
+                    >
+                      <span className="material-symbols-outlined">sort_by_alpha</span>
+                      <span>{t("musicLibrary.sort.default")}</span>
+                    </button>
+                    <button
+                      className={`sort-menu-item ${sortMode === "playCount" ? "active" : ""}`}
+                      onClick={() => { setSortMode("playCount"); setShowSortMenu(false); }}
+                    >
+                      <span className="material-symbols-outlined">headphones</span>
+                      <span>{t("musicLibrary.sort.playCount")}</span>
+                    </button>
+                    <button
+                      className={`sort-menu-item ${sortMode === "syncTimeDesc" ? "active" : ""}`}
+                      onClick={() => { setSortMode("syncTimeDesc"); setShowSortMenu(false); }}
+                    >
+                      <span className="material-symbols-outlined">schedule</span>
+                      <span>{t("musicLibrary.sort.syncTimeNew")}</span>
+                    </button>
+                    <button
+                      className={`sort-menu-item ${sortMode === "syncTimeAsc" ? "active" : ""}`}
+                      onClick={() => { setSortMode("syncTimeAsc"); setShowSortMenu(false); }}
+                    >
+                      <span className="material-symbols-outlined">history</span>
+                      <span>{t("musicLibrary.sort.syncTimeOld")}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div

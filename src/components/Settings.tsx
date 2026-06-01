@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
 import { DEFAULT_SMB_CONFIG, loadSmbConfig, saveSmbConfig } from "../lib/smbConfig";
-import { isBackgroundSyncEnabled, setBackgroundSyncEnabled } from "../lib/backgroundSync";
 import { showStatusBar } from "../lib/androidStatusBar";
 import "./Settings.css";
 
@@ -31,7 +30,6 @@ function Settings() {
     fileCount: number;
     totalSize: number;
   }>({ fileCount: 0, totalSize: 0 });
-  const [bgSyncEnabled, setBgSyncEnabled] = useState(isBackgroundSyncEnabled());
   const [showConfirmDialog, setShowConfirmDialog] = useState<string | null>(null);
 
   // 显示状态栏
@@ -327,31 +325,6 @@ function Settings() {
               {testResult.message}
             </div>
           )}
-        </section>
-
-        {/* 后台同步 */}
-        <section className="settings-section">
-          <h2 className="section-title">{t("settings.backgroundSync.title")}</h2>
-          <div className="settings-list">
-            <div className="setting-item">
-              <div className="setting-info">
-                <label className="setting-label">{t("settings.backgroundSync.title")}</label>
-                <span className="setting-hint">{t("settings.backgroundSync.desc")}</span>
-              </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={bgSyncEnabled}
-                  onChange={(e) => {
-                    const enabled = e.target.checked;
-                    setBgSyncEnabled(enabled);
-                    setBackgroundSyncEnabled(enabled);
-                  }}
-                />
-                <span className="toggle-slider" />
-              </label>
-            </div>
-          </div>
         </section>
 
         {/* 同步统计 */}

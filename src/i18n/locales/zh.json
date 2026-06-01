@@ -34,7 +34,14 @@
       "startSync": "开始同步"
     },
     "searchNoResults": "没有找到匹配的歌曲",
-    "emptyFolder": "此文件夹没有音乐文件"
+    "emptyFolder": "此文件夹没有音乐文件",
+    "rootDir": "根目录文件",
+    "sort": {
+      "default": "默认排序",
+      "playCount": "播放次数 (多→少)",
+      "syncTimeNew": "同步时间 (新→旧)",
+      "syncTimeOld": "同步时间 (旧→新)"
+    }
   },
   "player": {
     "playing": "正在播放",
@@ -133,7 +140,9 @@
     "files": "个",
     "syncLog": "同步日志",
     "noLogs": "暂无日志",
-    "startSync": "开始同步"
+    "startSync": "开始同步",
+    "recentSync": "最近同步的歌曲",
+    "noRecentSync": "还没有同步的歌曲"
   },
   "remote": {
     "title": "远程浏览",

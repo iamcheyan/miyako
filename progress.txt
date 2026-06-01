@@ -2,6 +2,14 @@
 Started: 2026-05-31 08:29:05
 ---
 
+## Codebase Patterns
+- SMB worker crashes cause "Failed to send message to worker" error - detect and auto-reconnect
+- Use `invalidateConnection()` to clear stale SMB connections before reconnecting
+- Add retry logic (max 2 attempts) for transient network/SMB errors
+- Multi-language support: add messages to zh.json, ja.json, en.json for all user-facing text
+- Android builds use `cargo tauri android build` and install via `adb install -r`
+---
+
 ## 2026-05-31 17:30:00 - US-001
 - Implemented GitHub Actions workflow for Android APK build on push/PR to main
 - Added typecheck and lint steps to workflow
@@ -60,4 +68,24 @@ Started: 2026-05-31 08:29:05
   - Check `$GITHUB_REF` to determine if build was triggered by tag
   - Release APKs are uploaded via `softprops/action-gh-release@v2` action
   - Build summary can conditionally show different instructions based on trigger type
+---
+
+## 2026-06-01 21:55:00 - Bug Fix: SMB Worker Crash Auto-Reconnect
+- Fixed "Failed to send message to worker" error during NAS sync
+- Added automatic reconnection when SMB worker thread crashes
+- Added invalidateConnection() function to clear stale connections
+- Updated SyncPage to detect worker errors and retry up to 2 times
+- Added multi-language support (zh, ja, en) for reconnection messages
+- Tested on Android device - sync now completes successfully
+- **Files changed:**
+  - `src/lib/smbSession.ts` - Added invalidateConnection() function
+  - `src/components/SyncPage.tsx` - Added auto-retry logic for worker crashes
+  - `src/i18n/locales/zh.json` - Added reconnection messages
+  - `src/i18n/locales/ja.json` - Added reconnection messages
+  - `src/i18n/locales/en.json` - Added reconnection messages
+- **Learnings for future iterations:**
+  - SMB worker crashes cause "Failed to send message to worker" error
+  - Need to detect specific error patterns and auto-reconnect
+  - Invalidation of stale connections is crucial for recovery
+  - Multi-language support should be added for all user-facing messages
 ---

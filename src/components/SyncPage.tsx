@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useNavigate } from "react-router-dom";
@@ -15,12 +15,6 @@ import "./SyncPage.css";
 
 const STATE_PATH = "sync_state.json";
 
-interface SyncLog {
-  time: string;
-  message: string;
-  type: "info" | "success" | "error";
-}
-
 interface SyncProgressPayload {
   current: number;
   total: number;
@@ -34,14 +28,8 @@ function SyncPage() {
   const [syncState, setSyncState] = useState<SyncState | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
-  const [logs, setLogs] = useState<SyncLog[]>([]);
   const [connectionState, setConnectionState] = useState(getSmbSessionState());
   const [error, setError] = useState<string | null>(getSmbSessionState().error);
-
-  const addLog = useCallback((message: string, type: SyncLog["type"] = "info") => {
-    const time = new Date().toLocaleTimeString();
-    setLogs((prev) => [...prev, { time, message, type }]);
-  }, []);
 
   // 显示状态栏
   useEffect(() => {
@@ -74,7 +62,6 @@ function SyncPage() {
             current: payload.current,
             total: payload.total,
           });
-          addLog(payload.message);
         }
       );
     };
@@ -86,15 +73,7 @@ function SyncPage() {
         unlisten();
       }
     };
-  }, [addLog]);
-
-  useEffect(() => {
-    if (connectionState.connectionId) {
-      addLog(t("sync.logs.connected"), "success");
-    } else if (connectionState.isConnecting) {
-      addLog(t("sync.logs.connecting"));
-    }
-  }, [connectionState.connectionId, connectionState.isConnecting, addLog, t]);
+  }, []);
 
   const connectionId = connectionState.connectionId;
 
@@ -140,24 +119,18 @@ function SyncPage() {
 
     setIsSyncing(true);
     setError(null);
-    setLogs([]);
     setProgress({ current: 0, total: 0 });
 
     try {
       // 步骤 1: 扫描远程目录
-      addLog(t("sync.logs.startScan"));
       const remotePath = getRemotePath();
-      addLog(`${t("sync.logs.remoteDir")} /${remotePath || ""}`);
       const remoteFiles = await invoke<RemoteFile[]>("sync_scan_remote", {
         connectionId: activeConnectionId,
         path: remotePath,
       });
-      addLog(t("sync.logs.scanComplete", { count: remoteFiles.length }), "success");
 
       // 步骤 2: 对比本地文件
-      addLog(t("sync.logs.comparing"));
       const localDir = getLocalDir();
-      addLog(`${t("sync.logs.localDir")} ${localDir}`);
       const actions = await invoke<SyncAction[]>("sync_compare", {
         remoteFiles,
         localDir,
@@ -165,12 +138,9 @@ function SyncPage() {
 
       const toDownload = actions.filter((a) => a.action === "Download");
       const toDelete = actions.filter((a) => a.action === "Delete");
-      const toSkip = actions.filter((a) => a.action === "Skip");
       const toMove = actions.filter((a) => a.action === "LocalMove");
-      addLog(t("sync.logs.needSync", { download: toDownload.length, move: toMove.length, delete: toDelete.length, skip: toSkip.length }));
 
       if (toDownload.length === 0 && toDelete.length === 0 && toMove.length === 0) {
-        addLog(t("sync.logs.allUpToDate"), "success");
         setIsSyncing(false);
         return;
       }
@@ -178,7 +148,6 @@ function SyncPage() {
       // 步骤 3: 下载、移动和删除文件
       const totalActions = toDownload.length + toDelete.length + toMove.length;
       setProgress({ current: 0, total: totalActions });
-      addLog(t("sync.logs.startSync"));
 
       const state = await invoke<SyncState>("sync_download", {
         connectionId: activeConnectionId,
@@ -188,19 +157,16 @@ function SyncPage() {
       });
 
       setSyncState(state);
-      addLog(t("sync.logs.syncComplete"), "success");
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
       // 检测 SMB worker 崩溃错误，自动重连重试
       const isWorkerError = errorMessage.includes("Failed to send message to worker") ||
                            errorMessage.includes("Message processing failed");
       if (isWorkerError && retryCount < 2) {
-        addLog(t("sync.logs.connectionLost"), "info");
         invalidateConnection();
         const config = loadSmbConfig();
         try {
           await ensureSmbConnection(config);
-          addLog(t("sync.logs.reconnected"), "success");
           setIsSyncing(false);
           handleStartSyncInternal(retryCount + 1);
           return;
@@ -209,7 +175,6 @@ function SyncPage() {
         }
       }
       setError(`${t("sync.logs.syncFailed")} ${errorMessage}`);
-      addLog(`${t("sync.logs.syncFailed")} ${errorMessage}`, "error");
     } finally {
       setIsSyncing(false);
     }
@@ -317,25 +282,33 @@ function SyncPage() {
           )}
         </div>
 
-        <div className="log-section">
-          <h3 className="section-title">{t("sync.syncLog")}</h3>
-          <div className="log-list">
-            {logs.length === 0 ? (
-              <div className="log-empty">
-                <span className="material-symbols-outlined">terminal</span>
-                <span>{t("sync.noLogs")}</span>
-              </div>
+        {/* 最近同步的歌曲 */}
+        <div className="recent-sync-section">
+          <h3 className="section-title">{t("sync.recentSync")}</h3>
+          <div className="recent-sync-list">
+            {syncState?.synced_files && syncState.synced_files.length > 0 ? (
+              // 按 last_modified 倒序，显示最近同步的歌曲
+              [...syncState.synced_files]
+                .sort((a, b) => (b.last_modified || 0) - (a.last_modified || 0))
+                .slice(0, 20)
+                .map((file, index) => {
+                  // 从 remote_path 提取歌曲名（去掉文件夹路径）
+                  const songName = file.remote_path.split('/').pop() || file.remote_path;
+                  const timeStr = file.last_modified
+                    ? new Date(file.last_modified * 1000).toLocaleTimeString()
+                    : '';
+                  return (
+                    <div className="recent-sync-item" key={index}>
+                      <span className="recent-sync-time">{timeStr}</span>
+                      <span className="recent-sync-name">{songName}</span>
+                    </div>
+                  );
+                })
             ) : (
-              // 只显示最新的一条日志
-              (() => {
-                const latestLog = logs[logs.length - 1];
-                return (
-                  <div className={`log-item log-${latestLog.type}`}>                  
-                    <span className="log-time">{latestLog.time}</span>
-                    <span className="log-message">{latestLog.message}</span>
-                  </div>
-                );
-              })()
+              <div className="log-empty">
+                <span className="material-symbols-outlined">music_note</span>
+                <span>{t("sync.noRecentSync")}</span>
+              </div>
             )}
           </div>
         </div>

@@ -77,3 +77,26 @@
     color: var(--on-surface-dark);
   }
 }
+
+
+/* ==================== 亮色模式强制覆盖 ==================== */
+:root[data-theme="light"] .page-header {
+    background-color: var(--surface);
+    border-bottom-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .back-btn {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .back-btn:hover {
+    background-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .page-title {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .section-title {
+    color: var(--on-surface);
+  }

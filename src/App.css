@@ -186,3 +186,14 @@ button,
     background-color: rgba(0, 0, 0, 0.1);
   }
 }
+
+
+/* ==================== 亮色模式强制覆盖 ==================== */
+:root[data-theme="light"] .app {
+    background-color: var(--surface);
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .page-wrapper {
+    background-color: var(--surface);
+  }

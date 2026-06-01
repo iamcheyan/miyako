@@ -414,3 +414,90 @@
 .log-error .log-message {
   color: var(--error);
 }
+
+
+/* ==================== 亮色模式强制覆盖 ==================== */
+:root[data-theme="light"] .last-sync-info {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .status-card {
+    background-color: var(--surface-variant);
+    border-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .status-icon {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .status-title {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .status-subtitle {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .browse-btn {
+    background-color: var(--surface-variant);
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .sync-fab {
+    background-color: var(--on-surface);
+    color: var(--surface);
+  }
+
+:root[data-theme="light"] .progress-bar {
+    background-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .progress-fill {
+    background-color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .stats-list {
+    background-color: var(--surface-variant);
+    border-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .stat-row {
+    border-bottom-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .stat-icon {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .stat-label {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .stat-value {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .log-list {
+    background-color: var(--surface-variant);
+    border-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .log-empty {
+    color: var(--outline);
+  }
+
+:root[data-theme="light"] .log-item {
+    border-bottom-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .log-time {
+    color: var(--outline);
+  }
+
+:root[data-theme="light"] .log-message {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .log-message {
+    color: var(--on-surface);
+  }

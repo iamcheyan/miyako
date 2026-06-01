@@ -955,3 +955,113 @@
 .playlist-row.active .row-name {
   font-weight: 500;
 }
+
+
+/* ==================== 亮色模式强制覆盖 ==================== */
+:root[data-theme="light"] .mini-progress {
+    background-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .mini-progress-fill {
+    background-color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .mini-track-name {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .mini-btn {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .mini-btn.play {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .expanded-backdrop {
+    background-color: var(--surface);
+  }
+
+:root[data-theme="light"] .expanded {
+    background-color: var(--surface);
+  }
+
+:root[data-theme="light"] .expanded-container {
+    background-color: var(--surface);
+  }
+
+:root[data-theme="light"] .expanded-close-btn {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .expanded-close-btn:hover {
+    background-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .track-title {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .track-status {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .playlist-header {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .playlist-header::after {
+    background-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .playlist-empty {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .expanded-controls {
+    border-top-color: var(--outline-variant);
+    background-color: var(--surface);
+  }
+
+:root[data-theme="light"] .seek-time {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .seek-bar::-webkit-slider-thumb {
+    background-color: var(--on-surface);
+    border-color: var(--surface);
+    box-shadow: 0 0 0 1px var(--outline-variant);
+  }
+
+:root[data-theme="light"] .ctrl-btn {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .ctrl-btn.mode {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .ctrl-btn.favorite {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .ctrl-btn.play {
+    background-color: var(--on-surface);
+    color: var(--surface);
+  }
+
+:root[data-theme="light"] .playlist-row:hover {
+    background-color: var(--surface-variant);
+  }
+
+:root[data-theme="light"] .row-num {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .row-name {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .eq-icon {
+    fill: var(--on-surface);
+  }

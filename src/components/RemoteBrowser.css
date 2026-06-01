@@ -229,3 +229,51 @@
     color: var(--on-surface-variant-dark);
   }
 }
+
+
+/* ==================== 亮色模式强制覆盖 ==================== */
+:root[data-theme="light"] .path-nav {
+    background-color: var(--surface-variant);
+    border-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .back-btn {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .back-btn:hover {
+    background-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .current-path {
+    color: var(--on-surface-variant);
+  }
+
+:root[data-theme="light"] .empty-state {
+    color: var(--outline);
+  }
+
+:root[data-theme="light"] .entry-list {
+    background-color: var(--surface-variant);
+    border-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .entry-item {
+    border-bottom-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .entry-item:hover {
+    background-color: var(--outline-variant);
+  }
+
+:root[data-theme="light"] .entry-icon {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .entry-name {
+    color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .entry-size {
+    color: var(--on-surface-variant);
+  }

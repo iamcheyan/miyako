@@ -47,17 +47,15 @@ function PlayerUI() {
   }, []);
 
   // 迷你播放器向上拖动拉起播放器手势 (无缝平移跟随)
-  const handleMiniTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    dragStartRef.current = { y: touch.clientY, time: Date.now() };
+  const startMiniDrag = useCallback((clientY: number) => {
+    dragStartRef.current = { y: clientY, time: Date.now() };
     setIsDragging(true);
     setDragType('up');
   }, []);
 
-  const handleMiniTouchMove = useCallback((e: React.TouchEvent) => {
+  const moveMiniDrag = useCallback((clientY: number) => {
     if (!dragStartRef.current) return;
-    const touch = e.touches[0];
-    const diffY = touch.clientY - dragStartRef.current.y;
+    const diffY = clientY - dragStartRef.current.y;
 
     // 只允许向上拖动（负位移）
     if (diffY < 0) {
@@ -65,7 +63,7 @@ function PlayerUI() {
     }
   }, []);
 
-  const handleMiniTouchEnd = useCallback(() => {
+  const endMiniDrag = useCallback(() => {
     if (!dragStartRef.current) return;
     const elapsed = Date.now() - dragStartRef.current.time;
     // 向上滑动 dragOffset 是负数，我们取绝对速度
@@ -80,6 +78,24 @@ function PlayerUI() {
     setDragType(null);
     dragStartRef.current = null;
   }, [dragOffset]);
+
+  const handleMiniTouchStart = useCallback((e: React.TouchEvent) => {
+    startMiniDrag(e.touches[0].clientY);
+  }, [startMiniDrag]);
+
+  const handleMiniTouchMove = useCallback((e: React.TouchEvent) => {
+    moveMiniDrag(e.touches[0].clientY);
+  }, [moveMiniDrag]);
+
+  const handleMiniMouseStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    startMiniDrag(e.clientY);
+  }, [startMiniDrag]);
+
+  const handleMiniMouseMove = useCallback((e: React.MouseEvent) => {
+    if (dragType !== 'up') return;
+    moveMiniDrag(e.clientY);
+  }, [dragType, moveMiniDrag]);
 
   useEffect(() => {
     setState(player.getState());
@@ -343,7 +359,11 @@ function PlayerUI() {
         }}
         onTouchStart={handleMiniTouchStart}
         onTouchMove={handleMiniTouchMove}
-        onTouchEnd={handleMiniTouchEnd}
+        onTouchEnd={endMiniDrag}
+        onMouseDown={handleMiniMouseStart}
+        onMouseMove={handleMiniMouseMove}
+        onMouseUp={endMiniDrag}
+        onMouseLeave={dragType === 'up' ? endMiniDrag : undefined}
       >
         <div className="mini-progress">
           <div

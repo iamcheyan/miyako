@@ -49,6 +49,10 @@
   box-sizing: border-box;
   overflow: hidden;
   padding-top: var(--system-top-inset);
+  padding-bottom: calc(
+    var(--mini-player-height) + var(--system-bottom-inset, 0px) +
+      var(--android-nav-height, 0px)
+  );
   animation: pageFadeIn 0.35s cubic-bezier(0.215, 0.610, 0.355, 1) both;
 }
 

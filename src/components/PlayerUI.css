@@ -8,15 +8,13 @@
   --player-light-outline: #dedee3;
   --player-light-signal: #8a8a90;
   --player-light-control-bg: #e5e5e8;
-  position: relative;
-  z-index: 2;
-  background-color: var(--surface);
-}
-
-@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
-  .player-ui-system {
-    background-color: var(--surface-dark);
-  }
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  background: transparent;
+  pointer-events: none;
 }
 
 .player-ui {
@@ -26,11 +24,14 @@
 
 /* ==================== 迷你播放器 ==================== */
 .mini-only {
+  position: relative;
+  z-index: 1;
   border-top: 1px solid var(--outline-variant);
   background-color: var(--surface);
   padding-bottom: calc(
     var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
   );
+  pointer-events: auto;
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
@@ -164,7 +165,7 @@
 }
 
 .expanded {
-  position: absolute;
+  position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
@@ -176,11 +177,7 @@
   padding-top: max(env(safe-area-inset-top, 0px), 36px);
   touch-action: pan-y;
   user-select: none;
-  z-index: 1;
-}
-
-.expanded.collapsed {
-  display: none;
+  z-index: 2;
 }
 
 .expanded.dragging {
@@ -902,7 +899,7 @@
 
 :root[data-theme="light"] .player-ui-system {
   color-scheme: light;
-  background-color: var(--player-light-surface);
+  background: transparent;
 }
 
 :root[data-theme="light"] .mini-progress-fill {

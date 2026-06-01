@@ -267,17 +267,17 @@
 .folder-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  background-color: var(--surface);
-  border-radius: 12px;
+  gap: 0;
+  background-color: transparent;
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid var(--outline-variant);
+  border: none;
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-list {
-    background-color: var(--surface-variant-dark);
-    border-color: var(--outline-variant-dark);
+    background-color: transparent;
+    border-color: transparent;
   }
 }
 
@@ -390,7 +390,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .back-btn-small {
@@ -454,17 +454,17 @@
 .file-list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  background-color: var(--surface);
-  border-radius: 12px;
+  gap: 0;
+  background-color: transparent;
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid var(--outline-variant);
+  border: none;
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-list {
-    background-color: var(--surface-variant-dark);
-    border-color: var(--outline-variant-dark);
+    background-color: transparent;
+    border-color: transparent;
   }
 }
 
@@ -926,8 +926,8 @@
 }
 
 :root[data-theme="light"] .folder-list {
-  background-color: var(--surface-variant);
-  border-color: var(--outline-variant);
+  background-color: transparent;
+  border-color: transparent;
 }
 
 :root[data-theme="light"] .folder-item {
@@ -975,8 +975,8 @@
 }
 
 :root[data-theme="light"] .file-list {
-  background-color: var(--surface-variant);
-  border-color: var(--outline-variant);
+  background-color: transparent;
+  border-color: transparent;
 }
 
 :root[data-theme="light"] .file-item {

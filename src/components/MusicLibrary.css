@@ -375,6 +375,16 @@
   }
 }
 
+.folder-item .material-symbols-outlined:last-child {
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .folder-item .material-symbols-outlined:last-child {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
 /* 列表头部 */
 .list-header {
   display: flex;
@@ -511,6 +521,13 @@
   border-radius: 50%;
   flex-shrink: 0;
   margin-right: 4px;
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark) {
+  .file-fav-btn {
+    color: var(--on-surface-variant-dark);
+  }
 }
 
 .file-fav-btn:hover {
@@ -532,6 +549,16 @@
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .file-index {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.file-play-btn .material-symbols-outlined {
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .file-play-btn .material-symbols-outlined {
     color: var(--on-surface-variant-dark);
   }
 }

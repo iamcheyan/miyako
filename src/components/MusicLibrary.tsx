@@ -64,17 +64,19 @@ function MusicLibrary() {
 
   // 当路径改变或页面加载完毕时，自动还原滚动条位置 (秒开恢复)
   useEffect(() => {
-    if (globalLibraryCache && globalLibraryCache.scrollTop > 0) {
+    const targetScrollTop = (window as any).musicLibraryScrollTop || (globalLibraryCache?.scrollTop || 0);
+
+    if (targetScrollTop > 0) {
       const restoreScroll = () => {
         const scrollEl = document.querySelector(".library-scroll");
-        if (scrollEl && globalLibraryCache) {
-          scrollEl.scrollTop = globalLibraryCache.scrollTop;
+        if (scrollEl) {
+          scrollEl.scrollTop = targetScrollTop;
           
           // 极致双重校准：如果由于 Android 布局延迟导致没有一次性设置成功，在 50ms 后重新校准
-          if (scrollEl.scrollTop !== globalLibraryCache.scrollTop) {
+          if (scrollEl.scrollTop !== targetScrollTop) {
             setTimeout(() => {
-              if (scrollEl && globalLibraryCache) {
-                scrollEl.scrollTop = globalLibraryCache.scrollTop;
+              if (scrollEl) {
+                scrollEl.scrollTop = targetScrollTop;
               }
             }, 50);
           }

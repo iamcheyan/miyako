@@ -78,6 +78,12 @@ function App() {
         const scrollEl = pageContent.querySelector(".library-scroll, .settings-scroll, .sync-scroll, .remote-scroll");
         const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
         
+        // 记录首页真实的滚动位置，防止 Android onScroll 事件频率限制或延迟导致丢失滚动记录
+        const libScrollEl = pageContent.querySelector(".library-scroll");
+        if (libScrollEl) {
+          (window as any).musicLibraryScrollTop = libScrollEl.scrollTop;
+        }
+        
         window.dispatchEvent(new CustomEvent("update_underlay", {
           detail: {
             html: pageContent.innerHTML,

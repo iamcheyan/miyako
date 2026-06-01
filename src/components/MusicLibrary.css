@@ -333,9 +333,17 @@
   color: var(--on-surface);
 }
 
+.folder-item.favorites .folder-icon {
+  color: #ff2d55;
+}
+
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
   .folder-icon {
     color: var(--on-surface-dark);
+  }
+
+  .folder-item.favorites .folder-icon {
+    color: #ff2d55;
   }
 }
 
@@ -910,6 +918,10 @@
 
 :root[data-theme="light"] .folder-icon {
     color: var(--on-surface);
+  }
+
+:root[data-theme="light"] .folder-item.favorites .folder-icon {
+    color: #ff2d55 !important;
   }
 
 :root[data-theme="light"] .folder-name {

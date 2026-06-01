@@ -36,15 +36,7 @@
   }
 }
 
-.page-header .back-btn:hover {
-  background-color: var(--outline-variant);
-}
 
-@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
-  .page-header .back-btn:hover {
-    background-color: var(--outline-variant-dark);
-  }
-}
 
 .page-title {
   flex: 1;
@@ -86,10 +78,6 @@
 
 :root[data-theme="light"] .back-btn {
   color: var(--on-surface);
-}
-
-:root[data-theme="light"] .back-btn:hover {
-  background-color: var(--outline-variant);
 }
 
 :root[data-theme="light"] .page-title {

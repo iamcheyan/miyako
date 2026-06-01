@@ -710,9 +710,9 @@
 .ctrl-btn.favorite.active .material-symbols-outlined {
   font-variation-settings: "FILL" 1 !important;
   color: #ff2d55 !important;
-  filter: drop-shadow(0 2px 4px rgba(255, 45, 85, 0.45))
-    drop-shadow(0 4px 10px rgba(255, 45, 85, 0.25)) !important;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  /*filter: drop-shadow(0 2px 4px rgba(255, 45, 85, 0.45))
+    drop-shadow(0 4px 10px rgba(255, 45, 85, 0.25)) !important;*/
+  /*text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);*/
 }
 
 @keyframes heartBeat {
@@ -869,11 +869,13 @@
 }
 
 .playlist-row.active {
-  margin-left: -24px;
+  /*margin-left: -24px;
   margin-right: -24px;
-  border-bottom: 1px solid #292828;
-  padding-left: 38px;
-  padding-right: 38px;
+  border-bottom: 1px solid #292828;*/
+  background-color: #1e1e1e;
+  border-radius: 5px;
+  /*padding-left: 38px;
+  padding-right: 38px;*/
 }
 
 /*@media (prefers-color-scheme: dark) {
@@ -916,18 +918,37 @@
   }
 }
 
-.row-num .playing {
+.row-num .eq-icon {
   font-size: 16px;
-  animation: rowPulse 1s ease-in-out infinite;
+  display: inline-block;
+  vertical-align: middle;
 }
 
-@keyframes rowPulse {
-  0%,
-  100% {
-    opacity: 1;
+.eq-bar {
+  animation: eqBounce 0.8s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+
+.eq-bar-1 {
+  animation-delay: 0s;
+}
+
+.eq-bar-2 {
+  animation-delay: 0.2s;
+}
+
+.eq-bar-3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes eqBounce {
+  0% {
+    transform: scaleY(0.35);
+    opacity: 0.5;
   }
-  50% {
-    opacity: 0.4;
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
   }
 }
 

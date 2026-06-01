@@ -4,6 +4,16 @@ import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/aud
 import { isFavorite, toggleFavorite } from "../lib/favorites";
 import "./PlayerUI.css";
 
+function EqualizerIcon() {
+  return (
+    <svg className="eq-icon" viewBox="0 0 24 24" width="1em" height="1em">
+      <rect className="eq-bar eq-bar-1" x="3" y="14" width="4" height="6" rx="1" />
+      <rect className="eq-bar eq-bar-2" x="10" y="6" width="4" height="14" rx="1" />
+      <rect className="eq-bar eq-bar-3" x="17" y="10" width="4" height="10" rx="1" />
+    </svg>
+  );
+}
+
 function PlayerUI() {
   const { t } = useTranslation();
   const player = getAudioPlayer();
@@ -472,7 +482,7 @@ function PlayerUI() {
                         >
                           <span className="row-num">
                             {index === state.currentIndex && state.isPlaying ? (
-                              <span className="material-symbols-outlined playing">equalizer</span>
+                              <EqualizerIcon />
                             ) : (
                               index + 1
                             )}
@@ -502,7 +512,7 @@ function PlayerUI() {
                         >
                           <span className="row-num">
                             {item.originalIndex === state.currentIndex && state.isPlaying ? (
-                              <span className="material-symbols-outlined playing">equalizer</span>
+                              <EqualizerIcon />
                             ) : (
                               item.originalIndex + 1
                             )}

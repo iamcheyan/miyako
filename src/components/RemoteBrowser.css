@@ -8,7 +8,7 @@
 
 /* 页面标题栏 */
 .page-header {
-  margin-bottom: 20px;
+  /* margin-bottom removed */
 }
 
 .remote-header {

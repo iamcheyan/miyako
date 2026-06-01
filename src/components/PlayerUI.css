@@ -32,8 +32,6 @@
       rgba(0, 0, 0, 0.2) 50%,
       rgba(255, 255, 255, 0.02) 100%
     ) !important;
-    backdrop-filter: blur(20px) saturate(120%);
-    -webkit-backdrop-filter: blur(20px) saturate(120%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 -4px 16px rgba(0, 0, 0, 0.12);
   }
 }
@@ -916,13 +914,7 @@
       rgba(0, 0, 0, 0.2) 50%,
       rgba(255, 255, 255, 0.02) 100%
     ) !important;
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    margin-left: -24px;
-    margin-right: -24px;
-    padding-left: 38px;
-    padding-right: 38px;
   }
 }
 

@@ -135,10 +135,13 @@ function App() {
     let currentDragOffset = 0;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // 首页不允许侧滑返回
+      // 首页如果没打开子文件夹（即不存在小返回键），则禁止侧滑返回
       if (window.location.pathname === "/") {
-        isEdgeSwipe = false;
-        return;
+        const hasBackButton = document.querySelector(".page-wrapper .back-btn-small");
+        if (!hasBackButton) {
+          isEdgeSwipe = false;
+          return;
+        }
       }
 
       const touch = e.touches[0];

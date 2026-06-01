@@ -1,0 +1,46 @@
+/* 下拉刷新容器 */
+.pull-to-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.refresh-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--surface-variant);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .refresh-spinner {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.refresh-spinner .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--on-surface-variant);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .refresh-spinner .material-symbols-outlined {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.refresh-spinner.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

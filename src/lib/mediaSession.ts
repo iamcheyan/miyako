@@ -17,38 +17,14 @@ export class MediaSessionManager {
   }
 
   private setupMediaSession() {
-    const { mediaSession } = navigator;
-
-    // Set action handlers
-    mediaSession.setActionHandler("play", () => {
-      this.player.play();
-    });
-
-    mediaSession.setActionHandler("pause", () => {
-      this.player.pause();
-    });
-
-    mediaSession.setActionHandler("stop", () => {
-      this.player.stop();
-    });
-
-    mediaSession.setActionHandler("previoustrack", () => {
-      this.player.previous();
-    });
-
-    mediaSession.setActionHandler("nexttrack", () => {
-      this.player.next();
-    });
-
-    mediaSession.setActionHandler("seekto", (details) => {
-      if (details.seekTime != null) {
-        this.player.seekTo(details.seekTime);
-      }
-    });
-
+    // Android WebView 需要先设置 metadata 才能激活 MediaSession
+    // action handlers 在 metadata 设置后注册才有效
     // Update metadata when track changes
     this.player.on("loadedmetadata", () => {
       this.updateMetadata();
+      this.registerActionHandlers();
+      // 设置播放状态，确保 Android MediaSession 完全激活
+      this.updatePlaybackState();
     });
 
     this.player.on("play", () => {
@@ -62,6 +38,42 @@ export class MediaSessionManager {
     this.player.on("timeupdate", () => {
       this.updatePositionState();
     });
+  }
+
+  private registerActionHandlers() {
+    const { mediaSession } = navigator;
+    if (!mediaSession) return;
+
+    // Android WebView 要求在 metadata 设置后才能成功注册 action handlers
+    try {
+      mediaSession.setActionHandler("play", () => {
+        this.player.play();
+      });
+
+      mediaSession.setActionHandler("pause", () => {
+        this.player.pause();
+      });
+
+      mediaSession.setActionHandler("stop", () => {
+        this.player.stop();
+      });
+
+      mediaSession.setActionHandler("previoustrack", () => {
+        this.player.previous();
+      });
+
+      mediaSession.setActionHandler("nexttrack", () => {
+        this.player.next();
+      });
+
+      mediaSession.setActionHandler("seekto", (details) => {
+        if (details.seekTime != null) {
+          this.player.seekTo(details.seekTime);
+        }
+      });
+    } catch (e) {
+      console.warn("Failed to set MediaSession action handlers:", e);
+    }
   }
 
   private setupAudioFocus() {

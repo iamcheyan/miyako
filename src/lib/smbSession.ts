@@ -45,6 +45,16 @@ export function subscribeSmbSession(
   return () => listeners.delete(listener);
 }
 
+export function invalidateConnection() {
+  state = {
+    connectionId: null,
+    isConnecting: false,
+    error: null,
+  };
+  activeConfigKey = null;
+  notify();
+}
+
 export async function ensureSmbConnection(config: SmbConfig): Promise<string> {
   const configKey = getConfigKey(config);
 

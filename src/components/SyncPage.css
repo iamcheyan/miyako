@@ -8,7 +8,7 @@
 
 .sync-header {
   flex-shrink: 0;
-  padding: 12px 0;
+  padding: 0 0 12px 0;
 }
 
 /* 可滚动内容区域 */

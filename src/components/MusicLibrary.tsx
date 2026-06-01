@@ -6,6 +6,8 @@ import type { SyncState } from "../types/tauri-commands";
 import { getAudioPlayer } from "../lib/audioPlayer";
 import { isDemoMode, getDemoFolders } from "../lib/demoData";
 import { getFavorites, isFavorite, toggleFavorite } from "../lib/favorites";
+import { usePullToRefresh } from "../lib/usePullToRefresh";
+import { PullToRefresh } from "./PullToRefresh";
 import "./MusicLibrary.css";
 
 const STATE_PATH = "sync_state.json";
@@ -183,6 +185,11 @@ function MusicLibrary() {
     }
   };
 
+  // 下拉刷新
+  const { pullDistance, isRefreshing, scrollRef, handlers } = usePullToRefresh({
+    onRefresh: loadMusicLibrary,
+  });
+
   const handleFolderClick = (folder: Folder) => {
     setCurrentPath(folder.path);
     setCurrentFiles(folder.files);
@@ -235,6 +242,20 @@ function MusicLibrary() {
       window.removeEventListener("popstate", handlePopState);
     };
   }, [currentPath, handleBackClick]);
+
+  // 播放器展开时按返回键，强制回到主界面文件夹列表
+  useEffect(() => {
+    const handleForceHome = () => {
+      setCurrentPath(null);
+      setCurrentFiles([]);
+      setSearchQuery("");
+    };
+
+    window.addEventListener("force-navigate-home", handleForceHome);
+    return () => {
+      window.removeEventListener("force-navigate-home", handleForceHome);
+    };
+  }, []);
 
   const handleFileClick = async (file: MusicFile) => {
     const player = getAudioPlayer();
@@ -316,7 +337,15 @@ function MusicLibrary() {
               </button>
             </div>
           </div>
-          <div className="library-scroll" onScroll={handleScroll}>
+          <div
+            ref={scrollRef}
+            className="library-scroll"
+            onScroll={handleScroll}
+            onTouchStart={handlers.onTouchStart}
+            onTouchMove={handlers.onTouchMove}
+            onTouchEnd={handlers.onTouchEnd}
+          >
+            <PullToRefresh pullDistance={pullDistance} isRefreshing={isRefreshing}>
             {folders.length === 0 ? (
               <div className="empty-state">
                 <span className="material-symbols-outlined empty-icon">library_music</span>
@@ -357,6 +386,7 @@ function MusicLibrary() {
                 ))}
               </div>
             )}
+            </PullToRefresh>
           </div>
         </>
       ) : (
@@ -379,7 +409,15 @@ function MusicLibrary() {
               </button>
             </div>
           </div>
-          <div className="library-scroll" onScroll={handleScroll}>
+          <div
+            ref={scrollRef}
+            className="library-scroll"
+            onScroll={handleScroll}
+            onTouchStart={handlers.onTouchStart}
+            onTouchMove={handlers.onTouchMove}
+            onTouchEnd={handlers.onTouchEnd}
+          >
+            <PullToRefresh pullDistance={pullDistance} isRefreshing={isRefreshing}>
             {filteredFiles.length === 0 ? (
               <div className="empty-state small">
                 <span className="material-symbols-outlined empty-icon">search_off</span>
@@ -422,6 +460,7 @@ function MusicLibrary() {
                 ))}
               </div>
             )}
+            </PullToRefresh>
           </div>
         </>
       )}
@@ -459,11 +498,13 @@ function MusicLibrary() {
                   key={file.remotePath}
                   className="search-result-item"
                   onClick={() => {
-                    // 搜索结果点击时，需要先加载对应的文件夹到 currentFiles
+                    // 搜索结果点击时，加载全部文件为播放列表并播放该歌曲
                     setCurrentFiles(allFiles);
                     handleFileClick(file);
                     setIsSearchOpen(false);
                     setSearchQuery("");
+                    // 自动展开播放器详情页
+                    window.dispatchEvent(new Event("expand-player"));
                   }}
                 >
                   <span className="material-symbols-outlined">music_note</span>

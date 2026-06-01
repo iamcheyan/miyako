@@ -93,6 +93,10 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "backgroundSync": {
+      "title": "Background Sync",
+      "desc": "Automatically sync NAS music when the app is open (every 5 minutes)"
     }
   },
   "sync": {
@@ -119,7 +123,9 @@
       "startSync": "Start syncing files...",
       "syncComplete": "Sync complete!",
       "syncFailed": "Sync failed:",
-      "connectFailed": "Connection failed:"
+      "connectFailed": "Connection failed:",
+      "connectionLost": "Connection lost, reconnecting...",
+      "reconnected": "Reconnected successfully"
     },
     "lastSync": "Last Sync",
     "syncedFiles": "Synced Files",

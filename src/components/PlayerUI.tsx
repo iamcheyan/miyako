@@ -20,6 +20,13 @@ function PlayerUI() {
   const favoritesScrollRef = useRef<HTMLDivElement>(null);
   const activeRowRef = useRef<HTMLDivElement>(null);
 
+  // 监听外部触发的展开事件（搜索结果点击时自动展开播放器）
+  useEffect(() => {
+    const handleExpandPlayer = () => setIsExpanded(true);
+    window.addEventListener("expand-player", handleExpandPlayer);
+    return () => window.removeEventListener("expand-player", handleExpandPlayer);
+  }, []);
+
   const [playlistTab, setPlaylistTab] = useState<'default' | 'favorites'>('default');
   const [dragType, setDragType] = useState<'up' | 'down' | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -108,7 +115,7 @@ function PlayerUI() {
     }
   }, [state.currentTrack]);
 
-  // 展开播放器时拦截安卓返回键：先收起播放器，而不是退出页面
+  // 展开播放器时拦截安卓返回键：收起播放器并回到主界面文件夹列表
   useEffect(() => {
     if (!isExpanded) {
       pushStateRef.current = false;
@@ -120,11 +127,12 @@ function PlayerUI() {
     pushStateRef.current = true;
 
     const handlePopState = (e: PopStateEvent) => {
-      // 检查是否是我们压入的状态
       if (e.state?.playerExpanded) {
-        // 收起播放器，阻止默认的返回导航
+        // 收起播放器
         setIsExpanded(false);
         pushStateRef.current = false;
+        // 通知 MusicLibrary 强制回到主界面文件夹列表
+        window.dispatchEvent(new Event("force-navigate-home"));
       }
     };
 

@@ -21,6 +21,7 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   padding-bottom: 16px;
+  position: relative;
 }
 
 /* 加载状态 */

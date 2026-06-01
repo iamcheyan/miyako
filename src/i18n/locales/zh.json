@@ -93,6 +93,10 @@
       "light": "亮色",
       "dark": "暗色",
       "system": "跟随系统"
+    },
+    "backgroundSync": {
+      "title": "后台同步",
+      "desc": "开启后，打开应用时自动同步 NAS 音乐（每 5 分钟检查一次）"
     }
   },
   "sync": {
@@ -119,7 +123,9 @@
       "startSync": "开始同步文件...",
       "syncComplete": "同步完成!",
       "syncFailed": "同步失败:",
-      "connectFailed": "连接失败:"
+      "connectFailed": "连接失败:",
+      "connectionLost": "连接已断开，正在重新连接...",
+      "reconnected": "重新连接成功"
     },
     "lastSync": "上次同步",
     "syncedFiles": "已同步文件",

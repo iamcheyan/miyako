@@ -9,7 +9,7 @@ import type {
   SyncState,
 } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
-import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
+import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession, invalidateConnection } from "../lib/smbSession";
 import { showStatusBar } from "../lib/androidStatusBar";
 import "./SyncPage.css";
 
@@ -128,7 +128,7 @@ function SyncPage() {
     return ensureSmbConnection(config);
   };
 
-  const handleStartSync = async () => {
+  const handleStartSyncInternal = async (retryCount = 0) => {
     let activeConnectionId: string;
     try {
       activeConnectionId = await reconnectIfNeeded();
@@ -191,11 +191,32 @@ function SyncPage() {
       addLog(t("sync.logs.syncComplete"), "success");
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
+      // 检测 SMB worker 崩溃错误，自动重连重试
+      const isWorkerError = errorMessage.includes("Failed to send message to worker") ||
+                           errorMessage.includes("Message processing failed");
+      if (isWorkerError && retryCount < 2) {
+        addLog(t("sync.logs.connectionLost"), "info");
+        invalidateConnection();
+        const config = loadSmbConfig();
+        try {
+          await ensureSmbConnection(config);
+          addLog(t("sync.logs.reconnected"), "success");
+          setIsSyncing(false);
+          handleStartSyncInternal(retryCount + 1);
+          return;
+        } catch {
+          // 重连失败，显示错误
+        }
+      }
       setError(`${t("sync.logs.syncFailed")} ${errorMessage}`);
       addLog(`${t("sync.logs.syncFailed")} ${errorMessage}`, "error");
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  const handleStartSync = () => {
+    handleStartSyncInternal(0);
   };
 
   const formatTime = (timestamp: number | null): string => {

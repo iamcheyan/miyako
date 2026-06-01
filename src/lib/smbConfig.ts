@@ -2,14 +2,15 @@ import type { SmbConfig } from "../types/tauri-commands";
 
 export const SMB_CONFIG_STORAGE_KEY = "smb-config";
 
-// Read from environment variables, fallback to empty strings
+// 默认值全部为空，确保构建产物不会包含任何 NAS 凭据
+// 用户首次打开 app 时在设置页面填写自己的 NAS 信息
 export const DEFAULT_SMB_CONFIG: SmbConfig = {
-  server: import.meta.env.VITE_SMB_SERVER || "",
-  share: import.meta.env.VITE_SMB_SHARE || "",
-  remotePath: import.meta.env.VITE_SMB_REMOTE_PATH || "",
-  username: import.meta.env.VITE_SMB_USERNAME || "",
-  password: import.meta.env.VITE_SMB_PASSWORD || "",
-  localDir: import.meta.env.VITE_SMB_LOCAL_DIR || "~/Music/NasSync",
+  server: "",
+  share: "",
+  remotePath: "",
+  username: "",
+  password: "",
+  localDir: "~/Music/NasSync",
 };
 
 export function loadSmbConfig(): SmbConfig {

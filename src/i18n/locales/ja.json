@@ -93,6 +93,10 @@
       "light": "ライト",
       "dark": "ダーク",
       "system": "システム"
+    },
+    "backgroundSync": {
+      "title": "バックグラウンド同期",
+      "desc": "アプリ起動中にNASの音楽を自動同期（5分ごと）"
     }
   },
   "sync": {
@@ -119,7 +123,9 @@
       "startSync": "ファイルの同期を開始...",
       "syncComplete": "同期完了!",
       "syncFailed": "同期失敗:",
-      "connectFailed": "接続失敗:"
+      "connectFailed": "接続失敗:",
+      "connectionLost": "接続が切断されました。再接続中...",
+      "reconnected": "再接続に成功しました"
     },
     "lastSync": "最終同期",
     "syncedFiles": "同期済みファイル",

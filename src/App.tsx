@@ -11,6 +11,7 @@ import MusicLibrary from "./components/MusicLibrary";
 import PlayerUI from "./components/PlayerUI";
 import Toast, { useToast } from "./components/Toast";
 import { getMediaSessionManager } from "./lib/mediaSession";
+import { initBackgroundSync } from "./lib/backgroundSync";
 import "./App.css";
 import "./components/shared.css";
 
@@ -47,6 +48,7 @@ function App() {
   useEffect(() => {
     const mediaSession = getMediaSessionManager();
     mediaSession.initialize();
+    initBackgroundSync();
 
     const applySystemInsets = () => {
       const root = document.documentElement;

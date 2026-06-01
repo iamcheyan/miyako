@@ -65,14 +65,26 @@ function MusicLibrary() {
   // 当路径改变或页面加载完毕时，自动还原滚动条位置 (秒开恢复)
   useEffect(() => {
     if (globalLibraryCache && globalLibraryCache.scrollTop > 0) {
-      const scrollEl = document.querySelector(".library-scroll");
-      if (scrollEl) {
-        requestAnimationFrame(() => {
-          if (scrollEl && globalLibraryCache) {
-            scrollEl.scrollTop = globalLibraryCache.scrollTop;
+      const restoreScroll = () => {
+        const scrollEl = document.querySelector(".library-scroll");
+        if (scrollEl && globalLibraryCache) {
+          scrollEl.scrollTop = globalLibraryCache.scrollTop;
+          
+          // 极致双重校准：如果由于 Android 布局延迟导致没有一次性设置成功，在 50ms 后重新校准
+          if (scrollEl.scrollTop !== globalLibraryCache.scrollTop) {
+            setTimeout(() => {
+              if (scrollEl && globalLibraryCache) {
+                scrollEl.scrollTop = globalLibraryCache.scrollTop;
+              }
+            }, 50);
           }
-        });
-      }
+        }
+      };
+
+      // 三重保险定位：立即执行 + 下一帧绘制执行 + 100ms 强制落位，完美对抗慢速 CPU 渲染延迟
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
+      setTimeout(restoreScroll, 100);
     }
   }, [currentPath, isLoading, folders]);
 

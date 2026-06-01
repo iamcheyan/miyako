@@ -48,26 +48,44 @@ function App() {
     const mediaSession = getMediaSessionManager();
     mediaSession.initialize();
 
-    // Android Tauri runs edge-to-edge, and some WebViews report
-    // safe-area-inset-bottom as 0 even with 3-button navigation.
+    // Keep system-bar spacing adaptive. Do not force a fixed Android
+    // navigation height: gesture-navigation devices often need 0px.
     const detectAndroidNavHeight = () => {
       const root = document.documentElement;
       const app = document.querySelector<HTMLElement>(".app");
       const isAndroid = /Android/i.test(navigator.userAgent);
-      const screenHeight = window.screen.height;
-      const windowHeight = window.innerHeight;
-      const diff = screenHeight - windowHeight;
-      const navHeight = diff > 0 && diff < 200 ? diff : isAndroid ? 48 : 0;
+      const visualViewport = window.visualViewport;
+      const viewportHeight = visualViewport?.height ?? window.innerHeight;
+      const screenDiff = window.screen.height - window.innerHeight;
+      const visualDiff =
+        window.innerHeight - viewportHeight - (visualViewport?.offsetTop ?? 0);
+      const navHeight = isAndroid
+        ? Math.max(
+            ...[screenDiff, visualDiff]
+              .filter((value) => value > 0 && value < 160)
+              .map((value) => Math.round(value))
+          )
+        : 0;
+      const navHeightPx = Number.isFinite(navHeight) ? navHeight : 0;
+      const topInset = isAndroid
+        ? "0px"
+        : "max(env(safe-area-inset-top, 0px), 36px)";
 
-      root.style.setProperty("--android-nav-height", `${navHeight}px`);
-      app?.style.setProperty("--android-nav-height", `${navHeight}px`);
+      root.style.setProperty("--system-top-inset", topInset);
+      root.style.setProperty("--android-nav-height", `${navHeightPx}px`);
+      app?.style.setProperty("--system-top-inset", topInset);
+      app?.style.setProperty("--android-nav-height", `${navHeightPx}px`);
     };
 
     detectAndroidNavHeight();
     window.addEventListener("resize", detectAndroidNavHeight);
+    window.visualViewport?.addEventListener("resize", detectAndroidNavHeight);
+    window.visualViewport?.addEventListener("scroll", detectAndroidNavHeight);
 
     return () => {
       window.removeEventListener("resize", detectAndroidNavHeight);
+      window.visualViewport?.removeEventListener("resize", detectAndroidNavHeight);
+      window.visualViewport?.removeEventListener("scroll", detectAndroidNavHeight);
     };
   }, []);
 

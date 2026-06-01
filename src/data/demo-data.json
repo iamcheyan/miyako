@@ -27,6 +27,66 @@
           "remotePath": "超长文件夹名测试/混合语言测试.mp3",
           "localPath": "/demo/超长文件夹名测试/混合语言测试.mp3",
           "size": 6543210
+        },
+        {
+          "name": "Aimer - 残響散歌 (Zankyousange) - from the anime series Demon Slayer Kimetsu no Yaiba Entertainment District Arc Opening Theme - Extended Version with Full Japanese Lyrics and English Translation Subtitles Included.mp3",
+          "remotePath": "超长文件夹名测试/残響散歌.mp3",
+          "localPath": "/demo/超长文件夹名测试/残響散歌.mp3",
+          "size": 11234567
+        },
+        {
+          "name": "YOASOBI - 群青 (Gunjou) - The Inspirational Story Behind the Blue Period Manga Adaptation Theme Song That Became a Viral Sensation Across Japan and the World - Official Music Video Version with Full Orchestral Arrangement.mp3",
+          "remotePath": "超长文件夹名测试/群青.mp3",
+          "localPath": "/demo/超长文件夹名测试/群青.mp3",
+          "size": 13456789
+        },
+        {
+          "name": " Kenshi Yonezu - KICK BACK (Kick Back) - Chainsaw Man Anime Opening Theme Song - The Wild and Chaotic Catchy Tune That Broke Every Streaming Record in 2022 and Became the Most Downloaded Anime OP Single of All Time.flac",
+          "remotePath": "超长文件夹名测试/KICK_BACK.flac",
+          "localPath": "/demo/超长文件夹名测试/KICK_BACK.flac",
+          "size": 15678901
+        },
+        {
+          "name": "Pink Floyd - Several Species of Small Furry Animals Gathered Together in a Cave and Grooving with a Pict.mp3",
+          "remotePath": "超长文件夹名测试/Pink_Floyd_Several_Species.mp3",
+          "localPath": "/demo/超长文件夹名测试/Pink_Floyd_Several_Species.mp3",
+          "size": 56789012
+        },
+        {
+          "name": "Fall Out Boy - Our Lawyer Made Us Change the Name of This Song So We Wouldn't Get Sued.mp3",
+          "remotePath": "超长文件夹名测试/Fall_Out_Boy_Lawyer.mp3",
+          "localPath": "/demo/超长文件夹名测试/Fall_Out_Boy_Lawyer.mp3",
+          "size": 8765432
+        },
+        {
+          "name": "Panic! At The Disco - The Only Difference Between Martyrdom and Suicide Is Press Coverage.mp3",
+          "remotePath": "超长文件夹名测试/Panic_The_Only_Difference.mp3",
+          "localPath": "/demo/超长文件夹名测试/Panic_The_Only_Difference.mp3",
+          "size": 9876543
+        },
+        {
+          "name": "Panic! At The Disco - There's a Good Reason These Tables Are Numbered Honey, You Just Haven't Thought of It Yet.mp3",
+          "remotePath": "超长文件夹名测试/Panic_Tables_Numbered.mp3",
+          "localPath": "/demo/超长文件夹名/test/Panic_Tables_Numbered.mp3",
+          "size": 8765432
+        },
+        {
+          "name": "Will Wood - Big Fat Bitchie's Blueberry Pie, Christmas Tree, and Recreational Jell-O Emporium a.k.a. Mr. Boy Is on the Roof Again.flac",
+          "remotePath": "超长文件夹名测试/Will_Wood_Big_Fat.flac",
+          "localPath": "/demo/超长文件夹名测试/Will_Wood_Big_Fat.flac",
+          "size": 12345678
+        },
+        {
+          "name": "Bandits of the Acoustic Revolution - They Provide the Paint for the Picture-Perfect Masterpiece That You Will Paint on the Insides of Your Eyelids.mp3",
+          "remotePath": "超长文件夹名测试/Bandits_Provide_Paint.mp3",
+          "localPath": "/demo/超长文件夹名测试/Bandits_Provide_Paint.mp3",
+          "size": 11234567
+        },
+        {
+          "name": "Taylor Swift - All Too Well (Ten Minute Version) (Taylor's Version) - From the Vault Track - Originally Written During the Red Album Sessions in 2011 - Re-Recorded and Fully Restored with Never-Before-Heard Lyrics and Extended Bridge Section That Fans Have Been Waiting Years for.flac",
+          "remotePath": "超长文件夹名测试/All_Too_Well_Ten_Minute.flac",
+          "localPath": "/demo/超长文件夹名测试/All_Too_Well_Ten_Minute.flac",
+          "size": 22345678
         }
       ]
     },
@@ -75,6 +135,30 @@
           "remotePath": "流行/邓紫棋/光年之外.flac",
           "localPath": "/demo/流行/邓紫棋/光年之外.flac",
           "size": 45678901
+        },
+        {
+          "name": "毛不易 - 如果有一天我变得很有钱.mp3",
+          "remotePath": "流行/毛不易/如果有一天我变得很有钱.mp3",
+          "localPath": "/demo/流行/毛不易/如果有一天我变得很有钱.mp3",
+          "size": 7654321
+        },
+        {
+          "name": "牛奶咖啡 - 越长大越孤单越长大越不安.mp3",
+          "remotePath": "流行/牛奶咖啡/越长大越孤单越长大越不安.mp3",
+          "localPath": "/demo/流行/牛奶咖啡/越长大越孤单越长大越不安.mp3",
+          "size": 6543210
+        },
+        {
+          "name": "林俊杰 - 那些你很冒险的梦.mp3",
+          "remotePath": "流行/林俊杰/那些你很冒险的梦.mp3",
+          "localPath": "/demo/流行/林俊杰/那些你很冒险的梦.mp3",
+          "size": 5432109
+        },
+        {
+          "name": "后来的我们什么都有了却没有了我们 - 网络热歌.mp3",
+          "remotePath": "流行/网络热歌/后来的我们什么都有了却没有了我们.mp3",
+          "localPath": "/demo/流行/网络热歌/后来的我们什么都有了却没有了我们.mp3",
+          "size": 4321098
         }
       ]
     },
@@ -105,6 +189,54 @@
           "remotePath": "摇滚/五月天/突然好想你.flac",
           "localPath": "/demo/摇滚/五月天/突然好想你.flac",
           "size": 38765432
+        },
+        {
+          "name": "Pink Floyd - Several Species of Small Furry Animals Gathered Together in a Cave and Grooving with a Pict.mp3",
+          "remotePath": "摇滚/Pink Floyd/Several Species.mp3",
+          "localPath": "/demo/摇滚/Pink Floyd/Several Species.mp3",
+          "size": 56789012
+        },
+        {
+          "name": "Fall Out Boy - Our Lawyer Made Us Change the Name of This Song So We Wouldn't Get Sued.mp3",
+          "remotePath": "摇滚/Fall Out Boy/Our Lawyer Made Us Change the Name.mp3",
+          "localPath": "/demo/摇滚/Fall Out Boy/Our Lawyer Made Us Change the Name.mp3",
+          "size": 8765432
+        },
+        {
+          "name": "Panic! At The Disco - The Only Difference Between Martyrdom and Suicide Is Press Coverage.mp3",
+          "remotePath": "摇滚/Panic! At The Disco/The Only Difference Between Martyrdom and Suicide Is Press Coverage.mp3",
+          "localPath": "/demo/摇滚/Panic! At The Disco/The Only Difference Between Martyrdom and Suicide Is Press Coverage.mp3",
+          "size": 9876543
+        },
+        {
+          "name": "Panic! At The Disco - Lying Is the Most Fun a Girl Can Have Without Taking Her Clothes Off.mp3",
+          "remotePath": "摇滚/Panic! At The Disco/Lying Is the Most Fun.mp3",
+          "localPath": "/demo/摇滚/Panic! At The Disco/Lying Is the Most Fun.mp3",
+          "size": 7654321
+        },
+        {
+          "name": "Panic! At The Disco - There's a Good Reason These Tables Are Numbered Honey, You Just Haven't Thought of It Yet.mp3",
+          "remotePath": "摇滚/Panic! At The Disco/There's a Good Reason These Tables.mp3",
+          "localPath": "/demo/摇滚/Panic! At The Disco/There's a Good Reason These Tables.mp3",
+          "size": 8765432
+        },
+        {
+          "name": "Fall Out Boy - I'm Like a Lawyer with the Way I'm Always Trying to Get You Off (Me & You).mp3",
+          "remotePath": "摇滚/Fall Out Boy/I'm Like a Lawyer.mp3",
+          "localPath": "/demo/摇滚/Fall Out Boy/I'm Like a Lawyer.mp3",
+          "size": 6543210
+        },
+        {
+          "name": "Will Wood - Big Fat Bitchie's Blueberry Pie, Christmas Tree, and Recreational Jell-O Emporium a.k.a. Mr. Boy Is on the Roof Again.flac",
+          "remotePath": "摇滚/Will Wood/Big Fat Bitchie's Blueberry Pie.flac",
+          "localPath": "/demo/摇滚/Will Wood/Big Fat Bitchie's Blueberry Pie.flac",
+          "size": 12345678
+        },
+        {
+          "name": "Bandits of the Acoustic Revolution - They Provide the Paint for the Picture-Perfect Masterpiece That You Will Paint on the Insides of Your Eyelids.mp3",
+          "remotePath": "摇滚/Bandits of the Acoustic Revolution/They Provide the Paint.mp3",
+          "localPath": "/demo/摇滚/Bandits of the Acoustic Revolution/They Provide the Paint.mp3",
+          "size": 11234567
         }
       ]
     },
@@ -183,6 +315,120 @@
           "remotePath": "日语/YOASOBI/夜に駆ける.mp3",
           "localPath": "/demo/日语/YOASOBI/夜に駆ける.mp3",
           "size": 8765432
+        },
+        {
+          "name": "米津玄師 - 眩げでる (Mayuge de ru) - あの星が消える日 (Hi ga Kieru Hi) - from the critically acclaimed 2024 studio album STRAY SHEEP - The Emotional Ballad That Topped the Japanese Oricon Charts for Twelve Consecutive Weeks and Won Record of the Year at the Japan Record Awards.flac",
+          "remotePath": "日语/米津玄師/眩げでる.mp3",
+          "localPath": "/demo/日语/米津玄師/眩げでる.mp3",
+          "size": 12345678
+        },
+        {
+          "name": "YOASOBI - アドルレス (Adolescence) - 僕のヒーローアカデミア (Boku no Hero Academia) Season 6 Opening Theme - The High-Energy J-Pop Anthem That Combined Ikura's Soaring Vocals with Ayase's Signature Electronic Production to Create One of the Most Streamed Anime Theme Songs of 2023.mp3",
+          "remotePath": "日语/YOASOBI/アドルレス.mp3",
+          "localPath": "/demo/日语/YOASOBI/アドルレス.mp3",
+          "size": 14567890
+        },
+        {
+          "name": "Official髭男dism - I LOVE... - こっちのบายハウス (Kocchi no Baai Hausu) - From the Album Editorial - The Romantic Piano Ballad That Became the Theme Song for the Japanese Drama 「この恋あたためますか」(Kono Koi Atatamemasu ka) - Recorded Live at the Budokan with Full Orchestra Arrangement - Extended Version with Bonus Acoustic Interlude.mp3",
+          "remotePath": "日语/Official髭男dism/I_LOVE.mp3",
+          "localPath": "/demo/日语/Official髭男dism/I_LOVE.mp3",
+          "size": 16789012
+        },
+        {
+          "name": "King Gnu - 一途 (Ichizu) - 呪術廻戦 (Jujutsu Kaisen) Season 2 Shibuya Incident Arc Opening Theme - Directed by Toho Animation Studios - The Massive Rock Opus Featuring Layered Guitar Riffs and Dual Vocal Harmonies That Became the Defining Soundtrack of 2023 Anime Season - Includes Hidden Track in the Final 30 Seconds of Silence.flac",
+          "remotePath": "日语/King_Gnu/一途.mp3",
+          "localPath": "/demo/日语/King_Gnu/一途.mp3",
+          "size": 17654321
+        },
+        {
+          "name": "中島美嘉 - 僕が死のうと思ったのは.mp3",
+          "remotePath": "日语/中島美嘉/僕が死のうと思ったのは.mp3",
+          "localPath": "/demo/日语/中島美嘉/僕が死のうと思ったのは.mp3",
+          "size": 8765432
+        },
+        {
+          "name": "CHiCO with HoneyWorks - 世界は恋に落ちている.mp3",
+          "remotePath": "日语/CHiCO with HoneyWorks/世界は恋に落ちている.mp3",
+          "localPath": "/demo/日语/CHiCO with HoneyWorks/世界は恋に落ちている.mp3",
+          "size": 7654321
+        },
+        {
+          "name": "AAA - さよならの前に.mp3",
+          "remotePath": "日语/AAA/さよならの前に.mp3",
+          "localPath": "/demo/日语/AAA/さよならの前に.mp3",
+          "size": 6543210
+        },
+        {
+          "name": "Superfly - 愛をこめて花束を.mp3",
+          "remotePath": "日语/Superfly/愛をこめて花束を.mp3",
+          "localPath": "/demo/日语/Superfly/愛をこめて花束を.mp3",
+          "size": 5432109
+        },
+        {
+          "name": "スピッツ - 空も飛べるはず.mp3",
+          "remotePath": "日语/スピッツ/空も飛べるはず.mp3",
+          "localPath": "/demo/日语/スピッツ/空も飛べるはず.mp3",
+          "size": 4321098
+        },
+        {
+          "name": "supercell - 君の知らない物語.mp3",
+          "remotePath": "日语/supercell/君の知らない物語.mp3",
+          "localPath": "/demo/日语/supercell/君の知らない物語.mp3",
+          "size": 9876543
+        },
+        {
+          "name": "森高千里 - 私がオバさんになっても.mp3",
+          "remotePath": "日语/森高千里/私がオバさんになっても.mp3",
+          "localPath": "/demo/日语/森高千里/私がオバさんになっても.mp3",
+          "size": 7654321
+        },
+        {
+          "name": "初音ミク - 自分の事ばかりで情けなくなるよ.mp3",
+          "remotePath": "日语/Vocaloid/自分の事ばかりで情けなくなるよ.mp3",
+          "localPath": "/demo/日语/Vocaloid/自分の事ばかりで情けなくなるよ.mp3",
+          "size": 5432109
+        },
+        {
+          "name": "VOCALOID - こちら、幸福安心委員会です。.mp3",
+          "remotePath": "日语/Vocaloid/こちら、幸福安心委員会です。.mp3",
+          "localPath": "/demo/日语/Vocaloid/こちら、幸福安心委員会です。.mp3",
+          "size": 6543210
+        },
+        {
+          "name": "kemu - 人生リセットボタン.mp3",
+          "remotePath": "日语/Vocaloid/人生リセットボタン.mp3",
+          "localPath": "/demo/日语/Vocaloid/人生リセットボタン.mp3",
+          "size": 4321098
+        },
+        {
+          "name": "Neru - 少年少女カメレオンシンプトム.mp3",
+          "remotePath": "日语/Vocaloid/少年少女カメレオンシンプトム.mp3",
+          "localPath": "/demo/日语/Vocaloid/少年少女カメレオンシンプトム.mp3",
+          "size": 7654321
+        },
+        {
+          "name": "Nem - 夢喰い白黒バク.mp3",
+          "remotePath": "日语/Vocaloid/夢喰い白黒バク.mp3",
+          "localPath": "/demo/日语/Vocaloid/夢喰い白黒バク.mp3",
+          "size": 5432109
+        },
+        {
+          "name": "オワタP - リンちゃんなう！.mp3",
+          "remotePath": "日语/Vocaloid/リンちゃんなう！.mp3",
+          "localPath": "/demo/日语/Vocaloid/リンちゃんなう！.mp3",
+          "size": 3210987
+        },
+        {
+          "name": "ピノキオP - 腐れ外道とチョコレゐト.mp3",
+          "remotePath": "日语/Vocaloid/腐れ外道とチョコレゐト.mp3",
+          "localPath": "/demo/日语/Vocaloid/腐れ外道とチョコレゐト.mp3",
+          "size": 6543210
+        },
+        {
+          "name": "チャットモンチー - 風吹けば恋.mp3",
+          "remotePath": "日语/チャットモンチー/風吹けば恋.mp3",
+          "localPath": "/demo/日语/チャットモンチー/風吹けば恋.mp3",
+          "size": 4321098
         }
       ]
     }

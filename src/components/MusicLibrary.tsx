@@ -41,11 +41,38 @@ function MusicLibrary() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(!globalLibraryCache);
   const [favoritesVersion, setFavoritesVersion] = useState(0);
+  const [titleOverflow, setTitleOverflow] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const listTitleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     loadMusicLibrary();
   }, []);
+
+  // 检测标题是否溢出
+  useEffect(() => {
+    if (listTitleRef.current) {
+      const el = listTitleRef.current;
+      setTitleOverflow(el.scrollWidth > el.clientWidth);
+    }
+  }, [currentPath]);
+
+  // 检测所有 folder-name 和 file-name 是否溢出，添加 scrolling class
+  useEffect(() => {
+    const checkOverflow = () => {
+      document.querySelectorAll(".folder-name, .file-name").forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.scrollWidth > htmlEl.clientWidth) {
+          htmlEl.classList.add("scrolling");
+        } else {
+          htmlEl.classList.remove("scrolling");
+        }
+      });
+    };
+    // 延迟检查，等待 DOM 渲染完成
+    const timer = setTimeout(checkOverflow, 100);
+    return () => clearTimeout(timer);
+  }, [currentFiles, folders]);
 
   // 监听滚动事件并更新缓存中的 scrollTop
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
@@ -341,7 +368,7 @@ function MusicLibrary() {
                 <span className="material-symbols-outlined">arrow_back</span>
               </button>
               <div className="list-header-info">
-                <h2 className="list-title">{currentPath?.split("/").pop() || ""}</h2>
+                <h2 ref={listTitleRef} className={`list-title ${titleOverflow ? "scrolling" : ""}`}>{currentPath?.split("/").pop() || ""}</h2>
                 <span className="list-subtitle">{currentFiles.length} {t("musicLibrary.songs")}</span>
               </div>
               <button className="play-all-btn btn-interactive" onClick={handlePlayAllCurrentFiles} title="播放全部">

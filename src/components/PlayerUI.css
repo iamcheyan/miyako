@@ -75,6 +75,7 @@
 .mini-info {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
   padding: 8px;
   cursor: pointer;
 }
@@ -87,6 +88,17 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   display: block;
+}
+
+.mini-track-name.scrolling {
+  overflow: visible;
+  text-overflow: unset;
+  width: max-content;
+  animation: marquee 10s ease-in-out infinite;
+}
+
+.mini-track-name.scrolling:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
@@ -174,7 +186,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding-top: max(env(safe-area-inset-top, 0px), 36px);
+  padding-top: var(--system-top-inset);
   touch-action: pan-y;
   user-select: none;
   z-index: 2;
@@ -210,7 +222,7 @@
 /* 顶部：歌曲信息 */
 .expanded-header {
   flex-shrink: 0;
-  padding: 12px 24px 0;
+  padding: 20px 24px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -263,6 +275,7 @@
   margin-bottom: 8px;
   overflow: hidden;
   width: 100%;
+  min-width: 0;
   padding: 0 24px;
   box-sizing: border-box;
   position: relative;
@@ -383,10 +396,10 @@
 .track-title.scrolling {
   display: block;
   text-align: left;
+  overflow: visible;
   text-overflow: unset;
   width: max-content;
   animation: marquee 12s ease-in-out infinite;
-  clip-path: inset(0 0 0 0);
 }
 
 .track-title.scrolling:hover {
@@ -400,7 +413,7 @@
   }
   80%,
   100% {
-    transform: translateX(max(-100%, -400px));
+    transform: translateX(-200px);
   }
 }
 
@@ -541,7 +554,7 @@
     calc(
       10px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
     );
-  border-top: 1px solid var(--outline-variant);
+  /*border-top: 1px solid var(--outline-variant);*/
   background-color: var(--surface);
   /*box-shadow: 0 -16px 32px rgba(0, 0, 0, 0.06);*/
 }

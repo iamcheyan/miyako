@@ -349,6 +349,8 @@
 
 .folder-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -356,6 +358,20 @@
 .folder-name {
   font-size: 16px;
   color: var(--on-surface);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.folder-name.scrolling {
+  overflow: visible;
+  text-overflow: unset;
+  width: max-content;
+  animation: marquee-text 10s ease-in-out infinite;
+}
+
+.folder-name.scrolling:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
@@ -424,6 +440,8 @@
 
 .list-header-info {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .list-title {
@@ -431,6 +449,31 @@
   font-weight: 500;
   margin: 0;
   color: var(--on-surface);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.list-title.scrolling {
+  overflow: visible;
+  text-overflow: unset;
+  width: max-content;
+  animation: marquee-text 10s ease-in-out infinite;
+}
+
+.list-title.scrolling:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-text {
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+  85%,
+  100% {
+    transform: translateX(-200px);
+  }
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {
@@ -471,7 +514,7 @@
 .file-item {
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 10px 0 0;
   /*border-bottom: 1px solid var(--outline-variant);*/
   transition: background-color 0.2s;
 }
@@ -568,6 +611,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  overflow: hidden;
 }
 
 .file-name {
@@ -576,6 +620,17 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.file-name.scrolling {
+  overflow: visible;
+  text-overflow: unset;
+  width: max-content;
+  animation: marquee-text 10s ease-in-out infinite;
+}
+
+.file-name.scrolling:hover {
+  animation-play-state: paused;
 }
 
 @media (prefers-color-scheme: dark), :root[data-theme="dark"] {

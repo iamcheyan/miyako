@@ -261,6 +261,22 @@ function PlayerUI() {
     }
   }, [state.currentTrack]);
 
+  // 检测所有 track-title 和 mini-track-name 是否溢出
+  useEffect(() => {
+    const checkOverflow = () => {
+      document.querySelectorAll(".track-title, .mini-track-name").forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.scrollWidth > htmlEl.clientWidth) {
+          htmlEl.classList.add("scrolling");
+        } else {
+          htmlEl.classList.remove("scrolling");
+        }
+      });
+    };
+    const timer = setTimeout(checkOverflow, 100);
+    return () => clearTimeout(timer);
+  }, [state.currentTrack]);
+
   const handlePlayPause = useCallback(async () => {
     if (state.isPlaying) {
       player.pause();

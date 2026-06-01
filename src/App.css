@@ -48,12 +48,12 @@
   flex-direction: column;
   box-sizing: border-box;
   overflow: hidden;
-  padding-top: var(--system-top-inset);
+  padding-top: calc(var(--system-top-inset) + 12px);
   padding-bottom: calc(
     var(--mini-player-height) + var(--system-bottom-inset, 0px) +
       var(--android-nav-height, 0px)
   );
-  animation: pageFadeIn 0.35s cubic-bezier(0.215, 0.610, 0.355, 1) both;
+  animation: pageFadeIn 0.35s cubic-bezier(0.215, 0.61, 0.355, 1) both;
 }
 
 @keyframes pageFadeIn {
@@ -81,12 +81,14 @@ button,
 .back-btn-small,
 .search-btn {
   -webkit-tap-highlight-color: transparent !important;
-  transition: background-color 0.2s ease, opacity 0.2s ease !important;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease !important;
 }
 
 /* Material Symbols 图标 */
 .material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
+  font-family: "Material Symbols Outlined";
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -102,10 +104,10 @@ button,
 
 /* ==================== 亮色模式强制覆盖 ==================== */
 :root[data-theme="light"] .app {
-    background-color: var(--surface);
-    color: var(--on-surface);
-  }
+  background-color: var(--surface);
+  color: var(--on-surface);
+}
 
 :root[data-theme="light"] .page-wrapper {
-    background-color: var(--surface);
-  }
+  background-color: var(--surface);
+}

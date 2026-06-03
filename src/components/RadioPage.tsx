@@ -188,21 +188,38 @@ function RadioPage() {
     setTouchEnd(e.targetTouches[0].clientX);
   };
 
-  const handleTouchEnd = () => {
+  // radio-header 滑动：切换音乐/播客模式
+  const handleHeaderTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-
     const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe && mode === "music") {
-      // 左滑：切换到播客
+    if (distance > 50 && mode === "music") {
       switchMode("podcast");
-    } else if (isRightSwipe && mode === "podcast") {
-      // 右滑：切换到音乐
+    } else if (distance < -50 && mode === "podcast") {
       switchMode("music");
     }
+    setTouchStart(null);
+    setTouchEnd(null);
   };
+
+  // radio-content 滑动：左滑前一曲，右滑下一曲
+  const handleContentTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 50) {
+      // 左滑：前一曲
+      playPreviousSong();
+    } else if (distance < -50) {
+      // 右滑：下一曲
+      playNextSong();
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
+  const playPreviousSong = useCallback(() => {
+    const currentFiles = mode === "music" ? allMusicFiles : allPodcastFiles;
+    playRandomSong(currentFiles, blacklist);
+  }, [allMusicFiles, allPodcastFiles, blacklist, mode, playRandomSong]);
 
   const switchMode = (newMode: RadioMode) => {
     if (newMode === mode) return;
@@ -223,14 +240,14 @@ function RadioPage() {
   const currentFiles = mode === "music" ? allMusicFiles : allPodcastFiles;
 
   return (
-    <div
-      className="radio-page"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* 顶部导航 */}
-      <header className="radio-header">
+    <div className="radio-page">
+      {/* 顶部导航 - 左右滑动切换音乐/播客 */}
+      <header
+        className="radio-header"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleHeaderTouchEnd}
+      >
         <button className="back-btn" onClick={handleBack}>
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
@@ -248,8 +265,13 @@ function RadioPage() {
         </span>
       </div>
 
-      {/* 主要内容区域 */}
-      <div className="radio-content">
+      {/* 主要内容区域 - 左滑前一曲，右滑下一曲 */}
+      <div
+        className="radio-content"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleContentTouchEnd}
+      >
         {/* 图形展示 - 点击切换模式 */}
         <div className="visual-container" onClick={() => switchMode(mode === "music" ? "podcast" : "music")}>
           {mode === "music" ? (

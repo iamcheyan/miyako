@@ -241,8 +241,8 @@ function RadioPage() {
         </div>
       </header>
 
-      {/* 模式标签 */}
-      <div className="mode-label">
+      {/* 模式标签 - 点击切换 */}
+      <div className="mode-label" onClick={() => switchMode(mode === "music" ? "podcast" : "music")}>
         <span className="mode-text">
           {mode === "music" ? t("nav.music") : t("nav.podcast")}
         </span>
@@ -250,8 +250,8 @@ function RadioPage() {
 
       {/* 主要内容区域 */}
       <div className="radio-content">
-        {/* 图形展示 */}
-        <div className="visual-container">
+        {/* 图形展示 - 点击切换模式 */}
+        <div className="visual-container" onClick={() => switchMode(mode === "music" ? "podcast" : "music")}>
           {mode === "music" ? (
             // 音乐：唱片
             <div className={`vinyl-disc ${isPlaying ? "spinning" : ""}`}>

@@ -62,29 +62,23 @@
 
 .mode-indicator {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
 }
 
 .mode-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 4px;
-  background-color: var(--outline);
-  transition: background-color 0.3s, width 0.3s;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.25);
+  transition: background-color 0.3s;
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px;
 }
 
 .mode-dot.active {
-  width: 24px;
-  background-color: var(--primary);
-}
-
-@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
-  .mode-dot {
-    background-color: var(--outline-dark);
-  }
-  .mode-dot.active {
-    background-color: var(--primary-dark);
-  }
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 /* 模式标签 */
@@ -108,9 +102,18 @@
   }
 }
 
+/* 内容 + 控制整体居中 */
+.radio-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
 /* 主要内容区域 */
 .radio-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -476,15 +479,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
-  padding: 24px 20px
+  gap: 16px;
+  padding: 12px 24px
     calc(
-      16px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
+      10px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
   );
   flex-shrink: 0;
-  transform: translateY(
-    calc(-5px - var(--system-bottom-inset, 0px) - var(--android-nav-height, 0px))
-  );
 }
 
 .control-btn {
@@ -540,26 +540,6 @@
   color: var(--error);
 }
 
-/* 播放按钮 */
-.play-btn {
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-  background-color: var(--on-surface);
-  color: var(--surface);
-}
-
-@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
-  .play-btn {
-    background-color: var(--on-surface-dark);
-    color: var(--surface-dark);
-  }
-}
-
-.play-btn .material-symbols-outlined {
-  font-size: 36px;
-}
-
 /* 收藏按钮 */
 .favorite-btn {
   background-color: var(--surface-variant);
@@ -577,6 +557,22 @@
 
 .favorite-btn:hover:not(:disabled) {
   background-color: var(--error-container);
+}
+
+/* 下一曲按钮 */
+.next-btn {
+  background-color: var(--surface-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .next-btn {
+    background-color: var(--surface-variant-dark);
+  }
+}
+
+.next-btn:hover:not(:disabled) {
+  background-color: var(--primary-container);
+  color: var(--primary);
 }
 
 /* 亮色模式覆盖 */
@@ -620,12 +616,11 @@
   background-color: var(--surface-variant);
 }
 
-:root[data-theme="light"] .play-btn {
-  background-color: var(--on-surface);
-  color: var(--surface);
+:root[data-theme="light"] .favorite-btn {
+  background-color: var(--surface-variant);
 }
 
-:root[data-theme="light"] .favorite-btn {
+:root[data-theme="light"] .next-btn {
   background-color: var(--surface-variant);
 }
 

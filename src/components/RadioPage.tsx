@@ -253,18 +253,13 @@ function RadioPage() {
         </button>
         <h1 className="radio-title">{t("nav.radio")}</h1>
         <div className="mode-indicator">
-          <span className={`mode-dot ${mode === "music" ? "active" : ""}`} />
-          <span className={`mode-dot ${mode === "podcast" ? "active" : ""}`} />
+          <span className={`mode-dot ${mode === "music" ? "active" : ""}`} onClick={() => switchMode("music")} />
+          <span className={`mode-dot ${mode === "podcast" ? "active" : ""}`} onClick={() => switchMode("podcast")} />
         </div>
       </header>
 
-      {/* 模式标签 - 点击切换 */}
-      <div className="mode-label" onClick={() => switchMode(mode === "music" ? "podcast" : "music")}>
-        <span className="mode-text">
-          {mode === "music" ? t("nav.music") : t("nav.podcast")}
-        </span>
-      </div>
-
+      {/* 内容 + 控制按钮，整体居中 */}
+      <div className="radio-body">
       {/* 主要内容区域 - 左滑前一曲，右滑下一曲 */}
       <div
         className="radio-content"
@@ -273,7 +268,7 @@ function RadioPage() {
         onTouchEnd={handleContentTouchEnd}
       >
         {/* 图形展示 - 点击切换模式 */}
-        <div className="visual-container" onClick={() => switchMode(mode === "music" ? "podcast" : "music")}>
+        <div className="visual-container" onClick={handlePlayPause}>
           {mode === "music" ? (
             // 音乐：唱片
             <div className={`vinyl-disc ${isPlaying ? "spinning" : ""}`}>
@@ -322,9 +317,6 @@ function RadioPage() {
           <h2 className="song-name">
             {currentSong ? getDisplayName(currentSong.name) : t("radio.noSong")}
           </h2>
-          <span className="song-count">
-            {currentFiles.length} {mode === "music" ? t("musicLibrary.songs") : t("nav.podcast")}
-          </span>
         </div>
       </div>
 
@@ -340,16 +332,6 @@ function RadioPage() {
           <span className="material-symbols-outlined">delete</span>
         </button>
 
-        {/* 播放/暂停按钮 */}
-        <button
-          className="control-btn play-btn"
-          onClick={handlePlayPause}
-        >
-          <span className="material-symbols-outlined">
-            {isPlaying ? "pause" : "play_arrow"}
-          </span>
-        </button>
-
         {/* 收藏按钮 */}
         <button
           className={`control-btn favorite-btn ${isFavorited ? "favorited" : ""}`}
@@ -360,6 +342,17 @@ function RadioPage() {
             favorite
           </span>
         </button>
+
+        {/* 下一曲按钮 */}
+        <button
+          className="control-btn next-btn"
+          onClick={playNextSong}
+          disabled={currentFiles.length === 0}
+          title={t("radio.nextSong")}
+        >
+          <span className="material-symbols-outlined">skip_next</span>
+        </button>
+      </div>
       </div>
 
     </div>

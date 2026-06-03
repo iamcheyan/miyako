@@ -119,10 +119,16 @@
   gap: 32px;
 }
 
-/* 图形容器 */
+/* 图形容器 - 根据屏幕剩余高度自适应 */
 .visual-container {
-  width: 280px;
-  height: 280px;
+  width: min(70vw, 280px);
+  aspect-ratio: 1;
+  max-height: calc(
+    100vh - 56px - 40px - 60px - 100px
+    - var(--system-top-inset, 0px)
+    - var(--system-bottom-inset, 0px)
+    - var(--android-nav-height, 0px)
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -136,8 +142,8 @@
 
 /* 唱片封面 */
 .vinyl-disc {
-  width: 260px;
-  height: 260px;
+  width: 92%;
+  aspect-ratio: 1;
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
@@ -182,8 +188,8 @@
 }
 
 .vinyl-label {
-  width: 80px;
-  height: 80px;
+  width: 30%;
+  aspect-ratio: 1;
   border-radius: 50%;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   display: flex;
@@ -199,8 +205,8 @@
 
 /* 麦克风 */
 .microphone-container {
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  aspect-ratio: 1;
   position: relative;
   display: flex;
   align-items: center;
@@ -296,8 +302,8 @@
 
 /* 麦克风主体 */
 .microphone-body {
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,8 +313,8 @@
 }
 
 .microphone-svg {
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  height: 100%;
   display: block;
   overflow: visible;
 }

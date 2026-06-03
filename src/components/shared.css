@@ -85,3 +85,21 @@
 :root[data-theme="light"] .section-title {
   color: var(--on-surface);
 }
+
+/* ==================== 共享动画 ==================== */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== 共享组件 ==================== */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+  background-color: var(--error-container);
+  color: var(--error);
+  border-radius: 12px;
+}

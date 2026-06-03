@@ -52,12 +52,6 @@
   }
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* 搜索栏 */
 .search-bar {
   display: flex;

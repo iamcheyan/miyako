@@ -96,18 +96,6 @@
   color: var(--on-surface-variant);
 }
 
-/* 错误提示 */
-.error-banner {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  margin: 0 16px 16px;
-  background-color: var(--error-container);
-  color: var(--error);
-  border-radius: 12px;
-}
-
 /* 空状态 */
 .empty-state {
   display: flex;

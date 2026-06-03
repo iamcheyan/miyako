@@ -147,7 +147,7 @@
     "syncLog": "同期ログ",
     "noLogs": "ログなし",
     "startSync": "同期を開始",
-    "recentSync": "最近同期した曲",
+    "recentSync": "同期ログ",
     "noRecentSync": "まだ同期された曲はありません"
   },
   "remote": {

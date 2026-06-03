@@ -147,7 +147,7 @@
     "syncLog": "同步日志",
     "noLogs": "暂无日志",
     "startSync": "开始同步",
-    "recentSync": "最近同步的歌曲",
+    "recentSync": "同步日志",
     "noRecentSync": "还没有同步的歌曲"
   },
   "remote": {

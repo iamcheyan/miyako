@@ -432,9 +432,15 @@ function Settings() {
                 .slice(0, 20)
                 .map((file, index) => {
                   const songName = file.remote_path.split('/').pop() || file.remote_path;
-                  const timeStr = file.last_modified
-                    ? new Date(file.last_modified * 1000).toLocaleTimeString()
-                    : '';
+                  let timeStr = '';
+                  if (file.last_modified) {
+                    const date = new Date(file.last_modified * 1000);
+                    const now = new Date();
+                    const isToday = date.toDateString() === now.toDateString();
+                    timeStr = isToday
+                      ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : date.toLocaleDateString([], { month: '2-digit', day: '2-digit' });
+                  }
                   return (
                     <div className="recent-sync-item" key={index}>
                       <span className="recent-sync-time">{timeStr}</span>

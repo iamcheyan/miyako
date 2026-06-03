@@ -147,7 +147,7 @@
     "syncLog": "Sync Log",
     "noLogs": "No logs",
     "startSync": "Start Sync",
-    "recentSync": "Recently Synced Songs",
+    "recentSync": "Sync Log",
     "noRecentSync": "No synced songs yet"
   },
   "remote": {

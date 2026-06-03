@@ -340,12 +340,6 @@ function RadioPage() {
         </button>
       </div>
 
-      {/* 滑动提示 */}
-      <div className="swipe-hint">
-        <span className="swipe-text">
-          {mode === "music" ? "← " + t("nav.podcast") : t("nav.music") + " →"}
-        </span>
-      </div>
     </div>
   );
 }

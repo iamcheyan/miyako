@@ -476,6 +476,9 @@
       16px + var(--system-bottom-inset, 0px) + var(--android-nav-height, 0px)
     );
   flex-shrink: 0;
+  transform: translateY(
+    calc(-9px - var(--system-bottom-inset, 0px) - var(--android-nav-height, 0px))
+  );
 }
 
 .control-btn {
@@ -570,24 +573,6 @@
   background-color: var(--error-container);
 }
 
-/* 滑动提示 */
-.swipe-hint {
-  text-align: center;
-  padding: 8px 16px 24px;
-  flex-shrink: 0;
-}
-
-.swipe-text {
-  font-size: 12px;
-  color: var(--outline);
-}
-
-@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
-  .swipe-text {
-    color: var(--outline-dark);
-  }
-}
-
 /* 亮色模式覆盖 */
 :root[data-theme="light"] .radio-page {
   background-color: var(--surface);
@@ -636,10 +621,6 @@
 
 :root[data-theme="light"] .favorite-btn {
   background-color: var(--surface-variant);
-}
-
-:root[data-theme="light"] .swipe-text {
-  color: var(--outline);
 }
 
 :root[data-theme="light"] .cloud {

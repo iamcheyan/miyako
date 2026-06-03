@@ -23,6 +23,7 @@ export interface AudioPlayerState {
   playMode: PlayMode;
   playlist: string[];
   currentIndex: number;
+  radioMode: boolean;
 }
 
 export class AudioPlayer {
@@ -30,9 +31,10 @@ export class AudioPlayer {
   private playlist: string[] = [];
   private currentIndex: number = -1;
   private playMode: PlayMode = "sequential";
+  private radioMode: boolean = false;
   private eventListeners: Map<PlayerEvent, Set<EventCallback>> = new Map();
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
-  
+
   // 演示模式专用状态
   private demoMode = false;
   private demoPlaying = false;
@@ -57,13 +59,13 @@ export class AudioPlayer {
   private async loadSavedState() {
     // 演示模式下加载演示播放列表
     if (isDemoMode()) {
-      this.playlist = getDemoPlaylist();
+      this.playlist = await getDemoPlaylist();
       this.currentIndex = getDemoCurrentIndex();
       this.demoDuration = 240; // 默认4分钟
       this.emit("loadedmetadata", this.demoDuration);
       return;
     }
-    
+
     const saved = loadPlaybackState();
     if (saved) {
       this.playlist = saved.playlist;
@@ -474,9 +476,10 @@ export class AudioPlayer {
         playMode: this.playMode,
         playlist: [...this.playlist],
         currentIndex: this.currentIndex,
+        radioMode: this.radioMode,
       };
     }
-    
+
     return {
       isPlaying: !this.audio.paused,
       currentTrack:
@@ -486,12 +489,21 @@ export class AudioPlayer {
       playMode: this.playMode,
       playlist: [...this.playlist],
       currentIndex: this.currentIndex,
+      radioMode: this.radioMode,
     };
   }
 
   // 检查是否有保存的播放状态
   hasSavedState(): boolean {
     return loadPlaybackState() !== null;
+  }
+
+  setRadioMode(enabled: boolean) {
+    this.radioMode = enabled;
+  }
+
+  getRadioMode(): boolean {
+    return this.radioMode;
   }
 
   getCurrentTime(): number {

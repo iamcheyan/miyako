@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/audioPlayer";
 import { isFavorite, toggleFavorite } from "../lib/favorites";
 import "./PlayerUI.css";
 
 function PlayerUI() {
   const { t } = useTranslation();
+  const location = useLocation();
   const player = getAudioPlayer();
   const [state, setState] = useState<AudioPlayerState>(player.getState());
   const [isExpanded, setIsExpanded] = useState(false);
@@ -359,6 +361,8 @@ function PlayerUI() {
 
   const hasHistory = state.playlist.length > 0 && state.currentIndex >= 0;
   const progress = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
+  const isRadioMode = state.radioMode;
+  const isRadioPage = location.pathname === "/radio";
 
   // 实时计算展开播放器的 Y 轴平移量，实现无缝拖拽跟随
   let activeTranslateY = isExpanded ? 0 : window.innerHeight;
@@ -369,6 +373,11 @@ function PlayerUI() {
     } else if (dragType === 'down') {
       activeTranslateY = Math.max(0, dragOffset);
     }
+  }
+
+  // 在电台页面时隐藏播放器
+  if (isRadioPage) {
+    return null;
   }
 
   return (
@@ -399,37 +408,63 @@ function PlayerUI() {
         </div>
 
         <div className="mini-bar">
-          <div className="mini-info" onClick={() => setIsExpanded(true)}>
+          <div className="mini-info" onClick={() => !isRadioMode && setIsExpanded(true)}>
             <span className="mini-track-name">{currentTrackName}</span>
           </div>
 
           <div className="mini-controls">
-            <button
-              className="mini-btn"
-              onClick={handlePrevious}
-              disabled={!hasHistory}
-            >
-              <span className="material-symbols-outlined">skip_previous</span>
-            </button>
+            {isRadioMode ? (
+              <>
+                <button className="mini-btn" onClick={() => player.next()}>
+                  <span className="material-symbols-outlined">delete</span>
+                </button>
 
-            <button className="mini-btn play" onClick={handlePlayPause}>
-              <span className="material-symbols-outlined">
-                {state.isPlaying ? "pause" : "play_arrow"}
-              </span>
-            </button>
+                <button className="mini-btn play" onClick={handlePlayPause}>
+                  <span className="material-symbols-outlined">
+                    {state.isPlaying ? "pause" : "play_arrow"}
+                  </span>
+                </button>
 
-            <button
-              className="mini-btn"
-              onClick={handleNext}
-              disabled={!hasHistory}
-            >
-              <span className="material-symbols-outlined">skip_next</span>
-            </button>
+                <button
+                  className={`mini-btn favorite ${isFavorited ? "active" : ""}`}
+                  onClick={handleToggleFavorite}
+                >
+                  <span className="material-symbols-outlined">
+                    {isFavorited ? "favorite" : "favorite_border"}
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="mini-btn"
+                  onClick={handlePrevious}
+                  disabled={!hasHistory}
+                >
+                  <span className="material-symbols-outlined">skip_previous</span>
+                </button>
+
+                <button className="mini-btn play" onClick={handlePlayPause}>
+                  <span className="material-symbols-outlined">
+                    {state.isPlaying ? "pause" : "play_arrow"}
+                  </span>
+                </button>
+
+                <button
+                  className="mini-btn"
+                  onClick={handleNext}
+                  disabled={!hasHistory}
+                >
+                  <span className="material-symbols-outlined">skip_next</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* 展开的播放器 (始终存在于 DOM，通过 CSS 实时平移实现无缝拉起/下拉折叠) */}
+      {!isRadioMode && (
       <div
         className={`player-ui expanded ${isDragging ? 'dragging' : ''} ${!isExpanded && !isDragging ? 'collapsed' : ''}`}
         style={{
@@ -599,6 +634,7 @@ function PlayerUI() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

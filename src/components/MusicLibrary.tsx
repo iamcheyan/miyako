@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { SyncState } from "../types/tauri-commands";
 import { getAudioPlayer } from "../lib/audioPlayer";
-import { isDemoMode, getDemoFolders } from "../lib/demoData";
+import { isDemoMode, getDemoFolders, getDemoPlaylist } from "../lib/demoData";
 import { getFavorites, isFavorite, toggleFavorite } from "../lib/favorites";
 import { getPlayCount } from "../lib/playCount";
 import { usePullToRefresh } from "../lib/usePullToRefresh";
@@ -20,6 +20,8 @@ interface MusicFile {
   size: number;
   playCount: number;
   lastModified: number;
+  md5?: string;
+  tag?: string;
 }
 
 interface Folder {
@@ -38,6 +40,7 @@ let globalLibraryCache: {
 } | null = null;
 
 type SortMode = "default" | "playCount" | "syncTimeAsc" | "syncTimeDesc";
+type ActiveTab = "music" | "podcast";
 
 function MusicLibrary() {
   const { t } = useTranslation();
@@ -53,8 +56,17 @@ function MusicLibrary() {
   const [titleOverflow, setTitleOverflow] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("default");
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    return (localStorage.getItem("miyako_active_tab") as ActiveTab) || "music";
+  });
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listTitleRef = useRef<HTMLHeadingElement>(null);
+
+  // 切换标签页并保存到本地存储
+  const handleTabChange = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    localStorage.setItem("miyako_active_tab", tab);
+  };
 
   useEffect(() => {
     loadMusicLibrary();
@@ -133,15 +145,42 @@ function MusicLibrary() {
     if (!globalLibraryCache) {
       setIsLoading(true);
     }
-    
-    // 演示模式：使用假数据
+
+    // 演示模式：使用 file_index.json 数据
     if (isDemoMode()) {
-      const demoFolders = getDemoFolders();
-      setFolders(demoFolders as Folder[]);
-      setIsLoading(false);
+      try {
+        const { folders: demoFolders, rootFiles: demoRootFiles } = await getDemoFolders();
+        setFolders(demoFolders as Folder[]);
+        setRootFiles(demoRootFiles as MusicFile[]);
+
+        // 预加载演示播放列表到播放器，使播放按钮可用
+        const player = getAudioPlayer();
+        const demoPlaylist = await getDemoPlaylist();
+        if (demoPlaylist.length > 0) {
+          await player.loadPlaylist(demoPlaylist, 0);
+        }
+
+        // 初始化或更新全局秒开缓存
+        if (!globalLibraryCache) {
+          globalLibraryCache = {
+            folders: demoFolders as Folder[],
+            rootFiles: demoRootFiles as MusicFile[],
+            currentPath: null,
+            currentFiles: [],
+            scrollTop: 0
+          };
+        } else {
+          globalLibraryCache.folders = demoFolders as Folder[];
+          globalLibraryCache.rootFiles = demoRootFiles as MusicFile[];
+        }
+      } catch (e) {
+        console.error("Failed to load demo data:", e);
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
-    
+
     try {
       const state = await invoke<SyncState>("sync_load_state", {
         statePath: STATE_PATH,
@@ -166,6 +205,8 @@ function MusicLibrary() {
           size: file.size,
           playCount: getPlayCount(file.local_path),
           lastModified: file.last_modified || 0,
+          md5: file.md5 || undefined,
+          tag: file.tag || undefined,
         });
       }
 
@@ -233,7 +274,24 @@ function MusicLibrary() {
     setSearchQuery("");
   }, []);
 
-  const handleFavoritesClick = () => {
+  const handleFavoritesClick = async () => {
+    // 先清理失效的收藏
+    try {
+      const state = await invoke<SyncState>("sync_load_state", {
+        statePath: STATE_PATH,
+      });
+      const localPaths = state.synced_files.map(f => f.local_path);
+      const stored = localStorage.getItem("miyako_favorites");
+      if (stored) {
+        const favoritesList: string[] = JSON.parse(stored);
+        const validFavoritesList = favoritesList.filter(path => localPaths.includes(path));
+        localStorage.setItem("miyako_favorites", JSON.stringify(validFavoritesList));
+      }
+    } catch (e) {
+      console.error("Failed to clean favorites:", e);
+    }
+
+    // 然后显示收藏列表
     setCurrentPath(t("musicLibrary.quickActions.favorites"));
     setCurrentFiles(validFavorites);
     setSearchQuery("");
@@ -320,14 +378,30 @@ function MusicLibrary() {
   for (const folder of folders) {
     allFiles.push(...folder.files);
   }
-  
+
+  // 根据 activeTab 过滤文件
+  const filteredFolders = folders.map(folder => ({
+    ...folder,
+    files: folder.files.filter(file => {
+      if (activeTab === "music") return file.tag !== "podcast";
+      if (activeTab === "podcast") return file.tag === "podcast";
+      return true;
+    })
+  })).filter(folder => folder.files.length > 0);
+
+  const filteredRootFiles = rootFiles.filter(file => {
+    if (activeTab === "music") return file.tag !== "podcast";
+    if (activeTab === "podcast") return file.tag === "podcast";
+    return true;
+  });
+
   // 获取收藏列表（favoritesVersion 用于强制更新）
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   favoritesVersion;
   const favorites = getFavorites();
   // 过滤出在本地音乐库中真实存在的收藏文件，避免因为删除文件或重命名导致数量对不上
   const validFavorites = allFiles.filter(file => favorites.includes(file.localPath));
-  
+
   // 全局搜索结果（用于搜索弹出层）
   const searchResults = searchQuery
     ? allFiles.filter((file) =>
@@ -374,18 +448,29 @@ function MusicLibrary() {
       {!currentPath ? (
         <>
           <div className="library-header">
-            <div className="quick-actions">
-              <button className="action-card" onClick={() => setIsSearchOpen(true)}>
-                <span className="material-symbols-outlined action-icon">search</span>
-                <span className="action-label">{t("common.search")}</span>
+            <div className="header-top">
+              <h1 className="app-title">{t("app.title")}</h1>
+              <div className="header-actions">
+                <button className="search-icon-btn" onClick={() => setIsSearchOpen(true)}>
+                  <span className="material-symbols-outlined">search</span>
+                </button>
+                <button className="settings-icon-btn" onClick={() => navigate("/settings")}>
+                  <span className="material-symbols-outlined">settings</span>
+                </button>
+              </div>
+            </div>
+            <div className="tab-navigation">
+              <button className={`tab-btn ${activeTab === "music" ? "active" : ""}`} onClick={() => handleTabChange("music")}>
+                <span className="material-symbols-outlined">music_note</span>
+                <span className="tab-label">{t("nav.music")}</span>
               </button>
-              <button className="action-card" onClick={() => navigate("/settings")}>
-                <span className="material-symbols-outlined action-icon">settings_input_antenna</span>
-                <span className="action-label">{t("musicLibrary.quickActions.nasSettings")}</span>
+              <button className={`tab-btn ${activeTab === "podcast" ? "active" : ""}`} onClick={() => handleTabChange("podcast")}>
+                <span className="material-symbols-outlined">podcasts</span>
+                <span className="tab-label">{t("nav.podcast")}</span>
               </button>
-              <button className="action-card" onClick={() => navigate("/sync")}>
-                <span className="material-symbols-outlined action-icon">sync</span>
-                <span className="action-label">{t("musicLibrary.quickActions.syncMusic")}</span>
+              <button className="tab-btn" onClick={() => navigate("/radio")}>
+                <span className="material-symbols-outlined">radio</span>
+                <span className="tab-label">{t("nav.radio")}</span>
               </button>
             </div>
           </div>
@@ -404,8 +489,8 @@ function MusicLibrary() {
                 <h3 className="empty-title">{t("musicLibrary.empty.title")}</h3>
                 <p className="empty-desc">{t("musicLibrary.empty.description")}</p>
                 <div className="empty-actions">
-                  <button className="empty-btn primary" onClick={() => navigate("/sync")}>{t("musicLibrary.empty.configureNAS")}</button>
-                  <button className="empty-btn secondary" onClick={() => navigate("/sync")}>{t("musicLibrary.empty.startSync")}</button>
+                  <button className="empty-btn primary" onClick={() => navigate("/settings")}>{t("musicLibrary.empty.configureNAS")}</button>
+                  <button className="empty-btn secondary" onClick={() => navigate("/settings")}>{t("musicLibrary.empty.startSync")}</button>
                 </div>
               </div>
             ) : (
@@ -414,7 +499,7 @@ function MusicLibrary() {
                   <span className="material-symbols-outlined folder-icon">library_music</span>
                   <div className="folder-info">
                     <span className="folder-name">{t("musicLibrary.allSongs")}</span>
-                    <span className="folder-count">{folders.reduce((sum, f) => sum + f.files.length, 0)} {t("musicLibrary.songs")}</span>
+                    <span className="folder-count">{filteredFolders.reduce((sum, f) => sum + f.files.length, 0)} {t("musicLibrary.songs")}</span>
                   </div>
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
@@ -426,22 +511,22 @@ function MusicLibrary() {
                   </div>
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
-                {rootFiles.length > 0 && (
+                {filteredRootFiles.length > 0 && (
                   <button className="folder-item root-files" onClick={() => {
                     setCurrentPath(t("musicLibrary.rootDir"));
-                    setCurrentFiles(rootFiles);
+                    setCurrentFiles(filteredRootFiles);
                     setSearchQuery("");
                     window.history.pushState({ path: t("musicLibrary.rootDir") }, "");
                   }}>
                     <span className="material-symbols-outlined folder-icon">audio_file</span>
                     <div className="folder-info">
                       <span className="folder-name">{t("musicLibrary.rootDir")}</span>
-                      <span className="folder-count">{rootFiles.length} {t("musicLibrary.songs")}</span>
+                      <span className="folder-count">{filteredRootFiles.length} {t("musicLibrary.songs")}</span>
                     </div>
                     <span className="material-symbols-outlined">chevron_right</span>
                   </button>
                 )}
-                {folders.map((folder) => (
+                {filteredFolders.map((folder) => (
                   <button key={folder.path} className="folder-item" onClick={() => handleFolderClick(folder)}>
                     <span className="material-symbols-outlined folder-icon">folder</span>
                     <div className="folder-info">

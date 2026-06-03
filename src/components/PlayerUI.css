@@ -147,6 +147,24 @@
   }
 }
 
+.mini-btn.favorite {
+  color: var(--on-surface-variant);
+}
+
+.mini-btn.favorite.active {
+  color: #ff2d55;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .mini-btn.favorite {
+    color: var(--on-surface-variant-dark);
+  }
+
+  .mini-btn.favorite.active {
+    color: #ff2d55;
+  }
+}
+
 /* ==================== 展开播放器 ==================== */
 .expanded-wrapper {
   position: fixed;

@@ -6,8 +6,8 @@ import {
 } from "react-router-dom";
 import Settings from "./components/Settings";
 import RemoteBrowser from "./components/RemoteBrowser";
-import SyncPage from "./components/SyncPage";
 import MusicLibrary from "./components/MusicLibrary";
+import RadioPage from "./components/RadioPage";
 import PlayerUI from "./components/PlayerUI";
 import Toast, { useToast } from "./components/Toast";
 import { getMediaSessionManager } from "./lib/mediaSession";
@@ -22,9 +22,9 @@ function PageContent() {
       <main className="page-content">
         <Routes>
           <Route path="/" element={<MusicLibrary />} />
-          <Route path="/sync" element={<SyncPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/remote" element={<RemoteBrowser />} />
+          <Route path="/radio" element={<RadioPage />} />
         </Routes>
       </main>
     </div>

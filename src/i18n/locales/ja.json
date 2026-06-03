@@ -2,6 +2,12 @@
   "app": {
     "title": "Miyako"
   },
+  "nav": {
+    "music": "音楽",
+    "podcast": "ポッドキャスト",
+    "radio": "ラジオ",
+    "nasSettings": "NAS設定"
+  },
   "common": {
     "loading": "読み込み中...",
     "error": "エラー",
@@ -153,5 +159,10 @@
     "notConnected": "SMBサーバーに接続していません",
     "loadError": "ディレクトリの読み込みに失敗しました",
     "rootDir": "ルート"
+  },
+  "radio": {
+    "title": "ラジオ",
+    "noSong": "曲がありません",
+    "removeFromStation": "ステーションから削除"
   }
 }

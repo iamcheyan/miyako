@@ -15,6 +15,23 @@ pub struct RemoteFile {
     pub last_modified: Option<i64>,
 }
 
+/// File entry from file_index.json
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileIndexEntry {
+    pub md5: String,
+    pub path: String,
+    pub size: u64,
+    pub tag: Option<String>,
+}
+
+/// File index structure from file_index.json
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileIndex {
+    pub generated_at: f64,
+    pub file_count: usize,
+    pub files: Vec<FileIndexEntry>,
+}
+
 /// Sync action needed for a file
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncAction {
@@ -23,6 +40,8 @@ pub struct SyncAction {
     pub old_local_path: Option<String>, // For LocalMove action
     pub action: Action,
     pub reason: String,
+    pub md5: Option<String>,
+    pub tag: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -46,6 +65,8 @@ pub struct SyncedFile {
     pub local_path: String,
     pub size: u64,
     pub last_modified: Option<i64>,
+    pub md5: Option<String>,
+    pub tag: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -257,6 +278,8 @@ pub async fn compare_with_local(
                 old_local_path: None,
                 action: Action::Download,
                 reason: "文件不存在".to_string(),
+                md5: None,
+                tag: None,
             });
         } else {
             // Check if file needs update
@@ -295,6 +318,8 @@ pub async fn compare_with_local(
                     old_local_path: None,
                     action: Action::Download,
                     reason,
+                    md5: None,
+                    tag: None,
                 });
             } else {
                 actions.push(SyncAction {
@@ -303,6 +328,8 @@ pub async fn compare_with_local(
                     old_local_path: None,
                     action: Action::Skip,
                     reason: "文件相同，跳过".to_string(),
+                    md5: None,
+                    tag: None,
                 });
             }
         }
@@ -338,6 +365,8 @@ pub async fn compare_with_local(
                     old_local_path: None,
                     action: Action::Delete,
                     reason: "NAS 上已删除".to_string(),
+                    md5: None,
+                    tag: None,
                 });
             }
         }
@@ -345,6 +374,194 @@ pub async fn compare_with_local(
 
     // Detect renames and moves using heuristics
     detect_renames_and_moves(&mut actions);
+
+    Ok(actions)
+}
+
+/// Download file_index.json from the server
+pub async fn download_file_index(
+    connection_id: &str,
+    remote_path: &str,
+) -> Result<FileIndex, String> {
+    let index_path = if remote_path.is_empty() {
+        "file_index.json".to_string()
+    } else {
+        format!("{}/file_index.json", remote_path)
+    };
+
+    // Download to temp file
+    let temp_dir = std::env::temp_dir();
+    let temp_file = temp_dir.join("file_index.json");
+    let temp_str = temp_file.to_string_lossy().into_owned();
+
+    smb_client::download_file(
+        connection_id.to_string(),
+        index_path,
+        temp_str.clone(),
+    )
+    .await?;
+
+    // Parse JSON
+    let content = fs::read_to_string(&temp_str)
+        .await
+        .map_err(|e| format!("Failed to read file_index.json: {}", e))?;
+
+    // Clean up temp file
+    let _ = fs::remove_file(&temp_str).await;
+
+    serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse file_index.json: {}", e))
+}
+
+/// Compare file_index.json with local files using MD5 matching
+pub async fn compare_with_file_index(
+    file_index: &FileIndex,
+    local_dir: &str,
+    state: &SyncState,
+) -> Result<Vec<SyncAction>, String> {
+    let mut actions = Vec::new();
+
+    // Build MD5 -> local file mapping from sync state
+    let local_md5_map: std::collections::HashMap<String, &SyncedFile> = state
+        .synced_files
+        .iter()
+        .filter_map(|f| f.md5.as_ref().map(|md5| (md5.clone(), f)))
+        .collect();
+
+    // Build local path set for files that exist
+    let local_base = resolve_local_dir(local_dir)?;
+    let mut existing_local_files: std::collections::HashMap<String, PathBuf> = std::collections::HashMap::new();
+    if local_base.exists() {
+        let mut local_files = Vec::new();
+        scan_local_music_files(&local_base, &mut local_files).await?;
+        for f in local_files {
+            existing_local_files.insert(f.to_string_lossy().into_owned(), f);
+        }
+    }
+
+    // Track which local MD5s are matched
+    let mut matched_local_md5s: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    for entry in &file_index.files {
+        let local_path = build_local_path(local_dir, &entry.path)?;
+        let local_path_str = local_path.to_string_lossy().into_owned();
+
+        if let Some(local_file) = local_md5_map.get(&entry.md5) {
+            // MD5 exists in local state
+            matched_local_md5s.insert(entry.md5.clone());
+
+            if local_file.local_path == local_path_str {
+                // Same path, check if file still exists
+                if existing_local_files.contains_key(&local_path_str) {
+                    // File exists at same path with same MD5 - skip
+                    actions.push(SyncAction {
+                        remote_path: entry.path.clone(),
+                        local_path: local_path_str,
+                        old_local_path: None,
+                        action: Action::Skip,
+                        reason: "MD5 相同，跳过".to_string(),
+                        md5: Some(entry.md5.clone()),
+                        tag: entry.tag.clone(),
+                    });
+                } else {
+                    // File was deleted locally, re-download
+                    actions.push(SyncAction {
+                        remote_path: entry.path.clone(),
+                        local_path: local_path_str,
+                        old_local_path: None,
+                        action: Action::Download,
+                        reason: "本地文件已删除".to_string(),
+                        md5: Some(entry.md5.clone()),
+                        tag: entry.tag.clone(),
+                    });
+                }
+            } else {
+                // Different path - this is a move/rename
+                if existing_local_files.contains_key(&local_file.local_path) {
+                    actions.push(SyncAction {
+                        remote_path: entry.path.clone(),
+                        local_path: local_path_str.clone(),
+                        old_local_path: Some(local_file.local_path.clone()),
+                        action: Action::LocalMove,
+                        reason: format!("MD5 匹配，路径变化: {} -> {}", local_file.local_path, local_path_str),
+                        md5: Some(entry.md5.clone()),
+                        tag: entry.tag.clone(),
+                    });
+                } else {
+                    // Old file doesn't exist, download
+                    actions.push(SyncAction {
+                        remote_path: entry.path.clone(),
+                        local_path: local_path_str,
+                        old_local_path: None,
+                        action: Action::Download,
+                        reason: "原文件不存在，需下载".to_string(),
+                        md5: Some(entry.md5.clone()),
+                        tag: entry.tag.clone(),
+                    });
+                }
+            }
+        } else {
+            // MD5 not in local state - new file
+            if existing_local_files.contains_key(&local_path_str) {
+                // File exists at path but different MD5 - re-download
+                actions.push(SyncAction {
+                    remote_path: entry.path.clone(),
+                    local_path: local_path_str,
+                    old_local_path: None,
+                    action: Action::Download,
+                    reason: "MD5 不同，需更新".to_string(),
+                    md5: Some(entry.md5.clone()),
+                    tag: entry.tag.clone(),
+                });
+            } else {
+                // New file, download
+                actions.push(SyncAction {
+                    remote_path: entry.path.clone(),
+                    local_path: local_path_str,
+                    old_local_path: None,
+                    action: Action::Download,
+                    reason: "新文件".to_string(),
+                    md5: Some(entry.md5.clone()),
+                    tag: entry.tag.clone(),
+                });
+            }
+        }
+    }
+
+    // Find local files not in file_index (to delete)
+    let index_paths: std::collections::HashSet<String> = file_index
+        .files
+        .iter()
+        .filter_map(|f| build_local_path(local_dir, &f.path).ok())
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect();
+
+    for (local_str, _local_path) in &existing_local_files {
+        if !index_paths.contains(local_str) {
+            // Check if this file's MD5 was matched (moved)
+            let is_matched = state.synced_files.iter().any(|f| {
+                f.local_path == *local_str && f.md5.as_ref().is_some_and(|md5| matched_local_md5s.contains(md5))
+            });
+
+            if !is_matched {
+                let remote_path = Path::new(local_str)
+                    .strip_prefix(&local_base)
+                    .unwrap_or(Path::new(local_str))
+                    .to_string_lossy()
+                    .replace('\\', "/");
+
+                actions.push(SyncAction {
+                    remote_path,
+                    local_path: local_str.clone(),
+                    old_local_path: None,
+                    action: Action::Delete,
+                    reason: "file_index 中不存在".to_string(),
+                    md5: None,
+                    tag: None,
+                });
+            }
+        }
+    }
 
     Ok(actions)
 }
@@ -397,6 +614,8 @@ pub fn detect_renames_and_moves(actions: &mut Vec<SyncAction>) {
                 old_local_path: Some(matched_delete.local_path),
                 action: Action::LocalMove,
                 reason: format!("检测到文件移动: {}", match_reason),
+                md5: dl.md5,
+                tag: dl.tag,
             });
         } else {
             // No match found, keep as download
@@ -538,12 +757,16 @@ pub async fn sync_download(
                     existing.local_path = action.local_path.clone();
                     existing.size = file_info.size;
                     existing.last_modified = file_info.last_modified;
+                    existing.md5 = action.md5.clone();
+                    existing.tag = action.tag.clone();
                 } else {
                     state.synced_files.push(SyncedFile {
                         remote_path: action.remote_path.clone(),
                         local_path: action.local_path.clone(),
                         size: file_info.size,
                         last_modified: file_info.last_modified,
+                        md5: action.md5.clone(),
+                        tag: action.tag.clone(),
                     });
                 }
 
@@ -620,6 +843,8 @@ pub async fn sync_download(
                         .find(|f| f.remote_path == action.remote_path)
                     {
                         existing.local_path = action.local_path.clone();
+                        existing.md5 = action.md5.clone();
+                        existing.tag = action.tag.clone();
                     } else {
                         // If not found by remote_path, try by old local_path
                         if let Some(existing) = state
@@ -629,6 +854,8 @@ pub async fn sync_download(
                         {
                             existing.remote_path = action.remote_path.clone();
                             existing.local_path = action.local_path.clone();
+                            existing.md5 = action.md5.clone();
+                            existing.tag = action.tag.clone();
                         }
                     }
 
@@ -662,6 +889,8 @@ pub async fn sync_download(
                         local_path: action.local_path.clone(),
                         size: file_info.size,
                         last_modified: file_info.last_modified,
+                        md5: action.md5.clone(),
+                        tag: action.tag.clone(),
                     });
 
                     save_sync_state(state_path, &state).await?;

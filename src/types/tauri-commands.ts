@@ -53,6 +53,8 @@ export interface SyncAction {
   old_local_path: string | null;
   action: SyncActionType;
   reason: string;
+  md5: string | null;
+  tag: string | null;
 }
 
 export interface SyncedFile {
@@ -60,9 +62,25 @@ export interface SyncedFile {
   local_path: string;
   size: number;
   last_modified: number | null;
+  md5: string | null;
+  tag: string | null;
 }
 
 export interface SyncState {
   last_sync_time: number | null;
   synced_files: SyncedFile[];
+}
+
+// File index types
+export interface FileIndexEntry {
+  md5: string;
+  path: string;
+  size: number;
+  tag: string | null;
+}
+
+export interface FileIndex {
+  generated_at: number;
+  file_count: number;
+  files: FileIndexEntry[];
 }

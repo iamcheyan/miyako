@@ -2,6 +2,12 @@
   "app": {
     "title": "Miyako"
   },
+  "nav": {
+    "music": "Music",
+    "podcast": "Podcast",
+    "radio": "Radio",
+    "nasSettings": "NAS Settings"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",
@@ -153,5 +159,10 @@
     "notConnected": "Not connected to SMB server",
     "loadError": "Failed to load directory",
     "rootDir": "Root"
+  },
+  "radio": {
+    "title": "Radio",
+    "noSong": "No song",
+    "removeFromStation": "Remove from station"
   }
 }

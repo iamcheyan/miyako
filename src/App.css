@@ -76,10 +76,13 @@ button,
 .file-item,
 .ctrl-btn,
 .action-card,
+.tab-btn,
 .search-result-item,
 .empty-btn,
 .back-btn-small,
-.search-btn {
+.search-btn,
+.search-icon-btn,
+.settings-icon-btn {
   -webkit-tap-highlight-color: transparent !important;
   transition:
     background-color 0.2s ease,

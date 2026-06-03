@@ -2,7 +2,7 @@ mod smb_client;
 mod sync_engine;
 
 use smb_client::{ConnectResult, DirEntry, DownloadResult, FileInfo};
-use sync_engine::{SyncAction, SyncProgress, SyncState};
+use sync_engine::{FileIndex, SyncAction, SyncProgress, SyncState};
 use std::fs;
 use tauri::Emitter;
 
@@ -136,6 +136,26 @@ async fn sync_load_state(state_path: String) -> Result<SyncState, String> {
     sync_engine::load_sync_state(&state_path).await
 }
 
+/// Download file_index.json from server
+#[tauri::command]
+async fn sync_download_file_index(
+    connection_id: String,
+    remote_path: String,
+) -> Result<FileIndex, String> {
+    sync_engine::download_file_index(&connection_id, &remote_path).await
+}
+
+/// Compare file_index.json with local files using MD5
+#[tauri::command]
+async fn sync_compare_with_index(
+    file_index: FileIndex,
+    local_dir: String,
+    state_path: String,
+) -> Result<Vec<SyncAction>, String> {
+    let state = sync_engine::load_sync_state(&state_path).await?;
+    sync_engine::compare_with_file_index(&file_index, &local_dir, &state).await
+}
+
 /// Read JSON file from app data directory
 #[tauri::command]
 async fn storage_read(dir: String, filename: String) -> Result<String, String> {
@@ -202,6 +222,8 @@ pub fn run() {
             sync_compare,
             sync_download,
             sync_load_state,
+            sync_download_file_index,
+            sync_compare_with_index,
             storage_read,
             storage_write,
             read_audio_file,

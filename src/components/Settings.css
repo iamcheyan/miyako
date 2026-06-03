@@ -103,6 +103,307 @@
   height: 40px;
 }
 
+/* Sync styles */
+.sync-header {
+  flex-shrink: 0;
+  padding: 0 0 12px 0;
+}
+
+.last-sync-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 0;
+  color: var(--on-surface-variant);
+  font-size: 13px;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .last-sync-info {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.last-sync-info .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* 状态卡片 */
+.status-card {
+  background-color: var(--surface);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .status-card {
+    background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
+  }
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-icon {
+  font-size: 36px;
+  color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .status-icon {
+    color: var(--on-surface-dark);
+  }
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .status-title {
+    color: var(--on-surface-dark);
+  }
+}
+
+.status-subtitle {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .status-subtitle {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+/* 操作按钮容器 */
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 浏览按钮 */
+.browse-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: var(--surface-variant);
+  color: var(--on-surface);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform 0.2s,
+    background-color 0.2s;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .browse-btn {
+    background-color: var(--surface-variant-dark);
+    color: var(--on-surface-dark);
+  }
+}
+
+.browse-btn:hover {
+  transform: scale(1.05);
+  background-color: var(--outline-variant);
+}
+
+.browse-btn:active {
+  transform: scale(0.95);
+}
+
+.browse-btn .material-symbols-outlined {
+  font-size: 24px;
+}
+
+/* 同步按钮 */
+.sync-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background-color: var(--on-surface);
+  color: var(--surface);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /*box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);*/
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .sync-fab {
+    background-color: var(--on-surface-dark);
+    color: var(--surface-dark);
+  }
+}
+
+.sync-fab:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sync-fab:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.sync-fab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sync-fab .material-symbols-outlined {
+  font-size: 28px;
+}
+
+.sync-fab.syncing .material-symbols-outlined {
+  animation: spin 1s linear infinite;
+}
+
+/* 同步进度 */
+.sync-progress {
+  margin-top: 12px;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--outline-variant);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .progress-bar {
+    background-color: var(--outline-variant-dark);
+  }
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--on-surface);
+  transition: width 0.3s ease;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .progress-fill {
+    background-color: var(--on-surface-dark);
+  }
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 14px;
+  color: var(--on-surface-variant);
+}
+
+/* 错误提示 */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+  background-color: var(--error-container);
+  color: var(--error);
+  border-radius: 12px;
+}
+
+/* 最近同步歌曲区块 */
+.recent-sync-section {
+  margin-bottom: 16px;
+}
+
+.recent-sync-section .section-title {
+  margin-bottom: 12px;
+}
+
+.recent-sync-list {
+  background-color: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .recent-sync-list {
+    background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
+  }
+}
+
+.recent-sync-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .recent-sync-item {
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.recent-sync-item:last-child {
+  border-bottom: none;
+}
+
+.recent-sync-time {
+  color: var(--on-surface-variant);
+  font-size: 13px;
+  min-width: 70px;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .recent-sync-time {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+.recent-sync-name {
+  flex: 1;
+  color: var(--on-surface);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .recent-sync-name {
+    color: var(--on-surface-dark);
+  }
+}
+
 /* Toggle switch */
 .toggle-switch {
   position: relative;
@@ -704,4 +1005,56 @@
 :root[data-theme="light"] .dialog-btn.confirm {
   background-color: var(--on-surface);
   color: var(--surface);
+}
+
+/* Sync light mode overrides */
+:root[data-theme="light"] .last-sync-info {
+  color: var(--on-surface-variant);
+}
+
+:root[data-theme="light"] .status-card {
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
+}
+
+:root[data-theme="light"] .status-icon {
+  color: var(--on-surface);
+}
+
+:root[data-theme="light"] .status-title {
+  color: var(--on-surface);
+}
+
+:root[data-theme="light"] .status-subtitle {
+  color: var(--on-surface-variant);
+}
+
+:root[data-theme="light"] .browse-btn {
+  background-color: var(--surface-variant);
+  color: var(--on-surface);
+}
+
+:root[data-theme="light"] .progress-bar {
+  background-color: var(--outline-variant);
+}
+
+:root[data-theme="light"] .progress-fill {
+  background-color: var(--on-surface);
+}
+
+:root[data-theme="light"] .recent-sync-list {
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
+}
+
+:root[data-theme="light"] .recent-sync-item {
+  border-bottom-color: var(--outline-variant);
+}
+
+:root[data-theme="light"] .recent-sync-time {
+  color: var(--on-surface-variant);
+}
+
+:root[data-theme="light"] .recent-sync-name {
+  color: var(--on-surface);
 }

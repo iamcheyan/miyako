@@ -2,6 +2,12 @@
   "app": {
     "title": "Miyako"
   },
+  "nav": {
+    "music": "音乐",
+    "podcast": "播客",
+    "radio": "电台",
+    "nasSettings": "NAS 设置"
+  },
   "common": {
     "loading": "加载中...",
     "error": "错误",
@@ -153,5 +159,10 @@
     "notConnected": "未连接到 SMB 服务器",
     "loadError": "加载目录失败",
     "rootDir": "根目录"
+  },
+  "radio": {
+    "title": "电台",
+    "noSong": "暂无歌曲",
+    "removeFromStation": "从电台移除"
   }
 }

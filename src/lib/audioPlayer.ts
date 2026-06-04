@@ -1,3 +1,16 @@
+import { convertFileSrc, isTauri } from "@tauri-apps/api/core";
+import {
+  bindNativeAudioEvents,
+  getNativeCurrentTime,
+  getNativeDuration,
+  isAndroidNativeAudioAvailable,
+  isNativePlaying,
+  pauseNativeAudio,
+  playNativeAudio,
+  resumeNativeAudio,
+  seekNativeAudio,
+  stopNativeAudio,
+} from "./androidNativeAudio";
 import { savePlaybackState, loadPlaybackState } from "./playbackStorage";
 import { isDemoMode, getDemoPlaylist, getDemoCurrentIndex } from "./demoData";
 import { incrementPlayCount } from "./playCount";
@@ -11,7 +24,9 @@ export type PlayerEvent =
   | "ended"
   | "timeupdate"
   | "loadedmetadata"
-  | "error";
+  | "error"
+  | "nexttrack"
+  | "previoustrack";
 
 export type EventCallback = (...args: unknown[]) => void;
 
@@ -27,13 +42,19 @@ export interface AudioPlayerState {
 }
 
 export class AudioPlayer {
-  private audio: HTMLAudioElement;
+  private audio: HTMLAudioElement | null = null;
+  private pendingRestoreSeconds: number | null = null;
   private playlist: string[] = [];
   private currentIndex: number = -1;
   private playMode: PlayMode = "sequential";
   private radioMode: boolean = false;
   private eventListeners: Map<PlayerEvent, Set<EventCallback>> = new Map();
   private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  private lastPersistedTime = -1;
+  private loadGeneration = 0;
+  private switchQueue: Promise<void> = Promise.resolve();
+  private readonly useNativeAudio = isAndroidNativeAudioAvailable();
+  private nativeTimeTimer: ReturnType<typeof setInterval> | null = null;
 
   // 演示模式专用状态
   private demoMode = false;
@@ -43,8 +64,14 @@ export class AudioPlayer {
   private demoTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    this.audio = new Audio();
-    this.setupAudioEvents();
+    if (this.useNativeAudio) {
+      this.setupNativeAudioEvents();
+    } else {
+      this.audio = new Audio();
+      this.audio.preload = "none";
+      this.audio.setAttribute("playsinline", "true");
+      this.setupAudioEvents();
+    }
     this.loadSavedState();
     
     // 检查是否为演示模式
@@ -72,20 +99,35 @@ export class AudioPlayer {
       this.currentIndex = saved.currentIndex;
       this.playMode = saved.playMode;
 
-      // 恢复播放位置
       if (saved.currentIndex >= 0 && saved.currentIndex < saved.playlist.length) {
-        try {
-          this.audio.src = await this.toBlobUrl(saved.playlist[saved.currentIndex]);
-          this.audio.currentTime = saved.currentTime;
-        } catch (e) {
-          console.error("Failed to restore saved state:", e);
+        if (this.useNativeAudio) {
+          if (saved.currentTime > 0) {
+            this.pendingRestoreSeconds = saved.currentTime;
+          }
+        } else {
+          try {
+            const audio = this.requireAudio();
+            audio.src = await this.toPlayableUrl(saved.playlist[saved.currentIndex]);
+            audio.currentTime = saved.currentTime;
+          } catch (e) {
+            console.error("Failed to restore saved state:", e);
+          }
         }
       }
     }
   }
 
+  private requireAudio(): HTMLAudioElement {
+    if (!this.audio) {
+      throw new Error("Web audio element is not available");
+    }
+    return this.audio;
+  }
+
   // 保存状态（防抖）
   private saveState() {
+    if (this.radioMode) return;
+
     if (this.saveTimeout) {
       clearTimeout(this.saveTimeout);
     }
@@ -95,40 +137,106 @@ export class AudioPlayer {
         savePlaybackState({
           playlist: this.playlist,
           currentIndex: this.currentIndex,
-          currentTime: this.audio.currentTime,
+          currentTime: this.useNativeAudio
+            ? getNativeCurrentTime()
+            : this.requireAudio().currentTime,
           playMode: this.playMode,
         });
       }
     }, 500);
   }
 
+  private setupNativeAudioEvents() {
+    bindNativeAudioEvents((detail) => {
+      switch (detail.type) {
+        case "play":
+          this.startNativeTimeUpdates();
+          this.emit("play");
+          this.saveState();
+          break;
+        case "pause":
+          this.stopNativeTimeUpdates();
+          this.emit("pause");
+          this.saveState();
+          break;
+        case "stop":
+          this.stopNativeTimeUpdates();
+          this.emit("stop");
+          this.saveState();
+          break;
+        case "ended":
+          this.stopNativeTimeUpdates();
+          this.handleEnded();
+          break;
+        case "loadedmetadata": {
+          if (this.pendingRestoreSeconds != null && this.pendingRestoreSeconds > 0) {
+            seekNativeAudio(this.pendingRestoreSeconds);
+            this.pendingRestoreSeconds = null;
+          }
+          this.emit("loadedmetadata", detail.duration ?? 0);
+          break;
+        }
+        case "error":
+          this.stopNativeTimeUpdates();
+          this.emit("error", new Error("Native audio playback failed"));
+          break;
+        case "nexttrack":
+          if (this.radioMode) {
+            this.emit("nexttrack");
+          } else {
+            void this.next();
+          }
+          break;
+        case "previoustrack":
+          if (this.radioMode) {
+            this.emit("previoustrack");
+          } else {
+            void this.previous();
+          }
+          break;
+      }
+    });
+  }
+
+  private startNativeTimeUpdates() {
+    if (this.nativeTimeTimer) return;
+    this.nativeTimeTimer = setInterval(() => {
+      this.emit("timeupdate", getNativeCurrentTime());
+    }, 500);
+  }
+
+  private stopNativeTimeUpdates() {
+    if (!this.nativeTimeTimer) return;
+    clearInterval(this.nativeTimeTimer);
+    this.nativeTimeTimer = null;
+  }
+
   private setupAudioEvents() {
-    this.audio.addEventListener("play", () => {
-      console.log("Audio: play event");
+    const audio = this.requireAudio();
+    audio.addEventListener("play", () => {
       this.emit("play");
       this.saveState();
     });
-    this.audio.addEventListener("pause", () => {
-      console.log("Audio: pause event");
+    audio.addEventListener("pause", () => {
       this.emit("pause");
       this.saveState();
     });
-    this.audio.addEventListener("ended", () => {
-      console.log("Audio: ended event");
+    audio.addEventListener("ended", () => {
       this.handleEnded();
     });
-    this.audio.addEventListener("timeupdate", () => {
-      this.emit("timeupdate", this.audio.currentTime);
-      if (Math.floor(this.audio.currentTime) % 3 === 0) {
+    audio.addEventListener("timeupdate", () => {
+      this.emit("timeupdate", audio.currentTime);
+      const second = Math.floor(audio.currentTime);
+      if (second !== this.lastPersistedTime && second % 5 === 0) {
+        this.lastPersistedTime = second;
         this.saveState();
       }
     });
-    this.audio.addEventListener("loadedmetadata", () => {
-      console.log("Audio: loadedmetadata, duration:", this.audio.duration);
-      this.emit("loadedmetadata", this.audio.duration);
+    audio.addEventListener("loadedmetadata", () => {
+      this.emit("loadedmetadata", audio.duration);
     });
-    this.audio.addEventListener("error", (e) => {
-      console.error("Audio error:", this.audio.error);
+    audio.addEventListener("error", (e) => {
+      console.error("Audio error:", audio.error);
       this.emit("error", e);
     });
   }
@@ -136,14 +244,26 @@ export class AudioPlayer {
   private handleEnded() {
     this.emit("ended");
 
+    if (this.radioMode) {
+      return;
+    }
+
     switch (this.playMode) {
       case "sequential":
         this.next();
         break;
-      case "loop":
-        this.audio.currentTime = 0;
-        this.audio.play();
+      case "loop": {
+        const track = this.playlist[this.currentIndex];
+        if (this.useNativeAudio && track) {
+          seekNativeAudio(0);
+          resumeNativeAudio();
+        } else {
+          const audio = this.requireAudio();
+          audio.currentTime = 0;
+          void audio.play();
+        }
         break;
+      }
       case "shuffle":
         this.playRandom();
         break;
@@ -254,52 +374,124 @@ export class AudioPlayer {
     }
   }
 
-  // 将本地文件路径转换为可播放的 blob URL
-  private async toBlobUrl(filePath: string): Promise<string> {
-    if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("blob:")) {
+  /** 流式播放本地文件；Tauri 真机路径使用 convertFileSrc，不做整文件 base64 读入 */
+  private async toPlayableUrl(filePath: string): Promise<string> {
+    if (
+      filePath.startsWith("http://") ||
+      filePath.startsWith("https://") ||
+      filePath.startsWith("blob:") ||
+      filePath.startsWith("asset://")
+    ) {
       return filePath;
     }
 
-    try {
-      // 使用自定义 Rust 命令读取文件
-      const { invoke } = await import("@tauri-apps/api/core");
-      const base64Data = await invoke<string>("read_audio_file", { path: filePath });
-
-      // 将 base64 转换为 Blob
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      const blob = new Blob([bytes], { type: this.getMimeType(filePath) });
-      const url = URL.createObjectURL(blob);
-
-      console.log("Created blob URL for:", filePath);
-      return url;
-    } catch (e) {
-      console.error("Failed to create blob URL:", e);
-      throw e;
+    if (isTauri()) {
+      return convertFileSrc(filePath);
     }
+
+    return filePath;
   }
 
-  // 根据文件扩展名获取 MIME 类型
-  private getMimeType(filePath: string): string {
-    const ext = filePath.toLowerCase().split('.').pop();
-    switch (ext) {
-      case 'mp3': return 'audio/mpeg';
-      case 'flac': return 'audio/flac';
-      case 'wav': return 'audio/wav';
-      case 'm4a': return 'audio/mp4';
-      case 'aac': return 'audio/aac';
-      case 'ogg': return 'audio/ogg';
-      case 'opus': return 'audio/opus';
-      case 'wma': return 'audio/x-ms-wma';
-      case 'aiff': return 'audio/aiff';
-      case 'ape': return 'audio/ape';
-      case 'alac': return 'audio/alac';
-      default: return 'audio/mpeg';
+  private schedulePlayCount(path: string) {
+    window.setTimeout(() => incrementPlayCount(path), 0);
+  }
+
+  private isSwitchAborted(generation: number) {
+    return generation !== this.loadGeneration;
+  }
+
+  private enqueueSwitch<T>(task: () => Promise<T>): Promise<T> {
+    const next = this.switchQueue.then(task, task);
+    this.switchQueue = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    return next;
+  }
+
+  private waitUntilReady(generation: number, timeoutMs = 20000): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.isSwitchAborted(generation)) {
+        reject(new DOMException("Aborted", "AbortError"));
+        return;
+      }
+
+      const audio = this.requireAudio();
+      const cleanup = () => {
+        clearTimeout(timer);
+        audio.removeEventListener("canplay", onReady);
+        audio.removeEventListener("loadeddata", onReady);
+        audio.removeEventListener("error", onError);
+      };
+
+      const onReady = () => {
+        if (this.isSwitchAborted(generation)) {
+          cleanup();
+          reject(new DOMException("Aborted", "AbortError"));
+          return;
+        }
+        cleanup();
+        resolve();
+      };
+
+      const onError = () => {
+        cleanup();
+        const mediaError = audio.error;
+        reject(new Error(mediaError?.message || "Audio load failed"));
+      };
+
+      const timer = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("Audio load timeout"));
+      }, timeoutMs);
+
+      if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        cleanup();
+        resolve();
+        return;
+      }
+
+      audio.addEventListener("canplay", onReady, { once: true });
+      audio.addEventListener("loadeddata", onReady, { once: true });
+      audio.addEventListener("error", onError, { once: true });
+    });
+  }
+
+  private async prepareAudioSource(filePath: string): Promise<number> {
+    const generation = ++this.loadGeneration;
+    const audio = this.requireAudio();
+    audio.pause();
+    const url = await this.toPlayableUrl(filePath);
+    if (this.isSwitchAborted(generation)) {
+      throw new DOMException("Aborted", "AbortError");
     }
+    audio.src = url;
+    audio.load();
+    return generation;
+  }
+
+  private async setAudioSource(filePath: string) {
+    await this.prepareAudioSource(filePath);
+  }
+
+  private playWithNative(filePath: string) {
+    ++this.loadGeneration;
+    playNativeAudio(filePath);
+    this.schedulePlayCount(filePath);
+  }
+
+  private async startPlayback(filePath: string, generation: number) {
+    if (this.useNativeAudio) {
+      this.playWithNative(filePath);
+      return;
+    }
+
+    await this.waitUntilReady(generation);
+    if (this.isSwitchAborted(generation)) {
+      throw new DOMException("Aborted", "AbortError");
+    }
+    await this.requireAudio().play();
+    this.schedulePlayCount(filePath);
   }
 
   async play(src?: string) {
@@ -309,18 +501,42 @@ export class AudioPlayer {
       return;
     }
 
-    if (src) {
-      this.audio.src = await this.toBlobUrl(src);
-      console.log("Audio src set to:", this.audio.src);
-      // 记录播放次数
-      incrementPlayCount(src);
-    } else if (this.currentIndex >= 0 && this.currentIndex < this.playlist.length) {
-      // 记录当前播放列表中歌曲的播放次数
-      incrementPlayCount(this.playlist[this.currentIndex]);
+    if (this.useNativeAudio) {
+      if (src) {
+        this.playWithNative(src);
+        return;
+      }
+      if (isNativePlaying()) {
+        return;
+      }
+      const track =
+        this.currentIndex >= 0 && this.currentIndex < this.playlist.length
+          ? this.playlist[this.currentIndex]
+          : null;
+      if (track) {
+        // 暂停后恢复播放（currentTime > 0 说明已加载过），否则从头播放
+        if (getNativeCurrentTime() > 0) {
+          resumeNativeAudio();
+        } else {
+          this.playWithNative(track);
+        }
+        return;
+      }
+      resumeNativeAudio();
+      return;
     }
+
+    if (src) {
+      const generation = await this.prepareAudioSource(src);
+      await this.startPlayback(src, generation);
+      return;
+    }
+
     try {
-      await this.audio.play();
-      console.log("Audio play started");
+      await this.requireAudio().play();
+      if (this.currentIndex >= 0 && this.currentIndex < this.playlist.length) {
+        this.schedulePlayCount(this.playlist[this.currentIndex]);
+      }
     } catch (e) {
       console.error("Audio play failed:", e);
       throw e;
@@ -333,13 +549,24 @@ export class AudioPlayer {
       this.pauseDemoPlayback();
       return;
     }
+
+    if (this.useNativeAudio) {
+      pauseNativeAudio();
+      return;
+    }
     
-    this.audio.pause();
+    this.requireAudio().pause();
   }
 
   stop() {
-    this.audio.pause();
-    this.audio.currentTime = 0;
+    if (this.useNativeAudio) {
+      stopNativeAudio();
+      return;
+    }
+
+    const audio = this.requireAudio();
+    audio.pause();
+    audio.currentTime = 0;
     this.emit("stop");
     this.saveState();
   }
@@ -352,8 +579,15 @@ export class AudioPlayer {
       this.saveState();
       return;
     }
+
+    if (this.useNativeAudio) {
+      seekNativeAudio(time);
+      this.emit("timeupdate", time);
+      this.saveState();
+      return;
+    }
     
-    this.audio.currentTime = time;
+    this.requireAudio().currentTime = time;
     this.saveState();
   }
 
@@ -379,25 +613,62 @@ export class AudioPlayer {
       return;
     }
     
-    if (tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
-      this.audio.src = await this.toBlobUrl(tracks[startIndex]);
+    if (!this.useNativeAudio && tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
+      await this.setAudioSource(tracks[startIndex]);
     }
     this.saveState();
   }
 
+  /** 电台/快速切歌：串行切换；Android 走原生 MediaPlayer */
+  async switchToTrack(filePath: string) {
+    return this.enqueueSwitch(async () => {
+      this.playlist = [filePath];
+      this.currentIndex = 0;
+
+      if (this.demoMode) {
+        this.demoPlayTrack(0);
+        return;
+      }
+
+      if (this.useNativeAudio) {
+        this.pendingRestoreSeconds = null;
+        this.playWithNative(filePath);
+        if (!this.radioMode) {
+          this.saveState();
+        }
+        return;
+      }
+
+      const generation = await this.prepareAudioSource(filePath);
+      await this.startPlayback(filePath, generation);
+      if (!this.radioMode) {
+        this.saveState();
+      }
+    });
+  }
+
   async playTrack(index: number) {
-    if (index >= 0 && index < this.playlist.length) {
-      // 演示模式
+    if (index < 0 || index >= this.playlist.length) return;
+
+    return this.enqueueSwitch(async () => {
       if (this.demoMode) {
         this.demoPlayTrack(index);
         return;
       }
-      
+
       this.currentIndex = index;
-      this.audio.src = await this.toBlobUrl(this.playlist[index]);
-      await this.audio.play();
+      const track = this.playlist[index];
+      if (this.useNativeAudio) {
+        this.pendingRestoreSeconds = null;
+        this.playWithNative(track);
+        this.saveState();
+        return;
+      }
+
+      const generation = await this.prepareAudioSource(track);
+      await this.startPlayback(track, generation);
       this.saveState();
-    }
+    });
   }
 
   async next() {
@@ -480,12 +751,27 @@ export class AudioPlayer {
       };
     }
 
+    if (this.useNativeAudio) {
+      return {
+        isPlaying: isNativePlaying(),
+        currentTrack:
+          this.currentIndex >= 0 ? this.playlist[this.currentIndex] : null,
+        currentTime: getNativeCurrentTime(),
+        duration: getNativeDuration(),
+        playMode: this.playMode,
+        playlist: [...this.playlist],
+        currentIndex: this.currentIndex,
+        radioMode: this.radioMode,
+      };
+    }
+
+    const audio = this.requireAudio();
     return {
-      isPlaying: !this.audio.paused,
+      isPlaying: !audio.paused,
       currentTrack:
         this.currentIndex >= 0 ? this.playlist[this.currentIndex] : null,
-      currentTime: this.audio.currentTime,
-      duration: this.audio.duration || 0,
+      currentTime: audio.currentTime,
+      duration: audio.duration || 0,
       playMode: this.playMode,
       playlist: [...this.playlist],
       currentIndex: this.currentIndex,
@@ -507,16 +793,25 @@ export class AudioPlayer {
   }
 
   getCurrentTime(): number {
-    return this.audio.currentTime;
+    if (this.useNativeAudio) {
+      return getNativeCurrentTime();
+    }
+    return this.requireAudio().currentTime;
   }
 
   getDuration(): number {
-    return this.audio.duration || 0;
+    if (this.useNativeAudio) {
+      return getNativeDuration();
+    }
+    return this.requireAudio().duration || 0;
   }
 
 
   isPlaying(): boolean {
-    return !this.audio.paused;
+    if (this.useNativeAudio) {
+      return isNativePlaying();
+    }
+    return !this.requireAudio().paused;
   }
 
   getCurrentIndex(): number {

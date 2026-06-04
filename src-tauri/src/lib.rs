@@ -151,9 +151,10 @@ async fn sync_compare_with_index(
     file_index: FileIndex,
     local_dir: String,
     state_path: String,
+    remote_path: String,
 ) -> Result<Vec<SyncAction>, String> {
     let state = sync_engine::load_sync_state(&state_path).await?;
-    sync_engine::compare_with_file_index(&file_index, &local_dir, &state).await
+    sync_engine::compare_with_file_index(&file_index, &local_dir, &state, &remote_path).await
 }
 
 /// Read JSON file from app data directory
@@ -180,6 +181,18 @@ async fn storage_write(dir: String, filename: String, content: String) -> Result
     fs::create_dir_all(&dir_path).map_err(|e| format!("Failed to create directory: {}", e))?;
 
     fs::write(&file_path, content).map_err(|e| format!("Failed to write file: {}", e))
+}
+
+/// Read file from local filesystem
+#[tauri::command]
+async fn storage_read_file(path: String) -> Result<String, String> {
+    let file_path = std::path::PathBuf::from(&path);
+
+    if !file_path.exists() {
+        return Err(format!("File not found: {}", file_path.display()));
+    }
+
+    fs::read_to_string(&file_path).map_err(|e| format!("Failed to read file: {}", e))
 }
 
 /// 获取应用数据目录（跨平台）
@@ -226,6 +239,7 @@ pub fn run() {
             sync_compare_with_index,
             storage_read,
             storage_write,
+            storage_read_file,
             read_audio_file,
             file_exists,
             set_status_bar_visible

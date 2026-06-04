@@ -1,4 +1,6 @@
 import { getAudioPlayer } from "./audioPlayer";
+import { isAndroidNativeAudioAvailable } from "./androidNativeAudio";
+import { getDisplayName, getParentDirName } from "./pathUtils";
 
 export class MediaSessionManager {
   private player = getAudioPlayer();
@@ -6,6 +8,10 @@ export class MediaSessionManager {
 
   initialize() {
     if (this.isInitialized) return;
+    // Android 使用 MediaPlayer，Web Media Session 与真实播放不同步
+    if (isAndroidNativeAudioAvailable()) {
+      return;
+    }
     if (!("mediaSession" in navigator)) {
       console.warn("MediaSession API not supported");
       return;
@@ -99,8 +105,8 @@ export class MediaSessionManager {
     const state = this.player.getState();
     if (!state.currentTrack) return;
 
-    const fileName = this.getFileName(state.currentTrack);
-    const folderName = this.getFolderName(state.currentTrack);
+    const fileName = getDisplayName(state.currentTrack);
+    const folderName = getParentDirName(state.currentTrack);
 
     navigator.mediaSession.metadata = new MediaMetadata({
       title: fileName,
@@ -127,17 +133,6 @@ export class MediaSessionManager {
     }
   }
 
-  private getFileName(path: string): string {
-    const parts = path.split("/");
-    const fileName = parts[parts.length - 1];
-    const lastDot = fileName.lastIndexOf(".");
-    return lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
-  }
-
-  private getFolderName(path: string): string {
-    const parts = path.split("/");
-    return parts.length > 1 ? parts[parts.length - 2] : "";
-  }
 }
 
 // Singleton instance

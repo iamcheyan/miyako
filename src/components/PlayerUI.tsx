@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/audioPlayer";
 import { isFavorite, toggleFavorite } from "../lib/favorites";
+import { getDisplayName } from "../lib/pathUtils";
 import "./PlayerUI.css";
 
 function PlayerUI() {
@@ -10,6 +11,8 @@ function PlayerUI() {
   const location = useLocation();
   const player = getAudioPlayer();
   const [state, setState] = useState<AudioPlayerState>(player.getState());
+  const [progressTime, setProgressTime] = useState(player.getCurrentTime());
+  const lastProgressUpdateRef = useRef(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
@@ -190,7 +193,7 @@ function PlayerUI() {
         behavior: scrollBehavior as ScrollBehavior
       });
     }
-  }, [state.currentIndex, state.isPlaying, isExpanded]);
+  }, [state.currentIndex, state.isPlaying, isExpanded, playlistTab]);
 
   // 处理关闭播放器
   const handleClosePlayer = useCallback(() => {
@@ -240,23 +243,34 @@ function PlayerUI() {
 
   useEffect(() => {
     const updateState = () => {
-      setState(player.getState());
+      const next = player.getState();
+      setState(next);
+      setProgressTime(next.currentTime);
+    };
+
+    const updateProgress = (time?: unknown) => {
+      const now = Date.now();
+      if (now - lastProgressUpdateRef.current < 250) return;
+      lastProgressUpdateRef.current = now;
+      const t =
+        typeof time === "number" ? time : player.getCurrentTime();
+      setProgressTime(t);
     };
 
     player.on("play", updateState);
     player.on("pause", updateState);
     player.on("stop", updateState);
     player.on("ended", updateState);
-    player.on("timeupdate", updateState);
     player.on("loadedmetadata", updateState);
+    player.on("timeupdate", updateProgress);
 
     return () => {
       player.off("play", updateState);
       player.off("pause", updateState);
       player.off("stop", updateState);
       player.off("ended", updateState);
-      player.off("timeupdate", updateState);
       player.off("loadedmetadata", updateState);
+      player.off("timeupdate", updateProgress);
     };
   }, [player]);
 
@@ -333,13 +347,6 @@ function PlayerUI() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const getFileName = (path: string): string => {
-    const parts = path.split("/");
-    const fileName = parts[parts.length - 1];
-    const lastDot = fileName.lastIndexOf(".");
-    return lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
-  };
-
   const getModeIcon = (mode: PlayMode): string => {
     switch (mode) {
       case "sequential":
@@ -356,12 +363,11 @@ function PlayerUI() {
     .filter(item => isFavorite(item.track));
 
   const currentTrackName = state.currentTrack
-    ? getFileName(state.currentTrack)
+    ? getDisplayName(state.currentTrack)
     : "未选择歌曲";
 
   const hasHistory = state.playlist.length > 0 && state.currentIndex >= 0;
-  const progress = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
-  const isRadioMode = state.radioMode;
+  const progress = state.duration > 0 ? (progressTime / state.duration) * 100 : 0;
   const isRadioPage = location.pathname === "/radio";
 
   // 实时计算展开播放器的 Y 轴平移量，实现无缝拖拽跟随
@@ -402,69 +408,43 @@ function PlayerUI() {
           <div
             className="mini-progress-fill"
             style={{
-              width: `${state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0}%`,
+              width: `${state.duration > 0 ? (progressTime / state.duration) * 100 : 0}%`,
             }}
           />
         </div>
 
         <div className="mini-bar">
-          <div className="mini-info" onClick={() => !isRadioMode && setIsExpanded(true)}>
+          <div className="mini-info" onClick={() => setIsExpanded(true)}>
             <span className="mini-track-name">{currentTrackName}</span>
           </div>
 
           <div className="mini-controls">
-            {isRadioMode ? (
-              <>
-                <button className="mini-btn" onClick={() => player.next()}>
-                  <span className="material-symbols-outlined">delete</span>
-                </button>
+            <button
+              className="mini-btn"
+              onClick={handlePrevious}
+              disabled={!hasHistory}
+            >
+              <span className="material-symbols-outlined">skip_previous</span>
+            </button>
 
-                <button className="mini-btn play" onClick={handlePlayPause}>
-                  <span className="material-symbols-outlined">
-                    {state.isPlaying ? "pause" : "play_arrow"}
-                  </span>
-                </button>
+            <button className="mini-btn play" onClick={handlePlayPause}>
+              <span className="material-symbols-outlined">
+                {state.isPlaying ? "pause" : "play_arrow"}
+              </span>
+            </button>
 
-                <button
-                  className={`mini-btn favorite ${isFavorited ? "active" : ""}`}
-                  onClick={handleToggleFavorite}
-                >
-                  <span className="material-symbols-outlined">
-                    {isFavorited ? "favorite" : "favorite_border"}
-                  </span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  className="mini-btn"
-                  onClick={handlePrevious}
-                  disabled={!hasHistory}
-                >
-                  <span className="material-symbols-outlined">skip_previous</span>
-                </button>
-
-                <button className="mini-btn play" onClick={handlePlayPause}>
-                  <span className="material-symbols-outlined">
-                    {state.isPlaying ? "pause" : "play_arrow"}
-                  </span>
-                </button>
-
-                <button
-                  className="mini-btn"
-                  onClick={handleNext}
-                  disabled={!hasHistory}
-                >
-                  <span className="material-symbols-outlined">skip_next</span>
-                </button>
-              </>
-            )}
+            <button
+              className="mini-btn"
+              onClick={handleNext}
+              disabled={!hasHistory}
+            >
+              <span className="material-symbols-outlined">skip_next</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* 展开的播放器 (始终存在于 DOM，通过 CSS 实时平移实现无缝拉起/下拉折叠) */}
-      {!isRadioMode && (
       <div
         className={`player-ui expanded ${isDragging ? 'dragging' : ''} ${!isExpanded && !isDragging ? 'collapsed' : ''}`}
         style={{
@@ -550,7 +530,7 @@ function PlayerUI() {
                           onClick={() => player.playTrack(index)}
                         >
                           <span className="row-num">{index + 1}</span>
-                          <span className="row-name">{getFileName(track)}</span>
+                          <span className="row-name">{getDisplayName(track)}</span>
                         </div>
                       ))
                     )}
@@ -574,7 +554,7 @@ function PlayerUI() {
                           onClick={() => player.playTrack(item.originalIndex)}
                         >
                           <span className="row-num">{item.originalIndex + 1}</span>
-                          <span className="row-name">{getFileName(item.track)}</span>
+                          <span className="row-name">{getDisplayName(item.track)}</span>
                         </div>
                       ))
                     )}
@@ -588,14 +568,14 @@ function PlayerUI() {
           <div className="expanded-controls">
             {/* 进度条 */}
             <div className="seek-section">
-              <span className="seek-time">{formatTime(state.currentTime)}</span>
+              <span className="seek-time">{formatTime(progressTime)}</span>
               <input
                 type="range"
                 className="seek-bar"
                 style={{ "--seek-progress": `${progress}%` } as CSSProperties}
                 min={0}
                 max={state.duration || 0}
-                value={state.currentTime}
+                value={progressTime}
                 onInput={handleSeek}
               />
               <span className="seek-time">{formatTime(state.duration)}</span>
@@ -634,7 +614,6 @@ function PlayerUI() {
           </div>
         </div>
       </div>
-      )}
     </div>
   );
 }

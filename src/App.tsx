@@ -9,9 +9,11 @@ import RemoteBrowser from "./components/RemoteBrowser";
 import MusicLibrary from "./components/MusicLibrary";
 import RadioPage from "./components/RadioPage";
 import PlayerUI from "./components/PlayerUI";
-import Toast, { useToast } from "./components/Toast";
+import Toast from "./components/Toast";
+import { useToast } from "./lib/useToast";
 import { getMediaSessionManager } from "./lib/mediaSession";
 import { initBackgroundSync } from "./lib/backgroundSync";
+import { APP_TOAST_EVENT, type AppToastDetail } from "./lib/toastBus";
 import "./App.css";
 import "./components/shared.css";
 
@@ -32,7 +34,7 @@ function PageContent() {
 }
 
 function App() {
-  const { messages, removeToast } = useToast();
+  const { messages, addToast, removeToast } = useToast();
 
   // 主题初始化
   useEffect(() => {
@@ -46,22 +48,40 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const onAppToast = (event: Event) => {
+      const detail = (event as CustomEvent<AppToastDetail>).detail;
+      if (detail?.message) {
+        addToast(detail.message, detail.type ?? "info", detail.duration);
+      }
+    };
+    window.addEventListener(APP_TOAST_EVENT, onAppToast);
+    return () => window.removeEventListener(APP_TOAST_EVENT, onAppToast);
+  }, [addToast]);
+
+  useEffect(() => {
     const mediaSession = getMediaSessionManager();
     mediaSession.initialize();
     initBackgroundSync();
 
     const applySystemInsets = () => {
+      if (window.StatusBarAndroid?.getTopInset) {
+        return;
+      }
       const root = document.documentElement;
       const app = document.querySelector<HTMLElement>(".app");
       const isAndroid = /Android/i.test(navigator.userAgent);
       const androidTopInset = window.StatusBarAndroid?.getTopInset?.();
       const androidBottomInset = window.StatusBarAndroid?.getBottomInset?.();
+      const androidNavHeight = window.StatusBarAndroid?.getAndroidNavHeight?.();
       const topInset = isAndroid
         ? `${androidTopInset && androidTopInset > 0 ? androidTopInset : 24}px`
         : "max(env(safe-area-inset-top, 0px), 36px)";
       const bottomInset = isAndroid
         ? `${androidBottomInset && androidBottomInset > 0 ? androidBottomInset : 0}px`
         : "env(safe-area-inset-bottom, 0px)";
+      const navHeight = isAndroid
+        ? `${androidNavHeight && androidNavHeight > 0 ? androidNavHeight : 0}px`
+        : "0px";
 
       if (isAndroid) {
         root.style.setProperty("--android-native-insets", "1");
@@ -69,10 +89,10 @@ function App() {
       }
       root.style.setProperty("--system-top-inset", topInset);
       root.style.setProperty("--system-bottom-inset", bottomInset);
-      root.style.setProperty("--android-nav-height", "0px");
+      root.style.setProperty("--android-nav-height", navHeight);
       app?.style.setProperty("--system-top-inset", topInset);
       app?.style.setProperty("--system-bottom-inset", bottomInset);
-      app?.style.setProperty("--android-nav-height", "0px");
+      app?.style.setProperty("--android-nav-height", navHeight);
     };
 
     applySystemInsets();

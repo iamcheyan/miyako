@@ -163,6 +163,11 @@
   "radio": {
     "title": "ラジオ",
     "noSong": "曲がありません",
-    "removeFromStation": "ステーションから削除"
+    "removeFromStation": "ステーションから削除",
+    "nextSong": "次の曲",
+    "loadFailed": "ラジオ曲庫を読み込めません。同期状態を確認してください",
+    "emptyLibrary": "再生できる曲がありません。設定で音楽を同期してください",
+    "playbackError": "再生に失敗しました。もう一度お試しください",
+    "retry": "再試行"
   }
 }

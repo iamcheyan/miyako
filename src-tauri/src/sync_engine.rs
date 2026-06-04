@@ -21,6 +21,8 @@ pub struct FileIndexEntry {
     pub md5: String,
     pub path: String,
     pub size: u64,
+    #[serde(default, alias = "backupPath")]
+    pub backup_path: Option<String>,
     pub tag: Option<String>,
 }
 
@@ -41,7 +43,11 @@ pub struct SyncAction {
     pub action: Action,
     pub reason: String,
     pub md5: Option<String>,
+    #[serde(default, alias = "backupPath")]
+    pub backup_path: Option<String>,
     pub tag: Option<String>,
+    #[serde(default)]
+    pub size: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -66,6 +72,8 @@ pub struct SyncedFile {
     pub size: u64,
     pub last_modified: Option<i64>,
     pub md5: Option<String>,
+    #[serde(default, alias = "backupPath")]
+    pub backup_path: Option<String>,
     pub tag: Option<String>,
 }
 
@@ -86,6 +94,9 @@ const MUSIC_EXTENSIONS: &[&str] = &[
 
 // #region debug-point A:download-debug-reporting
 fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
+    if std::fs::metadata(".dbg/sync-download-stall.env").is_err() {
+        return;
+    }
     let env_content = std::fs::read_to_string(".dbg/sync-download-stall.env").ok();
     let url = env_content
         .as_deref()
@@ -148,6 +159,138 @@ fn is_music_file(filename: &str) -> bool {
     MUSIC_EXTENSIONS.iter().any(|ext| lower.ends_with(ext))
 }
 
+fn remote_path_has_music_extension(remote_path: &str) -> bool {
+    Path::new(remote_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(is_music_file)
+}
+
+fn is_not_found_error(error: &str) -> bool {
+    error.contains("Object Name Not Found") || error.contains("0xc0000034")
+}
+
+/// Match an index path without extension to an actual SMB filename in its parent folder.
+async fn resolve_remote_path_via_listing(
+    connection_id: &str,
+    remote_path: &str,
+    expected_size: Option<u64>,
+) -> Option<String> {
+    let path = Path::new(remote_path);
+    let stem = path.file_name()?.to_str()?;
+    let parent = path
+        .parent()
+        .map(|p| p.to_string_lossy().into_owned())
+        .unwrap_or_default();
+
+    let entries = smb_client::list_dir(connection_id.to_string(), parent.clone()).await.ok()?;
+    let mut exact_match: Option<String> = None;
+    let mut size_match: Option<String> = None;
+    let mut prefix_match: Option<String> = None;
+
+    for entry in entries {
+        if entry.is_directory {
+            continue;
+        }
+        let name = entry.name.as_str();
+        let candidate = if parent.is_empty() {
+            name.to_string()
+        } else {
+            format!("{parent}/{name}")
+        };
+
+        if name == stem {
+            exact_match = Some(candidate);
+            break;
+        }
+
+        if name.starts_with(stem) {
+            if let Some(size) = expected_size {
+                if entry.size == size {
+                    size_match = Some(candidate);
+                }
+            } else {
+                prefix_match = Some(candidate);
+            }
+        }
+    }
+
+    exact_match.or(size_match).or(prefix_match)
+}
+
+/// Download a remote file, probing common extensions when the index path has none.
+async fn download_remote_file_resolved(
+    connection_id: &str,
+    remote_path: &str,
+    local_path: &str,
+    expected_size: Option<u64>,
+) -> Result<(String, smb_client::DownloadResult), String> {
+    let filename = Path::new(remote_path)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("");
+    if is_metadata_file(filename) {
+        let result = smb_client::download_file(
+            connection_id.to_string(),
+            remote_path.to_string(),
+            local_path.to_string(),
+        )
+        .await?;
+        return Ok((remote_path.to_string(), result));
+    }
+
+    match smb_client::download_file(
+        connection_id.to_string(),
+        remote_path.to_string(),
+        local_path.to_string(),
+    )
+    .await
+    {
+        Ok(result) => Ok((remote_path.to_string(), result)),
+        Err(error) if is_not_found_error(&error) && !remote_path_has_music_extension(remote_path) => {
+            let mut last_error = error;
+            for ext in MUSIC_EXTENSIONS {
+                let candidate = format!("{remote_path}{ext}");
+                match smb_client::download_file(
+                    connection_id.to_string(),
+                    candidate.clone(),
+                    local_path.to_string(),
+                )
+                .await
+                {
+                    Ok(result) => return Ok((candidate, result)),
+                    Err(err) => last_error = err,
+                }
+            }
+
+            if let Some(resolved) =
+                resolve_remote_path_via_listing(connection_id, remote_path, expected_size).await
+            {
+                if resolved != remote_path {
+                    match smb_client::download_file(
+                        connection_id.to_string(),
+                        resolved.clone(),
+                        local_path.to_string(),
+                    )
+                    .await
+                    {
+                        Ok(result) => return Ok((resolved, result)),
+                        Err(err) => last_error = err,
+                    }
+                }
+            }
+
+            Err(last_error)
+        }
+        Err(error) => Err(error),
+    }
+}
+
+/// Check if a file is a metadata file that should be synced (e.g., file_index.json)
+fn is_metadata_file(filename: &str) -> bool {
+    filename.to_lowercase() == "file_index.json"
+}
+
 fn resolve_local_dir(local_dir: &str) -> Result<PathBuf, String> {
     // Android 上使用应用内部存储
     #[cfg(target_os = "android")]
@@ -194,6 +337,53 @@ fn build_local_path(local_dir: &str, remote_path: &str) -> Result<PathBuf, Strin
     Ok(full_path)
 }
 
+fn build_remote_child_path(remote_base_path: &str, filename: &str) -> String {
+    let base = remote_base_path.trim_matches('/');
+    if base.is_empty() {
+        filename.to_string()
+    } else {
+        format!("{}/{}", base, filename)
+    }
+}
+
+/// Normalize a remote/SMB path (no leading slashes, forward slashes).
+fn normalize_remote_path(path: &str) -> String {
+    path.trim()
+        .trim_start_matches('\\')
+        .trim_start_matches('/')
+        .replace('\\', "/")
+}
+
+/// Resolve an index entry path to the SMB path used for download/list.
+fn resolve_index_entry_remote_path(remote_base_path: &str, index_path: &str) -> String {
+    let normalized = normalize_remote_path(index_path);
+    let base = normalize_remote_path(remote_base_path);
+    if base.is_empty() {
+        return normalized;
+    }
+    if normalized == base || normalized.starts_with(&format!("{}/", base)) {
+        normalized
+    } else {
+        format!("{}/{}", base, normalized)
+    }
+}
+
+fn file_index_remote_candidates(remote_base_path: &str) -> Vec<String> {
+    let base = normalize_remote_path(remote_base_path);
+    let mut candidates = Vec::new();
+    let primary = build_remote_child_path(&base, "file_index.json");
+    candidates.push(primary);
+    if !base.is_empty() {
+        candidates.push("file_index.json".to_string());
+    }
+    if base != "Music" {
+        candidates.push("Music/file_index.json".to_string());
+    }
+    let mut seen = std::collections::HashSet::new();
+    candidates.retain(|path| seen.insert(path.clone()));
+    candidates
+}
+
 /// Recursively scan remote directory for music files
 pub async fn scan_remote_directory(
     connection_id: &str,
@@ -221,7 +411,7 @@ async fn scan_directory_recursive(
         if entry.is_directory {
             // Recursively scan subdirectories
             Box::pin(scan_directory_recursive(connection_id, &entry_path, result)).await?;
-        } else if is_music_file(&entry.name) {
+        } else if is_music_file(&entry.name) || is_metadata_file(&entry.name) {
             result.push(RemoteFile {
                 remote_path: entry_path,
                 size: entry.size,
@@ -248,7 +438,7 @@ async fn scan_local_music_files(dir: &Path, result: &mut Vec<PathBuf>) -> Result
         if path.is_dir() {
             Box::pin(scan_local_music_files(&path, result)).await?;
         } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if is_music_file(name) {
+            if is_music_file(name) || is_metadata_file(name) {
                 result.push(path);
             }
         }
@@ -279,7 +469,9 @@ pub async fn compare_with_local(
                 action: Action::Download,
                 reason: "文件不存在".to_string(),
                 md5: None,
+                backup_path: None,
                 tag: None,
+                size: Some(remote.size),
             });
         } else {
             // Check if file needs update
@@ -319,7 +511,9 @@ pub async fn compare_with_local(
                     action: Action::Download,
                     reason,
                     md5: None,
+                    backup_path: None,
                     tag: None,
+                    size: Some(remote.size),
                 });
             } else {
                 actions.push(SyncAction {
@@ -329,7 +523,9 @@ pub async fn compare_with_local(
                     action: Action::Skip,
                     reason: "文件相同，跳过".to_string(),
                     md5: None,
+                    backup_path: None,
                     tag: None,
+                    size: Some(remote.size),
                 });
             }
         }
@@ -366,7 +562,9 @@ pub async fn compare_with_local(
                     action: Action::Delete,
                     reason: "NAS 上已删除".to_string(),
                     md5: None,
+                    backup_path: None,
                     tag: None,
+                    size: None,
                 });
             }
         }
@@ -383,34 +581,50 @@ pub async fn download_file_index(
     connection_id: &str,
     remote_path: &str,
 ) -> Result<FileIndex, String> {
-    let index_path = if remote_path.is_empty() {
-        "file_index.json".to_string()
-    } else {
-        format!("{}/file_index.json", remote_path)
-    };
-
-    // Download to temp file
     let temp_dir = std::env::temp_dir();
-    let temp_file = temp_dir.join("file_index.json");
+    let temp_file = temp_dir.join(format!(
+        "file_index_{}.json",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    ));
     let temp_str = temp_file.to_string_lossy().into_owned();
 
-    smb_client::download_file(
-        connection_id.to_string(),
-        index_path,
-        temp_str.clone(),
-    )
-    .await?;
+    let candidates = file_index_remote_candidates(remote_path);
+    let mut last_error = String::from("No file_index.json candidates");
 
-    // Parse JSON
-    let content = fs::read_to_string(&temp_str)
+    for index_path in candidates {
+        if let Err(error) = smb_client::download_file(
+            connection_id.to_string(),
+            index_path.clone(),
+            temp_str.clone(),
+        )
         .await
-        .map_err(|e| format!("Failed to read file_index.json: {}", e))?;
+        {
+            last_error = format!("{} (tried {})", error, index_path);
+            continue;
+        }
 
-    // Clean up temp file
+        let content = match fs::read_to_string(&temp_str).await {
+            Ok(content) => content,
+            Err(e) => {
+                last_error = format!("Failed to read file_index.json from {}: {}", index_path, e);
+                continue;
+            }
+        };
+        let _ = fs::remove_file(&temp_str).await;
+
+        return serde_json::from_str(&content).map_err(|e| {
+            format!("Failed to parse file_index.json from {}: {}", index_path, e)
+        });
+    }
+
     let _ = fs::remove_file(&temp_str).await;
-
-    serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse file_index.json: {}", e))
+    Err(format!(
+        "Failed to download file_index.json (remote base: {:?}): {}",
+        remote_path, last_error
+    ))
 }
 
 /// Compare file_index.json with local files using MD5 matching
@@ -418,8 +632,24 @@ pub async fn compare_with_file_index(
     file_index: &FileIndex,
     local_dir: &str,
     state: &SyncState,
+    remote_base_path: &str,
 ) -> Result<Vec<SyncAction>, String> {
     let mut actions = Vec::new();
+    let index_remote_path = build_remote_child_path(remote_base_path, "file_index.json");
+    let index_local_path = build_local_path(local_dir, "file_index.json")?;
+    let index_local_path_str = index_local_path.to_string_lossy().into_owned();
+
+    actions.push(SyncAction {
+        remote_path: index_remote_path,
+        local_path: index_local_path_str.clone(),
+        old_local_path: None,
+        action: Action::Download,
+        reason: "同步 NAS 元数据索引".to_string(),
+        md5: None,
+        backup_path: None,
+        tag: Some("metadata".to_string()),
+        size: None,
+    });
 
     // Build MD5 -> local file mapping from sync state
     let local_md5_map: std::collections::HashMap<String, &SyncedFile> = state
@@ -443,7 +673,9 @@ pub async fn compare_with_file_index(
     let mut matched_local_md5s: std::collections::HashSet<String> = std::collections::HashSet::new();
 
     for entry in &file_index.files {
-        let local_path = build_local_path(local_dir, &entry.path)?;
+        let entry_remote_path =
+            resolve_index_entry_remote_path(remote_base_path, &entry.path);
+        let local_path = build_local_path(local_dir, &entry_remote_path)?;
         let local_path_str = local_path.to_string_lossy().into_owned();
 
         if let Some(local_file) = local_md5_map.get(&entry.md5) {
@@ -455,74 +687,104 @@ pub async fn compare_with_file_index(
                 if existing_local_files.contains_key(&local_path_str) {
                     // File exists at same path with same MD5 - skip
                     actions.push(SyncAction {
-                        remote_path: entry.path.clone(),
+                        remote_path: entry_remote_path.clone(),
                         local_path: local_path_str,
                         old_local_path: None,
                         action: Action::Skip,
                         reason: "MD5 相同，跳过".to_string(),
                         md5: Some(entry.md5.clone()),
+                        backup_path: entry.backup_path.clone(),
                         tag: entry.tag.clone(),
+                        size: Some(entry.size),
                     });
                 } else {
                     // File was deleted locally, re-download
                     actions.push(SyncAction {
-                        remote_path: entry.path.clone(),
+                        remote_path: entry_remote_path.clone(),
                         local_path: local_path_str,
                         old_local_path: None,
                         action: Action::Download,
                         reason: "本地文件已删除".to_string(),
                         md5: Some(entry.md5.clone()),
+                        backup_path: entry.backup_path.clone(),
                         tag: entry.tag.clone(),
+                        size: Some(entry.size),
                     });
                 }
             } else {
                 // Different path - this is a move/rename
                 if existing_local_files.contains_key(&local_file.local_path) {
                     actions.push(SyncAction {
-                        remote_path: entry.path.clone(),
+                        remote_path: entry_remote_path.clone(),
                         local_path: local_path_str.clone(),
                         old_local_path: Some(local_file.local_path.clone()),
                         action: Action::LocalMove,
                         reason: format!("MD5 匹配，路径变化: {} -> {}", local_file.local_path, local_path_str),
                         md5: Some(entry.md5.clone()),
+                        backup_path: entry.backup_path.clone(),
                         tag: entry.tag.clone(),
+                        size: Some(entry.size),
                     });
                 } else {
                     // Old file doesn't exist, download
                     actions.push(SyncAction {
-                        remote_path: entry.path.clone(),
+                        remote_path: entry_remote_path.clone(),
                         local_path: local_path_str,
                         old_local_path: None,
                         action: Action::Download,
                         reason: "原文件不存在，需下载".to_string(),
                         md5: Some(entry.md5.clone()),
+                        backup_path: entry.backup_path.clone(),
                         tag: entry.tag.clone(),
+                        size: Some(entry.size),
                     });
                 }
             }
         } else {
             // MD5 not in local state - new file
             if existing_local_files.contains_key(&local_path_str) {
-                // File exists at path but different MD5 - re-download
-                actions.push(SyncAction {
-                    remote_path: entry.path.clone(),
-                    local_path: local_path_str,
-                    old_local_path: None,
-                    action: Action::Download,
-                    reason: "MD5 不同，需更新".to_string(),
-                    md5: Some(entry.md5.clone()),
-                    tag: entry.tag.clone(),
-                });
+                let local_size = fs::metadata(&local_path)
+                    .await
+                    .map(|metadata| metadata.len())
+                    .unwrap_or(0);
+
+                if local_size == entry.size {
+                    actions.push(SyncAction {
+                        remote_path: entry_remote_path.clone(),
+                        local_path: local_path_str,
+                        old_local_path: None,
+                        action: Action::Skip,
+                        reason: "路径和大小相同，补写 MD5/tag 元数据".to_string(),
+                        md5: Some(entry.md5.clone()),
+                        backup_path: entry.backup_path.clone(),
+                        tag: entry.tag.clone(),
+                        size: Some(entry.size),
+                    });
+                } else {
+                    actions.push(SyncAction {
+                        remote_path: entry_remote_path.clone(),
+                        local_path: local_path_str,
+                        old_local_path: None,
+                        action: Action::Download,
+                        reason: format!("本地大小不同，需更新 (本地: {}, 索引: {})", local_size, entry.size),
+                        md5: Some(entry.md5.clone()),
+                        backup_path: entry.backup_path.clone(),
+                        tag: entry.tag.clone(),
+                        size: Some(entry.size),
+                    });
+                }
             } else {
                 // New file, download
                 actions.push(SyncAction {
-                    remote_path: entry.path.clone(),
+                    remote_path: entry_remote_path.clone(),
                     local_path: local_path_str,
                     old_local_path: None,
                     action: Action::Download,
                     reason: "新文件".to_string(),
                     md5: Some(entry.md5.clone()),
+                    backup_path: entry.backup_path.clone(),
                     tag: entry.tag.clone(),
+                    size: Some(entry.size),
                 });
             }
         }
@@ -532,9 +794,14 @@ pub async fn compare_with_file_index(
     let index_paths: std::collections::HashSet<String> = file_index
         .files
         .iter()
-        .filter_map(|f| build_local_path(local_dir, &f.path).ok())
+        .filter_map(|f| {
+            let remote = resolve_index_entry_remote_path(remote_base_path, &f.path);
+            build_local_path(local_dir, &remote).ok()
+        })
         .map(|p| p.to_string_lossy().into_owned())
         .collect();
+    let mut index_paths = index_paths;
+    index_paths.insert(index_local_path_str);
 
     for (local_str, _local_path) in &existing_local_files {
         if !index_paths.contains(local_str) {
@@ -557,7 +824,9 @@ pub async fn compare_with_file_index(
                     action: Action::Delete,
                     reason: "file_index 中不存在".to_string(),
                     md5: None,
+                    backup_path: None,
                     tag: None,
+                    size: None,
                 });
             }
         }
@@ -615,7 +884,9 @@ pub fn detect_renames_and_moves(actions: &mut Vec<SyncAction>) {
                 action: Action::LocalMove,
                 reason: format!("检测到文件移动: {}", match_reason),
                 md5: dl.md5,
+                backup_path: dl.backup_path,
                 tag: dl.tag,
+                size: dl.size,
             });
         } else {
             // No match found, keep as download
@@ -642,7 +913,18 @@ pub async fn load_sync_state(state_path: &str) -> Result<SyncState, String> {
         .await
         .map_err(|e| format!("Failed to read sync state: {}", e))?;
 
-    serde_json::from_str(&content).map_err(|e| format!("Failed to parse sync state: {}", e))
+    let mut state: SyncState =
+        serde_json::from_str(&content).map_err(|e| format!("Failed to parse sync state: {}", e))?;
+    dedupe_sync_state(&mut state);
+    Ok(state)
+}
+
+fn dedupe_sync_state(state: &mut SyncState) {
+    let mut seen = std::collections::HashSet::new();
+    state.synced_files.retain(|file| {
+        let key = format!("{}\n{}", file.remote_path, file.local_path);
+        seen.insert(key)
+    });
 }
 
 /// Save sync state to file
@@ -665,6 +947,23 @@ pub async fn save_sync_state(state_path: &str, state: &SyncState) -> Result<(), 
     Ok(())
 }
 
+/// Persist sync state periodically during long downloads (final save still runs at end).
+const SYNC_STATE_SAVE_INTERVAL: usize = 10;
+
+async fn maybe_save_sync_state(
+    state_path: &str,
+    state: &SyncState,
+    pending_writes: &mut usize,
+    force: bool,
+) -> Result<(), String> {
+    *pending_writes += 1;
+    if force || *pending_writes >= SYNC_STATE_SAVE_INTERVAL {
+        save_sync_state(state_path, state).await?;
+        *pending_writes = 0;
+    }
+    Ok(())
+}
+
 /// Download files with progress callback
 pub async fn sync_download(
     connection_id: &str,
@@ -675,6 +974,8 @@ pub async fn sync_download(
 ) -> Result<SyncState, String> {
     let mut state = load_sync_state(state_path).await?;
     let total = actions.len();
+    let mut download_errors: Vec<String> = Vec::new();
+    let mut pending_state_writes = 0usize;
     // #region debug-point A:sync-download-enter
     report_debug_event(
         "A",
@@ -708,32 +1009,71 @@ pub async fn sync_download(
                     cb(index + 1, total, &format!("下载: {}", action.remote_path));
                 }
 
-                // Download the file
-                smb_client::download_file(
-                    connection_id.to_string(),
-                    action.remote_path.clone(),
-                    action.local_path.clone(),
+                // Download the file (probe extensions when index path omits them)
+                let resolved_remote_path = match download_remote_file_resolved(
+                    connection_id,
+                    &action.remote_path,
+                    &action.local_path,
+                    action.size,
                 )
-                .await?;
-                // #region debug-point B:download-file-finished
-                report_debug_event(
-                    "B",
-                    "download_file returned",
-                    json!({
-                        "index": index + 1,
-                        "total": total,
-                        "remotePath": action.remote_path,
-                        "localPath": action.local_path,
-                    }),
-                );
-                // #endregion
+                .await
+                {
+                    Ok((resolved_remote_path, _)) => {
+                        // #region debug-point B:download-file-finished
+                        report_debug_event(
+                            "B",
+                            "download_file returned",
+                            json!({
+                                "index": index + 1,
+                                "total": total,
+                                "remotePath": action.remote_path,
+                                "localPath": action.local_path,
+                            }),
+                        );
+                        // #endregion
+                        resolved_remote_path
+                    }
+                    Err(error) => {
+                        download_errors.push(format!("{}: {}", action.remote_path, error));
+                        if let Some(cb) = callback {
+                            cb(
+                                index + 1,
+                                total,
+                                &format!("下载失败: {} ({})", action.remote_path, error),
+                            );
+                        }
+                        continue;
+                    }
+                };
 
-                // Get file info for accurate size
-                let file_info = smb_client::get_file_info(
-                    connection_id.to_string(),
-                    action.remote_path.clone(),
-                )
-                .await?;
+                let is_metadata = Path::new(&action.local_path)
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(is_metadata_file);
+
+                let (file_size, last_modified) = if is_metadata {
+                    let metadata = fs::metadata(&action.local_path)
+                        .await
+                        .map_err(|e| {
+                            format!(
+                                "Failed to get local file metadata for {}: {}",
+                                action.local_path, e
+                            )
+                        })?;
+                    let modified = metadata
+                        .modified()
+                        .ok()
+                        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                        .map(|d| d.as_secs() as i64);
+                    (metadata.len(), modified)
+                } else {
+                    let file_info = smb_client::get_file_info(
+                        connection_id.to_string(),
+                        resolved_remote_path.clone(),
+                    )
+                    .await?;
+                    (file_info.size, file_info.last_modified)
+                };
                 // #region debug-point C:file-info-finished
                 report_debug_event(
                     "C",
@@ -742,8 +1082,8 @@ pub async fn sync_download(
                         "index": index + 1,
                         "total": total,
                         "remotePath": action.remote_path,
-                        "size": file_info.size,
-                        "lastModified": file_info.last_modified,
+                        "size": file_size,
+                        "lastModified": last_modified,
                     }),
                 );
                 // #endregion
@@ -752,26 +1092,31 @@ pub async fn sync_download(
                 if let Some(existing) = state
                     .synced_files
                     .iter_mut()
-                    .find(|f| f.remote_path == action.remote_path)
+                    .find(|f| {
+                        f.remote_path == action.remote_path
+                            || f.remote_path == resolved_remote_path
+                    })
                 {
+                    existing.remote_path = resolved_remote_path.clone();
                     existing.local_path = action.local_path.clone();
-                    existing.size = file_info.size;
-                    existing.last_modified = file_info.last_modified;
+                    existing.size = file_size;
+                    existing.last_modified = last_modified;
                     existing.md5 = action.md5.clone();
+                    existing.backup_path = action.backup_path.clone();
                     existing.tag = action.tag.clone();
                 } else {
                     state.synced_files.push(SyncedFile {
-                        remote_path: action.remote_path.clone(),
+                        remote_path: resolved_remote_path.clone(),
                         local_path: action.local_path.clone(),
-                        size: file_info.size,
-                        last_modified: file_info.last_modified,
+                        size: file_size,
+                        last_modified,
                         md5: action.md5.clone(),
+                        backup_path: action.backup_path.clone(),
                         tag: action.tag.clone(),
                     });
                 }
 
-                // Save state after each file to support resume on interruption
-                save_sync_state(state_path, &state).await?;
+                maybe_save_sync_state(state_path, &state, &mut pending_state_writes, false).await?;
 
                 // #region debug-point C:state-updated
                 report_debug_event(
@@ -789,6 +1134,42 @@ pub async fn sync_download(
             Action::Skip => {
                 if let Some(cb) = callback {
                     cb(index + 1, total, &format!("跳过: {}", action.remote_path));
+                }
+
+                if action.md5.is_some() || action.tag.is_some() || action.backup_path.is_some() {
+                    if let Some(existing) = state
+                        .synced_files
+                        .iter_mut()
+                        .find(|f| f.remote_path == action.remote_path || f.local_path == action.local_path)
+                    {
+                        existing.remote_path = action.remote_path.clone();
+                        existing.local_path = action.local_path.clone();
+                        existing.md5 = action.md5.clone();
+                        existing.backup_path = action.backup_path.clone();
+                        existing.tag = action.tag.clone();
+                    } else {
+                        let local_path = Path::new(&action.local_path);
+                        if local_path.exists() {
+                            let metadata = fs::metadata(local_path)
+                                .await
+                                .map_err(|e| format!("Failed to get local file metadata for {}: {}", action.local_path, e))?;
+                            let last_modified = metadata
+                                .modified()
+                                .ok()
+                                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                                .map(|d| d.as_secs() as i64);
+
+                            state.synced_files.push(SyncedFile {
+                                remote_path: action.remote_path.clone(),
+                                local_path: action.local_path.clone(),
+                                size: metadata.len(),
+                                last_modified,
+                                md5: action.md5.clone(),
+                                backup_path: action.backup_path.clone(),
+                                tag: action.tag.clone(),
+                            });
+                        }
+                    }
                 }
             }
             Action::Delete => {
@@ -844,6 +1225,7 @@ pub async fn sync_download(
                     {
                         existing.local_path = action.local_path.clone();
                         existing.md5 = action.md5.clone();
+                        existing.backup_path = action.backup_path.clone();
                         existing.tag = action.tag.clone();
                     } else {
                         // If not found by remote_path, try by old local_path
@@ -855,12 +1237,12 @@ pub async fn sync_download(
                             existing.remote_path = action.remote_path.clone();
                             existing.local_path = action.local_path.clone();
                             existing.md5 = action.md5.clone();
+                            existing.backup_path = action.backup_path.clone();
                             existing.tag = action.tag.clone();
                         }
                     }
 
-                    // Save state after each move
-                    save_sync_state(state_path, &state).await?;
+                    maybe_save_sync_state(state_path, &state, &mut pending_state_writes, false).await?;
                 } else {
                     // Old file doesn't exist, fall back to download
                     if let Some(cb) = callback {
@@ -870,42 +1252,45 @@ pub async fn sync_download(
                             &format!("原文件不存在，降级下载: {}", action.remote_path),
                         );
                     }
-                    smb_client::download_file(
-                        connection_id.to_string(),
-                        action.remote_path.clone(),
-                        action.local_path.clone(),
+                    let (resolved_remote_path, _) = download_remote_file_resolved(
+                        connection_id,
+                        &action.remote_path,
+                        &action.local_path,
+                        action.size,
                     )
                     .await?;
 
                     // Update sync state
                     let file_info = smb_client::get_file_info(
                         connection_id.to_string(),
-                        action.remote_path.clone(),
+                        resolved_remote_path.clone(),
                     )
                     .await?;
 
                     state.synced_files.push(SyncedFile {
-                        remote_path: action.remote_path.clone(),
+                        remote_path: resolved_remote_path,
                         local_path: action.local_path.clone(),
                         size: file_info.size,
                         last_modified: file_info.last_modified,
                         md5: action.md5.clone(),
+                        backup_path: action.backup_path.clone(),
                         tag: action.tag.clone(),
                     });
 
-                    save_sync_state(state_path, &state).await?;
+                    maybe_save_sync_state(state_path, &state, &mut pending_state_writes, false).await?;
                 }
             }
         }
     }
 
-    // Update last sync time
-    state.last_sync_time = Some(
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64,
-    );
+    if download_errors.is_empty() {
+        state.last_sync_time = Some(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        );
+    }
 
     // Save state
     // #region debug-point C:save-state-start
@@ -915,6 +1300,7 @@ pub async fn sync_download(
         json!({
             "statePath": state_path,
             "syncedFileCount": state.synced_files.len(),
+            "downloadErrorCount": download_errors.len(),
         }),
     );
     // #endregion
@@ -931,12 +1317,64 @@ pub async fn sync_download(
     );
     // #endregion
 
-    Ok(state)
+    if download_errors.is_empty() {
+        println!("MiyakoSync: success, synced_files={}", state.synced_files.len());
+        Ok(state)
+    } else {
+        let message = format!(
+            "{} file(s) failed to download: {}",
+            download_errors.len(),
+            download_errors.join("; ")
+        );
+        println!("MiyakoSync: partial failure: {message}");
+        Err(message)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_normalize_remote_path() {
+        assert_eq!(normalize_remote_path("/Music/song.mp3"), "Music/song.mp3");
+        assert_eq!(normalize_remote_path("Music/song.mp3"), "Music/song.mp3");
+        assert_eq!(normalize_remote_path("\\Music\\song.mp3"), "Music/song.mp3");
+    }
+
+    #[test]
+    fn test_resolve_index_entry_remote_path() {
+        assert_eq!(
+            resolve_index_entry_remote_path("", "/Music/song.mp3"),
+            "Music/song.mp3"
+        );
+        assert_eq!(
+            resolve_index_entry_remote_path("Music", "/Music/song.mp3"),
+            "Music/song.mp3"
+        );
+        assert_eq!(
+            resolve_index_entry_remote_path("Music", "subdir/song.mp3"),
+            "Music/subdir/song.mp3"
+        );
+    }
+
+    #[test]
+    fn test_file_index_remote_candidates() {
+        assert_eq!(
+            file_index_remote_candidates(""),
+            vec![
+                "file_index.json".to_string(),
+                "Music/file_index.json".to_string(),
+            ]
+        );
+        assert_eq!(
+            file_index_remote_candidates("Music"),
+            vec![
+                "Music/file_index.json".to_string(),
+                "file_index.json".to_string(),
+            ]
+        );
+    }
 
     #[test]
     fn test_is_music_file() {
@@ -975,6 +1413,55 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_compare_with_file_index_backfills_metadata_for_existing_same_size_file() {
+        let local_dir = std::env::temp_dir().join(format!(
+            "miyako_index_backfill_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let music_dir = local_dir.join("Music");
+        fs::create_dir_all(&music_dir).await.unwrap();
+        fs::write(music_dir.join("song.mp3"), b"abc").await.unwrap();
+
+        let index = FileIndex {
+            generated_at: 1.0,
+            file_count: 1,
+            files: vec![FileIndexEntry {
+                md5: "900150983cd24fb0d6963f7d28e17f72".to_string(),
+                path: "/Music/song.mp3".to_string(),
+                size: 3,
+                backup_path: Some("/backup/song.mp3".to_string()),
+                tag: Some("music".to_string()),
+            }],
+        };
+        let state = SyncState {
+            last_sync_time: None,
+            synced_files: Vec::new(),
+        };
+
+        let actions = compare_with_file_index(
+            &index,
+            local_dir.to_str().unwrap(),
+            &state,
+            "",
+        )
+        .await
+        .unwrap();
+
+        assert!(actions.iter().any(|action| {
+            action.remote_path == "Music/song.mp3"
+                && action.action == Action::Skip
+                && action.md5.as_deref() == Some("900150983cd24fb0d6963f7d28e17f72")
+                && action.backup_path.as_deref() == Some("/backup/song.mp3")
+                && action.tag.as_deref() == Some("music")
+        }));
+
+        let _ = fs::remove_dir_all(&local_dir).await;
+    }
+
+    #[tokio::test]
     async fn test_sync_state_serialization() {
         let state = SyncState {
             last_sync_time: Some(1234567890),
@@ -983,6 +1470,9 @@ mod tests {
                 local_path: "/local/song.mp3".to_string(),
                 size: 1024,
                 last_modified: Some(1000),
+                md5: None,
+                backup_path: None,
+                tag: None,
             }],
         };
 

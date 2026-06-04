@@ -1,11 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { RemoteFile, SyncAction, SyncState } from "../types/tauri-commands";
+import type { FileIndex, SyncAction, SyncState } from "../types/tauri-commands";
 import { loadSmbConfig } from "./smbConfig";
 import { ensureSmbConnection, getSmbSessionState } from "./smbSession";
 import { shouldAutoSyncAsync } from "./deviceStatus";
+import { SYNC_STATE_PATH } from "./syncState";
+import {
+  tryAcquireSyncLock,
+  releaseSyncLock,
+  isSyncInProgress,
+} from "./syncCoordinator";
+import { notifyLibrarySyncComplete } from "./libraryEvents";
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
-const STATE_PATH = "sync_state.json";
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let isRunning = false;
@@ -33,11 +39,10 @@ export function stopBackgroundSync(): void {
 }
 
 async function runSync(): Promise<void> {
-  if (isRunning) return; // skip if already syncing
+  if (isRunning || isSyncInProgress()) return;
 
   // 检查设备状态：充电 + WiFi + 可访问 NAS
   if (!(await shouldAutoSyncAsync())) {
-    console.log("[BackgroundSync] Device conditions not met, skipping sync");
     return;
   }
 
@@ -48,45 +53,61 @@ async function runSync(): Promise<void> {
   const session = getSmbSessionState();
   if (session.isConnecting) return;
 
+  if (!tryAcquireSyncLock()) return;
+
   isRunning = true;
 
   try {
     const connectionId = await ensureSmbConnection(config);
 
-    // Scan remote
-    const remoteFiles = await invoke<RemoteFile[]>("sync_scan_remote", {
+    const remoteBasePath = config.remotePath?.trim() || "";
+
+    // Use NAS file_index.json as the source of truth for file changes and metadata.
+    const fileIndex = await invoke<FileIndex>("sync_download_file_index", {
       connectionId,
-      path: config.remotePath || "",
+      remotePath: remoteBasePath,
     });
 
-    // Compare
-    const actions = await invoke<SyncAction[]>("sync_compare", {
-      remoteFiles,
+    const actions = await invoke<SyncAction[]>("sync_compare_with_index", {
+      fileIndex,
       localDir: config.localDir || "~/Music/NasSync",
+      statePath: SYNC_STATE_PATH,
+      remotePath: remoteBasePath,
     });
 
     const toDownload = actions.filter((a) => a.action === "Download");
     const toDelete = actions.filter((a) => a.action === "Delete");
     const toMove = actions.filter((a) => a.action === "LocalMove");
+    const toSkip = actions.filter((a) => a.action === "Skip");
+    const indexDownloads = toDownload.filter((a) =>
+      a.remote_path.endsWith("file_index.json")
+    );
+    const fileDownloads = toDownload.filter(
+      (a) => !a.remote_path.endsWith("file_index.json")
+    );
 
-    if (toDownload.length === 0 && toDelete.length === 0 && toMove.length === 0) {
-      console.log("[BackgroundSync] Already up to date");
+    if (actions.length === 0) {
       return;
     }
 
-    // Download
-    console.log(`[BackgroundSync] Syncing: ${toDownload.length} download, ${toMove.length} move, ${toDelete.length} delete`);
     await invoke<SyncState>("sync_download", {
       connectionId,
-      actions: [...toDownload, ...toDelete, ...toMove],
+      actions: [
+        ...toSkip,
+        ...toMove,
+        ...toDelete,
+        ...indexDownloads,
+        ...fileDownloads,
+      ],
       localDir: config.localDir || "~/Music/NasSync",
-      statePath: STATE_PATH,
+      statePath: SYNC_STATE_PATH,
     });
 
-    console.log("[BackgroundSync] Sync complete");
+    notifyLibrarySyncComplete();
   } catch (e) {
     console.error("[BackgroundSync] Sync failed:", e);
   } finally {
     isRunning = false;
+    releaseSyncLock();
   }
 }

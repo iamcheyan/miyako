@@ -163,6 +163,11 @@
   "radio": {
     "title": "Radio",
     "noSong": "No song",
-    "removeFromStation": "Remove from station"
+    "removeFromStation": "Remove from station",
+    "nextSong": "Next song",
+    "loadFailed": "Could not load radio library. Check sync status.",
+    "emptyLibrary": "No songs available. Sync music in Settings first.",
+    "playbackError": "Playback failed. Try again.",
+    "retry": "Retry"
   }
 }

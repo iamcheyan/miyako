@@ -6,6 +6,7 @@ declare global {
       setVisible: (visible: boolean) => void;
       getTopInset?: () => number;
       getBottomInset?: () => number;
+      getAndroidNavHeight?: () => number;
     };
   }
 }

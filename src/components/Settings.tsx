@@ -3,14 +3,19 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import type { ConnectResult, RemoteFile, SmbConfig, SyncAction, SyncState } from "../types/tauri-commands";
+import type { ConnectResult, SmbConfig, SyncAction, SyncState, FileIndex } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
 import { DEFAULT_SMB_CONFIG, loadSmbConfig, saveSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession, invalidateConnection } from "../lib/smbSession";
 import { showStatusBar } from "../lib/androidStatusBar";
+import { SYNC_STATE_PATH, isPlayableSyncedFile } from "../lib/syncState";
+import {
+  tryAcquireSyncLock,
+  releaseSyncLock,
+  isSyncInProgress,
+} from "../lib/syncCoordinator";
+import { notifyLibrarySyncComplete } from "../lib/libraryEvents";
 import "./Settings.css";
-
-const STATE_PATH = "sync_state.json";
 
 const LANGUAGES = [
   { code: "zh", name: "中文" },
@@ -47,6 +52,7 @@ function Settings() {
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [connectionState, setConnectionState] = useState(getSmbSessionState());
   const [syncError, setSyncError] = useState<string | null>(getSmbSessionState().error);
+  const [fileIndexLogs, setFileIndexLogs] = useState<string[]>([]);
 
   // 显示状态栏
   useEffect(() => {
@@ -56,8 +62,7 @@ function Settings() {
   // 加载保存的配置
   useEffect(() => {
     setConfig(loadSmbConfig());
-    loadSyncStats();
-    loadSyncState();
+    loadSyncData();
     const unsubscribe = subscribeSmbSession((nextState) => {
       setConnectionState(nextState);
       setSyncError(nextState.error);
@@ -95,28 +100,19 @@ function Settings() {
     };
   }, []);
 
-  const loadSyncStats = async () => {
+  const loadSyncData = async () => {
     try {
       const state = await invoke<SyncState>("sync_load_state", {
-        statePath: STATE_PATH,
-      });
-
-      const fileCount = state.synced_files.length;
-      const totalSize = state.synced_files.reduce((sum, file) => sum + file.size, 0);
-      setSyncStats({ fileCount, totalSize });
-    } catch (e) {
-      console.error("Failed to load sync stats:", e);
-    }
-  };
-
-  const loadSyncState = async () => {
-    try {
-      const state = await invoke<SyncState>("sync_load_state", {
-        statePath: STATE_PATH,
+        statePath: SYNC_STATE_PATH,
       });
       setSyncState(state);
+      const playableFiles = state.synced_files.filter(isPlayableSyncedFile);
+      setSyncStats({
+        fileCount: playableFiles.length,
+        totalSize: playableFiles.reduce((sum, file) => sum + file.size, 0),
+      });
     } catch (e) {
-      console.error("Failed to load sync state:", e);
+      console.error("Failed to load sync data:", e);
     }
   };
 
@@ -125,11 +121,6 @@ function Settings() {
   const getLocalDir = (): string => {
     const smbConfig = loadSmbConfig();
     return smbConfig.localDir || "~/Music/NasSync";
-  };
-
-  const getRemotePath = (): string => {
-    const smbConfig = loadSmbConfig();
-    return smbConfig.remotePath || "";
   };
 
   const reconnectIfNeeded = async () => {
@@ -141,13 +132,100 @@ function Settings() {
     return ensureSmbConnection(smbConfig);
   };
 
+  // 下载并对比 file_index.json
+  const compareFileIndex = async (activeConnectionId: string): Promise<{
+    remoteIndex: FileIndex;
+    actions: SyncAction[];
+  } | null> => {
+    const logs: string[] = [];
+    const localDir = getLocalDir();
+    const smbConfig = loadSmbConfig();
+    const remoteBasePath = smbConfig.remotePath?.trim() || "";
+
+    try {
+      const indexLocation = remoteBasePath
+        ? `${remoteBasePath}/file_index.json`
+        : "file_index.json（share 根目录，必要时回退 Music/file_index.json）";
+      logs.push(`📥 正在读取 NAS file_index.json: ${indexLocation}`);
+      const remoteIndex = await invoke<FileIndex>("sync_download_file_index", {
+        connectionId: activeConnectionId,
+        remotePath: remoteBasePath,
+      });
+      logs.push(`✅ NAS file_index.json: ${remoteIndex.file_count} 个文件`);
+
+      // 2. 后端使用 file_index.json 的 md5/tag/backup_path 与本地状态对比
+      const actions = await invoke<SyncAction[]>("sync_compare_with_index", {
+        fileIndex: remoteIndex,
+        localDir,
+        statePath: SYNC_STATE_PATH,
+        remotePath: remoteBasePath,
+      });
+
+      const indexRemotePath = remoteBasePath
+        ? `${remoteBasePath.replace(/^\/+|\/+$/g, "")}/file_index.json`
+        : "file_index.json";
+      const indexAction = actions.find(
+        (a) =>
+          a.remote_path === indexRemotePath ||
+          a.remote_path.endsWith("/file_index.json") ||
+          a.remote_path === "file_index.json"
+      );
+      const fileActions = actions.filter(
+        (a) =>
+          a.remote_path !== indexRemotePath &&
+          !a.remote_path.endsWith("/file_index.json") &&
+          a.remote_path !== "file_index.json"
+      );
+      const toDownload = fileActions.filter((a) => a.action === "Download");
+      const toDelete = fileActions.filter((a) => a.action === "Delete");
+      const toMove = fileActions.filter((a) => a.action === "LocalMove");
+      const skipped = fileActions.filter((a) => a.action === "Skip");
+
+      logs.push(indexAction ? `📂 本地 file_index.json: 将同步到设备` : `📂 本地 file_index.json: 无需处理`);
+      logs.push(`📊 同步计划: 下载 ${toDownload.length}, 移动 ${toMove.length}, 删除 ${toDelete.length}, 跳过 ${skipped.length}`);
+
+      [...toDownload, ...toMove, ...toDelete].slice(0, 8).forEach((action) => {
+        logs.push(`   - ${action.action}: ${action.remote_path} (${action.reason})`);
+      });
+      if (toDownload.length + toMove.length + toDelete.length > 8) {
+        logs.push(`   ... 还有 ${toDownload.length + toMove.length + toDelete.length - 8} 个变更`);
+      }
+
+      setFileIndexLogs(logs);
+      return { remoteIndex, actions };
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      logs.push(`❌ 获取 file_index.json 失败: ${errorMessage}`);
+      setFileIndexLogs(logs);
+      return null;
+    }
+  };
+
   const handleStartSyncInternal = async (retryCount = 0) => {
+    if (isSyncInProgress()) {
+      setSyncError("同步正在进行中，请稍后再试");
+      return;
+    }
+    if (!tryAcquireSyncLock()) {
+      setSyncError("同步正在进行中，请稍后再试");
+      return;
+    }
+
     let activeConnectionId: string;
     try {
       activeConnectionId = await reconnectIfNeeded();
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
       setSyncError(`${t("sync.logs.connectFailed")} ${errorMessage}`);
+      releaseSyncLock();
+      return;
+    }
+
+    // 先读取并对比 NAS 根目录的 file_index.json
+    const indexCompare = await compareFileIndex(activeConnectionId);
+    if (!indexCompare) {
+      setSyncError("无法读取 NAS file_index.json，同步已停止");
+      releaseSyncLock();
       return;
     }
 
@@ -156,44 +234,66 @@ function Settings() {
     setProgress({ current: 0, total: 0 });
 
     try {
-      // 步骤 1: 扫描远程目录
-      const remotePath = getRemotePath();
-      const remoteFiles = await invoke<RemoteFile[]>("sync_scan_remote", {
-        connectionId: activeConnectionId,
-        path: remotePath,
-      });
-
-      // 步骤 2: 对比本地文件
+      // 使用 file_index.json 生成的同步计划，保留 Skip 以更新 tag/md5/backup_path 元数据
       const localDir = getLocalDir();
-      const actions = await invoke<SyncAction[]>("sync_compare", {
-        remoteFiles,
-        localDir,
-      });
+      const actions = indexCompare.actions;
 
       const toDownload = actions.filter((a) => a.action === "Download");
       const toDelete = actions.filter((a) => a.action === "Delete");
       const toMove = actions.filter((a) => a.action === "LocalMove");
+      const toSkip = actions.filter((a) => a.action === "Skip");
 
-      if (toDownload.length === 0 && toDelete.length === 0 && toMove.length === 0) {
-        setIsSyncing(false);
+      if (actions.length === 0) {
+        await loadSyncData();
         return;
       }
 
       // 步骤 3: 下载、移动和删除文件
-      const totalActions = toDownload.length + toDelete.length + toMove.length;
+      const totalActions = actions.length;
       setProgress({ current: 0, total: totalActions });
+
+      const indexDownloads = toDownload.filter((a) =>
+        a.remote_path.endsWith("file_index.json")
+      );
+      const fileDownloads = toDownload.filter(
+        (a) => !a.remote_path.endsWith("file_index.json")
+      );
 
       const state = await invoke<SyncState>("sync_download", {
         connectionId: activeConnectionId,
-        actions: [...toDownload, ...toDelete, ...toMove],
+        actions: [
+          ...toSkip,
+          ...toMove,
+          ...toDelete,
+          ...indexDownloads,
+          ...fileDownloads,
+        ],
         localDir,
-        statePath: STATE_PATH,
+        statePath: SYNC_STATE_PATH,
       });
 
       setSyncState(state);
-      loadSyncStats();
+      await loadSyncData();
+      notifyLibrarySyncComplete();
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : String(e);
+      // 部分文件下载失败时，后端仍会保存已完成的 Skip/元数据更新
+      if (errorMessage.includes("failed to download")) {
+        await loadSyncData();
+        const failedMatch = errorMessage.match(/^(\d+) file\(s\) failed to download/);
+        const failedCount = failedMatch
+          ? Number.parseInt(failedMatch[1], 10)
+          : Number.NaN;
+        const totalPlanned = indexCompare.actions.filter((a) => a.action === "Download").length;
+        if (!Number.isNaN(failedCount) && failedCount < totalPlanned) {
+          setSyncError(
+            `同步完成，但有 ${failedCount} 个文件未能下载（其余已更新）。详情见对比日志。`
+          );
+          notifyLibrarySyncComplete();
+          return;
+        }
+        notifyLibrarySyncComplete();
+      }
       // 检测 SMB worker 崩溃错误，自动重连重试
       const isWorkerError = errorMessage.includes("Failed to send message to worker") ||
                            errorMessage.includes("Message processing failed");
@@ -203,7 +303,8 @@ function Settings() {
         try {
           await ensureSmbConnection(smbConfig);
           setIsSyncing(false);
-          handleStartSyncInternal(retryCount + 1);
+          releaseSyncLock();
+          void handleStartSyncInternal(retryCount + 1);
           return;
         } catch {
           // 重连失败，显示错误
@@ -212,6 +313,7 @@ function Settings() {
       setSyncError(`${t("sync.logs.syncFailed")} ${errorMessage}`);
     } finally {
       setIsSyncing(false);
+      releaseSyncLock();
     }
   };
 
@@ -422,12 +524,26 @@ function Settings() {
           )}
         </div>
 
+        {/* file_index.json 对比日志 */}
+        {fileIndexLogs.length > 0 && (
+          <div className="file-index-logs">
+            <h3 className="section-title">📋 file_index.json 对比</h3>
+            <div className="log-list">
+              {fileIndexLogs.map((log, index) => (
+                <div key={index} className="log-item">
+                  <span className="log-text">{log}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 最近同步的歌曲 */}
         <div className="recent-sync-section">
           <h3 className="section-title">{t("sync.recentSync")}</h3>
           <div className="recent-sync-list">
-            {syncState?.synced_files && syncState.synced_files.length > 0 ? (
-              [...syncState.synced_files]
+            {syncState?.synced_files && syncState.synced_files.filter(isPlayableSyncedFile).length > 0 ? (
+              [...syncState.synced_files.filter(isPlayableSyncedFile)]
                 .sort((a, b) => (b.last_modified || 0) - (a.last_modified || 0))
                 .slice(0, 20)
                 .map((file, index) => {

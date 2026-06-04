@@ -9,9 +9,16 @@ import { getFavorites, isFavorite, toggleFavorite } from "../lib/favorites";
 import { getPlayCount } from "../lib/playCount";
 import { usePullToRefresh } from "../lib/usePullToRefresh";
 import { PullToRefresh } from "./PullToRefresh";
+import { SYNC_STATE_PATH, getUniquePlayableSyncedFiles } from "../lib/syncState";
+import { LIBRARY_SYNC_COMPLETE } from "../lib/libraryEvents";
+import { getBaseName, stripExtension } from "../lib/pathUtils";
 import "./MusicLibrary.css";
 
-const STATE_PATH = "sync_state.json";
+declare global {
+  interface Window {
+    musicLibraryScrollTop?: number;
+  }
+}
 
 interface MusicFile {
   name: string;
@@ -68,8 +75,23 @@ function MusicLibrary() {
     localStorage.setItem("miyako_active_tab", tab);
   };
 
+  const filterByActiveTab = useCallback((files: MusicFile[], tab: ActiveTab = activeTab) => {
+    if (tab === "music") return files.filter(file => file.tag !== "podcast");
+    if (tab === "podcast") return files.filter(file => file.tag === "podcast");
+    return files;
+  }, [activeTab]);
+
   useEffect(() => {
     loadMusicLibrary();
+  }, []);
+
+  useEffect(() => {
+    const onSyncComplete = () => {
+      globalLibraryCache = null;
+      void loadMusicLibrary();
+    };
+    window.addEventListener(LIBRARY_SYNC_COMPLETE, onSyncComplete);
+    return () => window.removeEventListener(LIBRARY_SYNC_COMPLETE, onSyncComplete);
   }, []);
 
   // 检测标题是否溢出
@@ -114,7 +136,7 @@ function MusicLibrary() {
 
   // 当路径改变或页面加载完毕时，自动还原滚动条位置 (秒开恢复)
   useEffect(() => {
-    const targetScrollTop = (window as any).musicLibraryScrollTop || (globalLibraryCache?.scrollTop || 0);
+    const targetScrollTop = window.musicLibraryScrollTop || (globalLibraryCache?.scrollTop || 0);
 
     if (targetScrollTop > 0) {
       const restoreScroll = () => {
@@ -183,16 +205,16 @@ function MusicLibrary() {
 
     try {
       const state = await invoke<SyncState>("sync_load_state", {
-        statePath: STATE_PATH,
+        statePath: SYNC_STATE_PATH,
       });
 
       // 按文件夹分组
       const folderMap = new Map<string, MusicFile[]>();
 
-      for (const file of state.synced_files) {
+      for (const file of getUniquePlayableSyncedFiles(state)) {
         const parts = file.remote_path.split("/");
         const folderPath = parts.slice(0, -1).join("/") || "根目录";
-        const fileName = parts[parts.length - 1];
+        const fileName = getBaseName(file.remote_path);
 
         if (!folderMap.has(folderPath)) {
           folderMap.set(folderPath, []);
@@ -217,13 +239,26 @@ function MusicLibrary() {
         if (path === "根目录") {
           rootFiles = files;
         } else {
-          const name = path.split("/").pop()!;
+          const name = getBaseName(path);
           folderArray.push({ name, path, files });
         }
       }
 
       setFolders(folderArray);
       setRootFiles(rootFiles);
+
+      if (currentPath) {
+        if (currentPath === t("musicLibrary.allSongs")) {
+          setCurrentFiles(folderArray.flatMap(folder => folder.files));
+        } else if (currentPath === t("musicLibrary.rootDir")) {
+          setCurrentFiles(rootFiles);
+        } else {
+          const currentFolder = folderArray.find(folder => folder.path === currentPath);
+          if (currentFolder) {
+            setCurrentFiles(currentFolder.files);
+          }
+        }
+      }
 
       // 初始化或更新全局秒开缓存
       if (!globalLibraryCache) {
@@ -278,7 +313,7 @@ function MusicLibrary() {
     // 先清理失效的收藏
     try {
       const state = await invoke<SyncState>("sync_load_state", {
-        statePath: STATE_PATH,
+        statePath: SYNC_STATE_PATH,
       });
       const localPaths = state.synced_files.map(f => f.local_path);
       const stored = localStorage.getItem("miyako_favorites");
@@ -298,11 +333,25 @@ function MusicLibrary() {
     window.history.pushState({ path: "favorites" }, "");
   };
 
-  const handlePlayAllCurrentFiles = async () => {
-    if (currentFiles.length === 0) return;
+  const playFileFromList = useCallback(async (file: MusicFile, files: MusicFile[]) => {
+    const visibleFiles = filterByActiveTab(files);
+    if (visibleFiles.length === 0) return;
+
     const player = getAudioPlayer();
-    const trackPaths = currentFiles.map((f) => f.localPath);
-    player.loadPlaylist(trackPaths, 0);
+    const trackPaths = visibleFiles.map((f) => f.localPath);
+    const trackIndex = visibleFiles.findIndex((f) => f.localPath === file.localPath);
+
+    await player.loadPlaylist(trackPaths, trackIndex >= 0 ? trackIndex : 0);
+    await player.play();
+  }, [filterByActiveTab]);
+
+  const handlePlayAllCurrentFiles = async () => {
+    const visibleFiles = filterByActiveTab(currentFiles);
+    if (visibleFiles.length === 0) return;
+
+    const player = getAudioPlayer();
+    const trackPaths = visibleFiles.map((f) => f.localPath);
+    await player.loadPlaylist(trackPaths, 0);
     await player.play();
   };
 
@@ -350,14 +399,7 @@ function MusicLibrary() {
   }, []);
 
   const handleFileClick = async (file: MusicFile) => {
-    const player = getAudioPlayer();
-    console.log("Playing file:", file.localPath);
-
-    const trackPaths = currentFiles.map((f) => f.localPath);
-    const trackIndex = currentFiles.findIndex((f) => f.localPath === file.localPath);
-
-    player.loadPlaylist(trackPaths, trackIndex >= 0 ? trackIndex : 0);
-    await player.play();
+    await playFileFromList(file, currentFiles);
   };
 
   const formatSize = (bytes: number): string => {
@@ -369,8 +411,7 @@ function MusicLibrary() {
   };
 
   const formatFileName = (name: string): string => {
-    const lastDot = name.lastIndexOf(".");
-    return lastDot > 0 ? name.substring(0, lastDot) : name;
+    return stripExtension(name);
   };
 
   // 获取所有文件（用于全局搜索）
@@ -382,18 +423,10 @@ function MusicLibrary() {
   // 根据 activeTab 过滤文件
   const filteredFolders = folders.map(folder => ({
     ...folder,
-    files: folder.files.filter(file => {
-      if (activeTab === "music") return file.tag !== "podcast";
-      if (activeTab === "podcast") return file.tag === "podcast";
-      return true;
-    })
+    files: filterByActiveTab(folder.files)
   })).filter(folder => folder.files.length > 0);
 
-  const filteredRootFiles = rootFiles.filter(file => {
-    if (activeTab === "music") return file.tag !== "podcast";
-    if (activeTab === "podcast") return file.tag === "podcast";
-    return true;
-  });
+  const filteredRootFiles = filterByActiveTab(rootFiles);
 
   // 获取收藏列表（favoritesVersion 用于强制更新）
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -403,8 +436,9 @@ function MusicLibrary() {
   const validFavorites = allFiles.filter(file => favorites.includes(file.localPath));
 
   // 全局搜索结果（用于搜索弹出层）
+  const searchScope = filterByActiveTab(allFiles);
   const searchResults = searchQuery
-    ? allFiles.filter((file) =>
+    ? searchScope.filter((file) =>
         file.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
@@ -426,7 +460,7 @@ function MusicLibrary() {
 
   // 当前文件夹的过滤结果（用于文件列表页面）
   const filteredFiles = sortFiles(
-    currentFiles.filter((file) =>
+    filterByActiveTab(currentFiles).filter((file) =>
       file.name.toLowerCase().includes(searchQuery.toLowerCase())
     ),
     sortMode
@@ -507,7 +541,7 @@ function MusicLibrary() {
                   <span className="material-symbols-outlined folder-icon" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
                   <div className="folder-info">
                     <span className="folder-name">{t("musicLibrary.quickActions.favorites")}</span>
-                    <span className="folder-count">{favorites.length} {t("musicLibrary.songs")}</span>
+                    <span className="folder-count">{validFavorites.length} {t("musicLibrary.songs")}</span>
                   </div>
                   <span className="material-symbols-outlined">chevron_right</span>
                 </button>
@@ -550,8 +584,8 @@ function MusicLibrary() {
                 <span className="material-symbols-outlined">arrow_back</span>
               </button>
               <div className="list-header-info">
-                <h2 ref={listTitleRef} className={`list-title ${titleOverflow ? "scrolling" : ""}`}>{currentPath?.split("/").pop() || ""}</h2>
-                <span className="list-subtitle">{currentFiles.length} {t("musicLibrary.songs")}</span>
+                <h2 ref={listTitleRef} className={`list-title ${titleOverflow ? "scrolling" : ""}`}>{currentPath ? getBaseName(currentPath) : ""}</h2>
+                <span className="list-subtitle">{filteredFiles.length} {t("musicLibrary.songs")}</span>
               </div>
               <button className="play-all-btn btn-interactive" onClick={handlePlayAllCurrentFiles} title="播放全部">
                 <span className="material-symbols-outlined" style={{ fontSize: "28px" }}>play_circle</span>
@@ -618,14 +652,19 @@ function MusicLibrary() {
               <div className="file-list">
                 {filteredFiles.map((file, index) => (
                   <div key={file.remotePath} className="file-item">
-                    <button className="file-play-btn" onClick={() => handleFileClick(file)}>
+                    <div className="file-play-btn" role="button" tabIndex={0}
+                      onClick={() => handleFileClick(file)}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleFileClick(file); } }}
+                    >
                       <span className="file-index">{index + 1}</span>
                       <div className="file-info">
                         <span className="file-name">{formatFileName(file.name)}</span>
                         <span className="file-size">{formatSize(file.size)}</span>
                       </div>
                       <button
+                        type="button"
                         className="file-fav-btn"
+                        aria-label={t("musicLibrary.quickActions.favorites")}
                         onClick={(e) => {
                           e.stopPropagation();
                           toggleFavorite(file.localPath);
@@ -644,7 +683,7 @@ function MusicLibrary() {
                         </span>
                       </button>
                       <span className="material-symbols-outlined">play_circle</span>
-                    </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -688,8 +727,8 @@ function MusicLibrary() {
                   className="search-result-item"
                   onClick={() => {
                     // 搜索结果点击时，加载全部文件为播放列表并播放该歌曲
-                    setCurrentFiles(allFiles);
-                    handleFileClick(file);
+                    setCurrentFiles(searchScope);
+                    void playFileFromList(file, searchScope);
                     setIsSearchOpen(false);
                     setSearchQuery("");
                     // 自动展开播放器详情页

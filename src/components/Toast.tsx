@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import "./Toast.css";
 
 export interface ToastMessage {
@@ -61,25 +61,6 @@ function ToastItem({
       </button>
     </div>
   );
-}
-
-// Hook for using toast
-export function useToast() {
-  const [messages, setMessages] = useState<ToastMessage[]>([]);
-
-  const addToast = useCallback(
-    (message: string, type: ToastMessage["type"] = "info", duration?: number) => {
-      const id = Math.random().toString(36).substring(7);
-      setMessages((prev) => [...prev, { id, message, type, duration }]);
-    },
-    []
-  );
-
-  const removeToast = useCallback((id: string) => {
-    setMessages((prev) => prev.filter((msg) => msg.id !== id));
-  }, []);
-
-  return { messages, addToast, removeToast };
 }
 
 export default Toast;

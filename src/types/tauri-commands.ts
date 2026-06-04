@@ -54,7 +54,9 @@ export interface SyncAction {
   action: SyncActionType;
   reason: string;
   md5: string | null;
+  backup_path?: string | null;
   tag: string | null;
+  size?: number | null;
 }
 
 export interface SyncedFile {
@@ -63,6 +65,7 @@ export interface SyncedFile {
   size: number;
   last_modified: number | null;
   md5: string | null;
+  backup_path: string | null;
   tag: string | null;
 }
 
@@ -76,6 +79,7 @@ export interface FileIndexEntry {
   md5: string;
   path: string;
   size: number;
+  backup_path?: string | null;
   tag: string | null;
 }
 

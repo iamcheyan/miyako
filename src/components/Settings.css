@@ -1046,3 +1046,82 @@
 :root[data-theme="light"] .recent-sync-name {
   color: var(--on-surface);
 }
+
+/* file_index.json 对比日志 */
+.file-index-logs {
+  margin: 16px 0;
+  padding: 0 16px;
+}
+
+.file-index-logs .section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+  margin: 0 0 12px 0;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .file-index-logs .section-title {
+    color: var(--on-surface-dark);
+  }
+}
+
+.log-list {
+  background-color: var(--surface-variant);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .log-list {
+    background-color: var(--surface-variant-dark);
+    border-color: var(--outline-variant-dark);
+  }
+}
+
+.log-item {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .log-item {
+    border-bottom-color: var(--outline-variant-dark);
+  }
+}
+
+.log-item:last-child {
+  border-bottom: none;
+}
+
+.log-text {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+@media (prefers-color-scheme: dark), :root[data-theme="dark"] {
+  .log-text {
+    color: var(--on-surface-variant-dark);
+  }
+}
+
+:root[data-theme="light"] .file-index-logs .section-title {
+  color: var(--on-surface);
+}
+
+:root[data-theme="light"] .log-list {
+  background-color: var(--surface-variant);
+  border-color: var(--outline-variant);
+}
+
+:root[data-theme="light"] .log-item {
+  border-bottom-color: var(--outline-variant);
+}
+
+:root[data-theme="light"] .log-text {
+  color: var(--on-surface-variant);
+}

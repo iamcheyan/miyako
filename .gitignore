@@ -49,6 +49,12 @@ ralph/
 # Android/Gradle build cache (large files, should not be in git)
 src-tauri/gen/android/.gradle-home/
 
+# 旧 Android 测试壳（构建脚本用 src-tauri/gen/android，此目录仅存历史）
+android-test-app/
+
+# tauri android init 产生的旧壳归档
+src-tauri/gen/android.backup.*
+
 # Android build outputs and Gradle caches (never commit)
 android-test-app/app/build/
 android-test-app/.gradle/

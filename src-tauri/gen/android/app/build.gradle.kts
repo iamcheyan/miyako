@@ -1,3 +1,4 @@
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -28,6 +29,26 @@ android {
         getByName("debug") {
             // Uses default debug keystore
         }
+        // release 签名骨架：通过环境变量注入（CI secrets → env）。
+        // ANDROID_KEYSTORE_PATH / ANDROID_KEYSTORE_PASSWORD /
+        // ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD
+        create("release") {
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+            val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            val keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+            val keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            if (
+                !keystorePath.isNullOrBlank() && File(keystorePath).isFile() &&
+                !keystorePassword.isNullOrBlank() &&
+                !keyAlias.isNullOrBlank() &&
+                !keyPassword.isNullOrBlank()
+            ) {
+                storeFile = File(keystorePath)
+                storePassword = keystorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            }
+        }
     }
     buildTypes {
         getByName("debug") {
@@ -35,14 +56,26 @@ android {
             isDebuggable = true
             isJniDebuggable = true
             isMinifyEnabled = false
-            packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
+            packaging {
+                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86_64/*.so")
             }
         }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
+            // 有完整 keystore 配置才用正式签名；否则警告并退 debug（不阻塞 CI）
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile != null) {
+                signingConfig = releaseSigning
+            } else {
+                logger.warn(
+                    "RELEASE SIGNING NOT CONFIGURED: set ANDROID_KEYSTORE_PATH/" +
+                    "ANDROID_KEYSTORE_PASSWORD/ANDROID_KEY_ALIAS/ANDROID_KEY_PASSWORD " +
+                    "to sign releases properly. Falling back to debug signing."
+                )
+                signingConfig = signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }

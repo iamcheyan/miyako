@@ -146,11 +146,12 @@ fn media_response(
 /// Resolve and validate a requested media path against the allowed roots.
 fn resolve_media_path(raw: &str) -> Result<PathBuf, Response<Vec<u8>>> {
     // convertFileSrc encodes the absolute path; decode once. If the result is
-    // not absolute (double-encoding somewhere in the stack), decode again.
+    // not absolute (double-encoding somewhere in the stack), decode the
+    // *decoded* string again — decoding `raw` twice is a no-op.
     let mut decoded = percent_decode(raw)
         .map_err(|e| media_response(StatusCode::BAD_REQUEST, e.into_bytes(), &[]))?;
     if !decoded.starts_with('/') {
-        if let Ok(second) = percent_decode(raw) {
+        if let Ok(second) = percent_decode(&decoded) {
             if second.starts_with('/') {
                 decoded = second;
             }
@@ -471,6 +472,18 @@ mod media_tests {
         );
         assert!(percent_decode("/bad%2").is_err());
         assert!(percent_decode("/bad%zz").is_err());
+    }
+
+    #[test]
+    fn double_encoded_path_decodes_to_absolute() {
+        // %252F is '%' + '2F': decoding once yields "%2F", decoding the
+        // decoded string again yields "/". Simulates double-encoding in the
+        // URI stack.
+        let once = percent_decode("%252Fdata%252Fmusic.flac").unwrap();
+        assert_eq!(once, "%2Fdata%2Fmusic.flac");
+        let twice = percent_decode(&once).unwrap();
+        assert_eq!(twice, "/data/music.flac");
+        assert!(twice.starts_with('/'));
     }
 
     #[test]

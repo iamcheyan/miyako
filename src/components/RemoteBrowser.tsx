@@ -5,9 +5,19 @@ import type { DirEntry } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
 import { isDemoMode, getDemoRootEntries, getDemoEntries } from "../lib/demoData";
+import { useVirtualList } from "../hooks/useVirtualList";
+import { VirtualItems } from "./VirtualList";
 import "./RemoteBrowser.css";
 
 const MUSIC_EXTENSIONS = [".mp3", ".flac", ".aac", ".wav"];
+
+// 虚拟化行高：文件夹/文件/区块标题统一 56px
+const ENTRY_ROW_HEIGHT = 56;
+
+type BrowserRow =
+  | { kind: "header"; label: string }
+  | { kind: "dir"; name: string }
+  | { kind: "file"; name: string; size: number };
 
 function RemoteBrowser() {
   const navigate = useNavigate();
@@ -21,6 +31,12 @@ function RemoteBrowser() {
   // 加载配置并连接
   useEffect(() => {
     const config = loadSmbConfig();
+
+    // 演示模式：纯前端假数据，不发起 SMB 连接
+    if (isDemoMode()) {
+      return;
+    }
+
     const unsubscribe = subscribeSmbSession((nextState) => {
       setConnectionState(nextState);
       setError(nextState.error);
@@ -149,6 +165,24 @@ function RemoteBrowser() {
 
   const folders = entries.filter((e) => e.is_directory);
 
+  // 统一行模型（文件夹/文件/区块标题），供虚拟化列表渲染
+  const rows: BrowserRow[] = [];
+  if (folders.length > 0) {
+    rows.push({ kind: "header", label: "文件夹" });
+    for (const folder of folders) {
+      rows.push({ kind: "dir", name: folder.name });
+    }
+  }
+  if (musicFiles.length > 0) {
+    rows.push({ kind: "header", label: "音乐文件" });
+    for (const file of musicFiles) {
+      rows.push({ kind: "file", name: file.name, size: file.size });
+    }
+  }
+
+  // 虚拟化：远程目录只渲染可视区 ±20 行
+  const virtualList = useVirtualList(rows.length, ENTRY_ROW_HEIGHT);
+
   return (
     <div className="remote-browser">
       {/* 固定标题栏 */}
@@ -179,8 +213,8 @@ function RemoteBrowser() {
         </div>
       )}
 
-      {/* 可滚动内容 */}
-      <div className="remote-scroll">
+      {/* 可滚动内容（虚拟化：只渲染可视区 ±20 行） */}
+      <div className="remote-scroll" {...virtualList.containerProps}>
         {/* 加载状态 */}
         {isLoading && (
           <div className="browser-loading">
@@ -192,55 +226,55 @@ function RemoteBrowser() {
         {/* 内容列表 */}
         {!isLoading && !error && (
           <div className="browser-content">
-            {folders.length === 0 && musicFiles.length === 0 ? (
+            {rows.length === 0 ? (
               <div className="empty-state">
                 <span className="material-symbols-outlined empty-icon">folder_off</span>
                 <span>目录为空</span>
               </div>
             ) : (
-              <>
-                {/* 文件夹列表 */}
-                {folders.length > 0 && (
-                  <div className="entry-section">
-                    <h3 className="section-title">文件夹</h3>
-                    <div className="entry-list">
-                      {folders.map((folder) => (
+              <div className="entry-list">
+                <VirtualItems
+                  totalHeight={virtualList.totalHeight}
+                  startIndex={virtualList.startIndex}
+                  endIndex={virtualList.endIndex}
+                  itemHeight={ENTRY_ROW_HEIGHT}
+                  render={(index) => {
+                    const row = rows[index];
+                    if (row.kind === "header") {
+                      return (
+                        <div className="vrow-header">
+                          <h3 className="section-title">{row.label}</h3>
+                        </div>
+                      );
+                    }
+                    if (row.kind === "dir") {
+                      return (
                         <button
-                          key={folder.name}
                           className="entry-item"
-                          onClick={() => handleFolderClick(folder.name)}
+                          onClick={() => handleFolderClick(row.name)}
                         >
                           <span className="material-symbols-outlined entry-icon folder">
                             folder
                           </span>
-                          <span className="entry-name">{folder.name}</span>
+                          <span className="entry-name">{row.name}</span>
                           <span className="material-symbols-outlined">chevron_right</span>
                         </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 音乐文件列表 */}
-                {musicFiles.length > 0 && (
-                  <div className="entry-section">
-                    <h3 className="section-title">音乐文件</h3>
-                    <div className="entry-list">
-                      {musicFiles.map((file) => (
-                        <div key={file.name} className="entry-item">
-                          <span className="material-symbols-outlined entry-icon music">
-                            audio_file
-                          </span>
-                          <div className="entry-info">
-                            <span className="entry-name">{file.name}</span>
-                            <span className="entry-size">{formatSize(file.size)}</span>
-                          </div>
+                      );
+                    }
+                    return (
+                      <div className="entry-item">
+                        <span className="material-symbols-outlined entry-icon music">
+                          audio_file
+                        </span>
+                        <div className="entry-info">
+                          <span className="entry-name">{row.name}</span>
+                          <span className="entry-size">{formatSize(row.size)}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+                      </div>
+                    );
+                  }}
+                />
+              </div>
             )}
           </div>
         )}

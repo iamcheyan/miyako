@@ -255,6 +255,9 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
+  /* 虚拟化行高：.virtual-row 高 56px，行内容撑满 */
+  height: 100%;
+  box-sizing: border-box;
   background: none;
   border: none;
   border-bottom: 1px solid var(--outline-variant);
@@ -262,6 +265,19 @@
   text-align: left;
   width: 100%;
   transition: background-color 0.2s;
+}
+
+/* 虚拟化列表里的区块标题行（文件夹 / 音乐文件） */
+.vrow-header {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 16px 6px;
+}
+
+.vrow-header .section-title {
+  margin-bottom: 0;
 }
 
 @media (prefers-color-scheme: dark) {

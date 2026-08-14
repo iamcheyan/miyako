@@ -4,9 +4,14 @@ import { useNavigate } from "react-router-dom";
 import type { SyncState } from "../types/tauri-commands";
 import { getAudioPlayer } from "../lib/audioPlayer";
 import { isDemoMode, getDemoFolders } from "../lib/demoData";
+import { useVirtualList } from "../hooks/useVirtualList";
+import { VirtualItems } from "./VirtualList";
 import "./MusicLibrary.css";
 
 const STATE_PATH = "sync_state.json";
+
+// 虚拟化行高：64px 内容 + 2px 间隔（与 .file-item 的固定高度对应）
+const FILE_ROW_HEIGHT = 66;
 
 interface MusicFile {
   name: string;
@@ -163,6 +168,9 @@ function MusicLibrary() {
     file.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
   );
 
+  // 虚拟化：大曲库（10k+）只渲染可视区 ±20 行
+  const virtualList = useVirtualList(filteredFiles.length, FILE_ROW_HEIGHT);
+
   if (isLoading) {
     return (
       <div className="library-loading">
@@ -304,8 +312,8 @@ function MusicLibrary() {
         </div>
       </div>
 
-      {/* 可滚动内容：文件列表 */}
-      <div className="library-scroll">
+      {/* 可滚动内容：文件列表（虚拟化：只渲染可视区 ±20 行） */}
+      <div className="library-scroll" {...virtualList.containerProps}>
         {filteredFiles.length === 0 ? (
           <div className="empty-state small">
             <span className="material-symbols-outlined empty-icon">search_off</span>
@@ -315,20 +323,28 @@ function MusicLibrary() {
           </div>
         ) : (
           <div className="file-list">
-            {filteredFiles.map((file, index) => (
-              <button
-                key={file.remotePath}
-                className="file-item"
-                onClick={() => handleFileClick(file)}
-              >
-                <span className="file-index">{index + 1}</span>
-                <div className="file-info">
-                  <span className="file-name">{formatFileName(file.name)}</span>
-                  <span className="file-size">{formatSize(file.size)}</span>
-                </div>
-                <span className="material-symbols-outlined">play_circle</span>
-              </button>
-            ))}
+            <VirtualItems
+              totalHeight={virtualList.totalHeight}
+              startIndex={virtualList.startIndex}
+              endIndex={virtualList.endIndex}
+              itemHeight={FILE_ROW_HEIGHT}
+              render={(index) => {
+                const file = filteredFiles[index];
+                return (
+                  <button
+                    className="file-item"
+                    onClick={() => handleFileClick(file)}
+                  >
+                    <span className="file-index">{index + 1}</span>
+                    <div className="file-info">
+                      <span className="file-name">{formatFileName(file.name)}</span>
+                      <span className="file-size">{formatSize(file.size)}</span>
+                    </div>
+                    <span className="material-symbols-outlined">play_circle</span>
+                  </button>
+                );
+              }}
+            />
           </div>
         )}
       </div>

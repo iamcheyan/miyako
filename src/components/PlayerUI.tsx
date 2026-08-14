@@ -1,7 +1,98 @@
-import { useState, useEffect, useCallback, useRef, type CSSProperties } from "react";
+import { memo, useState, useEffect, useCallback, useRef, type CSSProperties } from "react";
 import { getAudioPlayer, type PlayMode, type AudioPlayerState } from "../lib/audioPlayer";
 import "./PlayerUI.css";
 
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function getFileName(path: string): string {
+  const parts = path.split("/").pop() || path;
+  const lastDot = parts.lastIndexOf(".");
+  return lastDot > 0 ? parts.substring(0, lastDot) : parts;
+}
+
+/**
+ * 进度条区块。timeupdate 高频更新只重渲染这里，
+ * 不触发整个播放列表 reconciliation。
+ */
+const SeekSection = memo(function SeekSection({
+  currentTime,
+  duration,
+  onSeek,
+}: {
+  currentTime: number;
+  duration: number;
+  onSeek: (e: React.FormEvent<HTMLInputElement>) => void;
+}) {
+  const progressPercent =
+    duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="seek-section">
+      <span className="seek-time">{formatTime(currentTime)}</span>
+      <input
+        type="range"
+        className="seek-bar"
+        style={{ "--seek-progress": `${progressPercent}%` } as CSSProperties}
+        min={0}
+        max={duration || 0}
+        value={currentTime}
+        onInput={onSeek}
+      />
+      <span className="seek-time">{formatTime(duration)}</span>
+    </div>
+  );
+});
+
+/**
+ * 播放列表区块。memo 后，timeupdate 引发的 PlayerUI 重渲染
+ * 会因 props 不变而跳过整列表。
+ */
+const Playlist = memo(function Playlist({
+  playlist,
+  currentIndex,
+  isPlaying,
+  onSelectTrack,
+}: {
+  playlist: string[];
+  currentIndex: number;
+  isPlaying: boolean;
+  onSelectTrack: (index: number) => void;
+}) {
+  if (playlist.length === 0) {
+    return (
+      <div className="playlist-empty">
+        <span className="material-symbols-outlined">queue_music</span>
+        <span>暂无播放列表</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {playlist.map((track, index) => (
+        <div
+          key={index}
+          className={`playlist-row ${index === currentIndex ? "active" : ""}`}
+          onClick={() => onSelectTrack(index)}
+        >
+          <span className="row-num">
+            {index === currentIndex && isPlaying ? (
+              <span className="material-symbols-outlined playing">equalizer</span>
+            ) : (
+              index + 1
+            )}
+          </span>
+          <span className="row-name">{getFileName(track)}</span>
+        </div>
+      ))}
+    </>
+  );
+});
 function PlayerUI() {
   const player = getAudioPlayer();
   const [state, setState] = useState<AudioPlayerState>(player.getState());
@@ -108,19 +199,13 @@ function PlayerUI() {
     player.setPlayMode(nextMode);
   }, [state.playMode, player]);
 
-  const formatTime = (seconds: number): string => {
-    if (isNaN(seconds)) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  const handleSelectTrack = useCallback(
+    (index: number) => {
+      player.playTrack(index);
+    },
+    [player]
+  );
 
-  const getFileName = (path: string): string => {
-    const parts = path.split("/");
-    const fileName = parts[parts.length - 1];
-    const lastDot = fileName.lastIndexOf(".");
-    return lastDot > 0 ? fileName.substring(0, lastDot) : fileName;
-  };
 
   const getModeIcon = (mode: PlayMode): string => {
     switch (mode) {
@@ -138,7 +223,6 @@ function PlayerUI() {
     : "未选择歌曲";
 
   const hasHistory = state.playlist.length > 0 && state.currentIndex >= 0;
-  const progressPercent = progress.duration > 0 ? (progress.currentTime / progress.duration) * 100 : 0;
 
   // 迷你播放器
   if (!isExpanded) {
@@ -215,50 +299,24 @@ function PlayerUI() {
         <div className="expanded-playlist">
           <h3 className="playlist-header">播放列表</h3>
           <div className="playlist-scroll">
-            {state.playlist.length === 0 ? (
-              <div className="playlist-empty">
-                <span className="material-symbols-outlined">queue_music</span>
-                <span>暂无播放列表</span>
-              </div>
-            ) : (
-              state.playlist.map((track, index) => (
-                <div
-                  key={index}
-                  className={`playlist-row ${index === state.currentIndex ? "active" : ""}`}
-                  onClick={() => player.playTrack(index)}
-                >
-                  <span className="row-num">
-                    {index === state.currentIndex && state.isPlaying ? (
-                      <span className="material-symbols-outlined playing">equalizer</span>
-                    ) : (
-                      index + 1
-                    )}
-                  </span>
-                  <span className="row-name">{getFileName(track)}</span>
-                </div>
-              ))
-            )}
+            <Playlist
+              playlist={state.playlist}
+              currentIndex={state.currentIndex}
+              isPlaying={state.isPlaying}
+              onSelectTrack={handleSelectTrack}
+            />
           </div>
         </div>
 
         {/* 底部：进度条 + 控制，固定在屏幕底部 */}
         <div className="expanded-controls">
-          {/* 进度条 */}
-          <div className="seek-section">
-            <span className="seek-time">{formatTime(progress.currentTime)}</span>
-            <input
-              type="range"
-              className="seek-bar"
-              style={{ "--seek-progress": `${progressPercent}%` } as CSSProperties}
-              min={0}
-              max={progress.duration || 0}
-              value={progress.currentTime}
-              onInput={handleSeek}
-            />
-            <span className="seek-time">{formatTime(progress.duration)}</span>
-          </div>
+          {/* 进度条（独立 memo 组件：timeupdate 只重渲染这里） */}
+          <SeekSection
+            currentTime={progress.currentTime}
+            duration={progress.duration}
+            onSeek={handleSeek}
+          />
 
-          {/* 主控制 */}
           <div className="main-controls">
             <button className="ctrl-btn mode" onClick={handleModeChange}>
               <span className="material-symbols-outlined">{getModeIcon(state.playMode)}</span>

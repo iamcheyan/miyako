@@ -409,11 +409,44 @@
 
 .log-item {
   display: flex;
+  align-items: center;
   gap: 12px;
   padding: 12px 16px;
+  /* 虚拟化行高：.virtual-row 高 44px，行内容撑满 */
+  height: 100%;
+  box-sizing: border-box;
+  width: 100%;
   border-bottom: 1px solid var(--outline-variant);
   font-family: 'Roboto Mono', monospace;
   font-size: 13px;
+}
+
+/* 取消同步按钮 */
+.cancel-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: var(--surface-variant);
+  color: #b3261e;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  transform: scale(1.05);
+  background-color: var(--outline-variant);
+}
+
+.cancel-btn:active {
+  transform: scale(0.95);
+}
+
+.cancel-btn .material-symbols-outlined {
+  font-size: 24px;
 }
 
 @media (prefers-color-scheme: dark) {

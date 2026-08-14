@@ -9,9 +9,14 @@ import type {
 } from "../types/tauri-commands";
 import { loadSmbConfig } from "../lib/smbConfig";
 import { ensureSmbConnection, getSmbSessionState, subscribeSmbSession } from "../lib/smbSession";
+import { useVirtualList } from "../hooks/useVirtualList";
+import { VirtualItems } from "./VirtualList";
 import "./SyncPage.css";
 
 const STATE_PATH = "sync_state.json";
+
+// 虚拟化日志行高（与 .log-item 的固定高度对应）
+const LOG_ROW_HEIGHT = 44;
 
 interface SyncLog {
   time: string;
@@ -198,10 +203,29 @@ function SyncPage() {
     }
   };
 
+  const handleCancelSync = async () => {
+    try {
+      const requested = await invoke<boolean>("sync_cancel", {
+        statePath: STATE_PATH,
+      });
+      if (requested) {
+        addLog("已请求取消同步，已下载部分保留（.part 可续传）");
+      } else {
+        addLog("当前没有正在进行的同步", "error");
+      }
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setError(`取消失败: ${errorMessage}`);
+    }
+  };
+
   const formatTime = (timestamp: number | null): string => {
     if (!timestamp) return "从未";
     return new Date(timestamp * 1000).toLocaleString();
   };
+
+  // 同步日志虚拟化：环形 200 条也只渲染可视区 ±20 行
+  const virtualLogs = useVirtualList(logs.length, LOG_ROW_HEIGHT);
 
   return (
     <div className="sync-page">
@@ -233,6 +257,16 @@ function SyncPage() {
             </div>
 
             <div className="status-actions">
+
+              {isSyncing && (
+                <button
+                  className="cancel-btn"
+                  onClick={handleCancelSync}
+                  aria-label="取消同步"
+                >
+                  <span className="material-symbols-outlined">stop_circle</span>
+                </button>
+              )}
               <button
                 className="settings-btn"
                 onClick={() => navigate("/settings")}
@@ -303,19 +337,28 @@ function SyncPage() {
       <div className="sync-scroll">
         <div className="log-section">
           <h3 className="section-title">同步日志</h3>
-          <div className="log-list">
+          <div className="log-list" {...virtualLogs.containerProps}>
             {logs.length === 0 ? (
               <div className="log-empty">
                 <span className="material-symbols-outlined">terminal</span>
                 <span>暂无日志</span>
               </div>
             ) : (
-              logs.map((log, index) => (
-                <div key={index} className={`log-item log-${log.type}`}>
-                  <span className="log-time">{log.time}</span>
-                  <span className="log-message">{log.message}</span>
-                </div>
-              ))
+              <VirtualItems
+                totalHeight={virtualLogs.totalHeight}
+                startIndex={virtualLogs.startIndex}
+                endIndex={virtualLogs.endIndex}
+                itemHeight={LOG_ROW_HEIGHT}
+                render={(index) => {
+                  const log = logs[index];
+                  return (
+                    <div className={`log-item log-${log.type}`}>
+                      <span className="log-time">{log.time}</span>
+                      <span className="log-message">{log.message}</span>
+                    </div>
+                  );
+                }}
+              />
             )}
           </div>
         </div>

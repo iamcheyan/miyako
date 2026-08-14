@@ -29,9 +29,37 @@ export const isDemoMode = (): boolean => {
   return params.get("demo") === "true";
 };
 
-// 获取演示文件夹数据
+// 数据量倍数（?scale=N）：性能测试用，N 份演示数据凑出 1000+ 曲目
 export const getDemoFolders = (): DemoFolder[] => {
-  return demoDataJson.folders as DemoFolder[];
+  const baseFolders = demoDataJson.folders as DemoFolder[];
+  const scaleParam = Number(
+    new URLSearchParams(window.location.search).get("scale") || "1"
+  );
+  const scale =
+    Number.isFinite(scaleParam) && scaleParam >= 1
+      ? Math.floor(scaleParam)
+      : 1;
+
+  if (scale === 1) {
+    return baseFolders;
+  }
+
+  const folders: DemoFolder[] = [];
+  for (let copy = 0; copy < scale; copy++) {
+    for (const folder of baseFolders) {
+      folders.push({
+        ...folder,
+        name: `${folder.name} #${copy + 1}`,
+        path: `${folder.path}/copy${copy + 1}`,
+        files: folder.files.map((file) => ({
+          ...file,
+          remotePath: `${folder.path}/copy${copy + 1}/${file.name}`,
+          localPath: `${file.localPath}.copy${copy + 1}`,
+        })),
+      });
+    }
+  }
+  return folders;
 };
 
 // 获取演示播放列表数据（用于PlayerUI）

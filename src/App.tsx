@@ -11,7 +11,7 @@ import MusicLibrary from "./components/MusicLibrary";
 import PlayerUI from "./components/PlayerUI";
 import Toast, { useToast } from "./components/Toast";
 import { getMediaSessionManager } from "./lib/mediaSession";
-import "./App.css";
+import { ensureMediaRoot } from "./lib/mediaRoot";
 
 // 页面内容区域
 function PageContent() {
@@ -35,7 +35,8 @@ function App() {
   useEffect(() => {
     const mediaSession = getMediaSessionManager();
     mediaSession.initialize();
-
+    // 允许 media:// 协议播放配置的本地音乐目录
+    void ensureMediaRoot();
     // Android Tauri runs edge-to-edge, and some WebViews report
     // safe-area-inset-bottom as 0 even with 3-button navigation.
     const detectAndroidNavHeight = () => {

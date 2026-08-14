@@ -48,4 +48,13 @@ ralph/
 
 # Android/Gradle build cache (large files, should not be in git)
 src-tauri/gen/android/.gradle-home/
+
+# Android build outputs and Gradle caches (never commit)
+android-test-app/app/build/
+android-test-app/.gradle/
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/.gradle/
+*.apk
+*.aab
+.dbg/
 android-test-app/.gradle-home/

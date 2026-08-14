@@ -27,7 +27,14 @@ function MusicLibrary() {
   const [currentPath, setCurrentPath] = useState<string | null>(null);
   const [currentFiles, setCurrentFiles] = useState<MusicFile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // 搜索防抖：避免每次按键都全量过滤大列表
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     loadMusicLibrary();
@@ -153,7 +160,7 @@ function MusicLibrary() {
   };
 
   const filteredFiles = currentFiles.filter((file) =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
+    file.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
   );
 
   if (isLoading) {

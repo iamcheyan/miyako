@@ -24,7 +24,12 @@ interface SyncProgressPayload {
   total: number;
   message: string;
   remote_path: string | null;
+  /** Byte-level high-frequency update; update the progress bar only. */
+  verbose: boolean;
 }
+
+// 日志环形上限：防止长同步把 logs 数组撑到数千条
+const MAX_SYNC_LOGS = 200;
 
 function SyncPage() {
   const navigate = useNavigate();
@@ -37,7 +42,10 @@ function SyncPage() {
 
   const addLog = useCallback((message: string, type: SyncLog["type"] = "info") => {
     const time = new Date().toLocaleTimeString();
-    setLogs((prev) => [...prev, { time, message, type }]);
+    setLogs((prev) => {
+      const next = [...prev, { time, message, type }];
+      return next.length > MAX_SYNC_LOGS ? next.slice(next.length - MAX_SYNC_LOGS) : next;
+    });
   }, []);
 
   // 加载配置并连接
@@ -66,7 +74,10 @@ function SyncPage() {
             current: payload.current,
             total: payload.total,
           });
-          addLog(payload.message);
+          // verbose 为字节级高频进度：只更新进度条，不追加日志
+          if (!payload.verbose) {
+            addLog(payload.message);
+          }
         }
       );
     };

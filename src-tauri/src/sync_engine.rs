@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
-use serde_json::json;
-use std::io::Write;
-use std::net::TcpStream;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 use tokio::fs;
+use tokio::sync::Mutex;
 
 use crate::smb_client;
 
@@ -15,13 +16,17 @@ pub struct RemoteFile {
     pub last_modified: Option<i64>,
 }
 
-/// Sync action needed for a file
+/// Sync action needed for a file. `size`/`last_modified` are carried from the
+/// remote scan so the download loop does not need a second SMB round-trip per
+/// file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncAction {
     pub remote_path: String,
     pub local_path: String,
     pub action: Action,
     pub reason: String,
+    pub size: u64,
+    pub last_modified: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -51,70 +56,29 @@ pub struct SyncProgress {
     pub total: usize,
     pub message: String,
     pub remote_path: Option<String>,
+    /// `true` for high-frequency byte-level progress updates. UIs should
+    /// update progress indicators but must not append these to a log.
+    pub verbose: bool,
 }
 
 /// Progress callback type
-pub type ProgressCallback = Box<dyn Fn(usize, usize, &str) + Send + Sync>;
+pub type ProgressCallback = Box<dyn Fn(usize, usize, &str, bool) + Send + Sync>;
 
 const MUSIC_EXTENSIONS: &[&str] = &[".mp3", ".flac", ".aac", ".wav"];
 
-// #region debug-point A:download-debug-reporting
-fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
-    let env_content = std::fs::read_to_string(".dbg/sync-download-stall.env").ok();
-    let url = env_content
-        .as_deref()
-        .and_then(|content| {
-            content
-                .lines()
-                .find_map(|line| line.strip_prefix("DEBUG_SERVER_URL="))
-        })
-        .unwrap_or("http://127.0.0.1:7778/event");
-    let session_id = env_content
-        .as_deref()
-        .and_then(|content| {
-            content
-                .lines()
-                .find_map(|line| line.strip_prefix("DEBUG_SESSION_ID="))
-        })
-        .unwrap_or("sync-download-stall");
+/// Maximum directory depth for the recursive remote scan
+const MAX_SCAN_DEPTH: usize = 16;
 
-    let Some(address_and_path) = url.strip_prefix("http://") else {
-        return;
-    };
-    let Some((address, path)) = address_and_path.split_once('/') else {
-        return;
-    };
+/// Maximum number of files collected by a single remote scan
+const MAX_SCAN_FILES: usize = 100_000;
 
-    let payload = json!({
-        "sessionId": session_id,
-        "runId": "post-fix",
-        "hypothesisId": hypothesis_id,
-        "location": "src-tauri/src/sync_engine.rs",
-        "msg": format!("[DEBUG] {}", msg),
-        "data": data,
-        "ts": std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis())
-            .unwrap_or(0),
-    });
+/// Minimum interval between byte-level progress emissions
+const PROGRESS_EMIT_INTERVAL: Duration = Duration::from_millis(200);
 
-    let Ok(body) = serde_json::to_vec(&payload) else {
-        return;
-    };
-
-    if let Ok(mut stream) = TcpStream::connect(address) {
-        let request = format!(
-            "POST /{} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-            path,
-            address,
-            body.len()
-        );
-        let _ = stream.write_all(request.as_bytes());
-        let _ = stream.write_all(&body);
-        let _ = stream.flush();
-    }
-}
-// #endregion
+/// Persist the sync state after this many files, or after this much time,
+/// whichever comes first.
+const STATE_CHECKPOINT_FILES: usize = 20;
+const STATE_CHECKPOINT_INTERVAL: Duration = Duration::from_secs(2);
 
 /// Check if a file is a music file based on extension
 fn is_music_file(filename: &str) -> bool {
@@ -158,6 +122,12 @@ fn resolve_state_path(state_path: &str) -> Result<PathBuf, String> {
     }
 }
 
+/// Expand `~`-relative local dirs (used by the sync engine and by the
+/// media protocol's allow-root command).
+pub(crate) fn expand_local_dir(local_dir: &str) -> Result<PathBuf, String> {
+    resolve_local_dir(local_dir)
+}
+
 fn build_local_path(local_dir: &str, remote_path: &str) -> Result<PathBuf, String> {
     let mut full_path = resolve_local_dir(local_dir)?;
     for segment in remote_path.split('/') {
@@ -174,7 +144,7 @@ pub async fn scan_remote_directory(
     path: &str,
 ) -> Result<Vec<RemoteFile>, String> {
     let mut result = Vec::new();
-    scan_directory_recursive(connection_id, path, &mut result).await?;
+    scan_directory_recursive(connection_id, path, &mut result, 0).await?;
     Ok(result)
 }
 
@@ -182,10 +152,28 @@ async fn scan_directory_recursive(
     connection_id: &str,
     path: &str,
     result: &mut Vec<RemoteFile>,
+    depth: usize,
 ) -> Result<(), String> {
+    if depth > MAX_SCAN_DEPTH {
+        return Err(format!(
+            "Remote directory tree exceeds the maximum depth of {} (at '{}')",
+            MAX_SCAN_DEPTH, path
+        ));
+    }
+    if result.len() >= MAX_SCAN_FILES {
+        return Err(format!(
+            "Remote scan exceeded the maximum of {} music files",
+            MAX_SCAN_FILES
+        ));
+    }
+
     let entries = smb_client::list_dir(connection_id.to_string(), path.to_string()).await?;
 
     for entry in entries {
+        if result.len() >= MAX_SCAN_FILES {
+            break;
+        }
+
         let entry_path = if path.is_empty() {
             entry.name.clone()
         } else {
@@ -194,7 +182,13 @@ async fn scan_directory_recursive(
 
         if entry.is_directory {
             // Recursively scan subdirectories
-            Box::pin(scan_directory_recursive(connection_id, &entry_path, result)).await?;
+            Box::pin(scan_directory_recursive(
+                connection_id,
+                &entry_path,
+                result,
+                depth + 1,
+            ))
+            .await?;
         } else if is_music_file(&entry.name) {
             result.push(RemoteFile {
                 remote_path: entry_path,
@@ -226,6 +220,8 @@ pub async fn compare_with_local(
                 local_path: local_path_string,
                 action: Action::Download,
                 reason: "文件不存在".to_string(),
+                size: remote.size,
+                last_modified: remote.last_modified,
             });
         } else {
             // Check if file needs update
@@ -263,6 +259,8 @@ pub async fn compare_with_local(
                     local_path: local_path_string,
                     action: Action::Download,
                     reason,
+                    size: remote.size,
+                    last_modified: remote.last_modified,
                 });
             } else {
                 actions.push(SyncAction {
@@ -270,6 +268,8 @@ pub async fn compare_with_local(
                     local_path: local_path_string,
                     action: Action::Skip,
                     reason: "文件相同，跳过".to_string(),
+                    size: remote.size,
+                    last_modified: remote.last_modified,
                 });
             }
         }
@@ -295,7 +295,8 @@ pub async fn load_sync_state(state_path: &str) -> Result<SyncState, String> {
     serde_json::from_str(&content).map_err(|e| format!("Failed to parse sync state: {}", e))
 }
 
-/// Save sync state to file
+/// Save sync state to file atomically (write to a temp file, then rename), so
+/// an interrupted write can never corrupt the existing state.
 pub async fn save_sync_state(state_path: &str, state: &SyncState) -> Result<(), String> {
     let state_path = resolve_state_path(state_path)?;
     let content = serde_json::to_string_pretty(state)
@@ -308,11 +309,40 @@ pub async fn save_sync_state(state_path: &str, state: &SyncState) -> Result<(), 
             .map_err(|e| format!("Failed to create state directory: {}", e))?;
     }
 
-    fs::write(&state_path, content)
+    let mut tmp_path = state_path.clone();
+    let file_name = state_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("sync_state.json")
+        .to_string();
+    tmp_path.set_file_name(format!("{}.tmp", file_name));
+
+    fs::write(&tmp_path, content)
         .await
         .map_err(|e| format!("Failed to write sync state: {}", e))?;
+    fs::rename(&tmp_path, &state_path)
+        .await
+        .map_err(|e| format!("Failed to finalize sync state: {}", e))?;
 
     Ok(())
+}
+
+/// Per-library sync locks, keyed by resolved state path. Prevents two
+/// concurrent `sync_download` runs from writing the same library directory
+/// and state file at the same time.
+static SYNC_LOCKS: tokio::sync::OnceCell<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> =
+    tokio::sync::OnceCell::const_new();
+
+async fn acquire_sync_lock(state_path: &str) -> Result<Arc<Mutex<()>>, String> {
+    let resolved = resolve_state_path(state_path)?;
+    let locks = SYNC_LOCKS
+        .get_or_init(|| async { Mutex::new(HashMap::new()) })
+        .await;
+    let mut map = locks.lock().await;
+    Ok(map
+        .entry(resolved)
+        .or_insert_with(|| Arc::new(Mutex::new(())))
+        .clone())
 }
 
 /// Download files with progress callback
@@ -323,154 +353,136 @@ pub async fn sync_download(
     state_path: &str,
     callback: Option<&ProgressCallback>,
 ) -> Result<SyncState, String> {
+    let lock = acquire_sync_lock(state_path).await?;
+    // Try-lock: a second sync on the same library fails fast instead of
+    // queueing behind the first one and double-writing state.
+    let _guard = lock
+        .try_lock()
+        .map_err(|_| "同步已在进行中，请稍后再试".to_string())?;
+
     let mut state = load_sync_state(state_path).await?;
-    let total = actions.len();
-    // #region debug-point A:sync-download-enter
-    report_debug_event(
-        "A",
-        "sync_download entered",
-        json!({
-            "connectionId": connection_id,
-            "actionCount": actions.len(),
-            "statePath": state_path,
-            "localDir": _local_dir,
-            "hasCallback": callback.is_some(),
-        }),
-    );
-    // #endregion
 
-    for (index, action) in actions.iter().enumerate() {
-        match action.action {
-            Action::Download => {
-                // #region debug-point A:download-action-start
-                report_debug_event(
-                    "A",
-                    "download action started",
-                    json!({
-                        "index": index + 1,
-                        "total": total,
-                        "remotePath": action.remote_path,
-                        "localPath": action.local_path,
-                    }),
-                );
-                // #endregion
-                if let Some(cb) = callback {
-                    cb(index + 1, total, &format!("下载: {}", action.remote_path));
+    let downloads: Vec<&SyncAction> = actions
+        .iter()
+        .filter(|a| a.action == Action::Download)
+        .collect();
+    let total = downloads.len();
+
+    let mut files_since_save = 0usize;
+    let mut last_save = Instant::now();
+    let mut failure: Option<String> = None;
+    for (index, action) in downloads.iter().enumerate() {
+        if let Some(cb) = callback {
+            cb(
+                index + 1,
+                total,
+                &format!("下载: {}", action.remote_path),
+                false,
+            );
+        }
+
+        // Byte-level progress is throttled to PROGRESS_EMIT_INTERVAL and
+        // marked `verbose` so the UI can skip logging it. The emitter owns
+        // its per-file throttle state to avoid holding a mutable borrow
+        // across loop iterations.
+        let mut last_byte_emit = Instant::now();
+        let current = index + 1;
+        let remote_label = action.remote_path.clone();
+        let mut byte_progress = move |done: u64, size: u64| {
+            if let Some(cb) = callback {
+                if last_byte_emit.elapsed() >= PROGRESS_EMIT_INTERVAL && size > 0 {
+                    last_byte_emit = Instant::now();
+                    let pct = (done as f64 / size as f64 * 100.0).min(100.0);
+                    cb(
+                        current,
+                        total,
+                        &format!("下载: {} ({:.0}%)", remote_label, pct),
+                        true,
+                    );
                 }
+            }
+        };
 
-                // Download the file
-                smb_client::download_file(
-                    connection_id.to_string(),
-                    action.remote_path.clone(),
-                    action.local_path.clone(),
-                )
-                .await?;
-                // #region debug-point B:download-file-finished
-                report_debug_event(
-                    "B",
-                    "download_file returned",
-                    json!({
-                        "index": index + 1,
-                        "total": total,
-                        "remotePath": action.remote_path,
-                        "localPath": action.local_path,
-                    }),
-                );
-                // #endregion
+        let download_result = smb_client::download_file(
+            connection_id.to_string(),
+            action.remote_path.clone(),
+            action.local_path.clone(),
+            Some(&mut byte_progress),
+        )
+        .await;
 
-                // Get file info for accurate size
-                let file_info = smb_client::get_file_info(
-                    connection_id.to_string(),
-                    action.remote_path.clone(),
-                )
-                .await?;
-                // #region debug-point C:file-info-finished
-                report_debug_event(
-                    "C",
-                    "get_file_info returned",
-                    json!({
-                        "index": index + 1,
-                        "total": total,
-                        "remotePath": action.remote_path,
-                        "size": file_info.size,
-                        "lastModified": file_info.last_modified,
-                    }),
-                );
-                // #endregion
+        match download_result {
+            Ok(result) => {
+                // Use the freshly downloaded size; fall back to the scan size.
+                let size = if result.bytes_written > 0 {
+                    result.bytes_written
+                } else {
+                    action.size
+                };
 
-                // Update sync state
                 if let Some(existing) = state
                     .synced_files
                     .iter_mut()
                     .find(|f| f.remote_path == action.remote_path)
                 {
                     existing.local_path = action.local_path.clone();
-                    existing.size = file_info.size;
-                    existing.last_modified = file_info.last_modified;
+                    existing.size = size;
+                    existing.last_modified = action.last_modified;
                 } else {
                     state.synced_files.push(SyncedFile {
                         remote_path: action.remote_path.clone(),
                         local_path: action.local_path.clone(),
-                        size: file_info.size,
-                        last_modified: file_info.last_modified,
+                        size,
+                        last_modified: action.last_modified,
                     });
                 }
+                files_since_save += 1;
 
-                // Save state after each file to support resume on interruption
-                save_sync_state(state_path, &state).await?;
-
-                // #region debug-point C:state-updated
-                report_debug_event(
-                    "C",
-                    "sync state updated",
-                    json!({
-                        "index": index + 1,
-                        "total": total,
-                        "remotePath": action.remote_path,
-                        "syncedFileCount": state.synced_files.len(),
-                    }),
-                );
-                // #endregion
-            }
-            Action::Skip => {
                 if let Some(cb) = callback {
-                    cb(index + 1, total, &format!("跳过: {}", action.remote_path));
+                    cb(
+                        index + 1,
+                        total,
+                        &format!("完成: {}", action.remote_path),
+                        false,
+                    );
                 }
             }
+            Err(e) => {
+                failure = Some(format!("下载 {} 失败: {}", action.remote_path, e));
+                break;
+            }
+        }
+
+        // Checkpoint: persist every STATE_CHECKPOINT_FILES files or every
+        // STATE_CHECKPOINT_INTERVAL, so an interrupted sync can resume.
+        if files_since_save >= STATE_CHECKPOINT_FILES
+            || last_save.elapsed() >= STATE_CHECKPOINT_INTERVAL
+        {
+            if let Err(e) = save_sync_state(state_path, &state).await {
+                return Err(format!("Failed to save sync state: {}", e));
+            }
+            files_since_save = 0;
+            last_save = Instant::now();
         }
     }
 
-    // Update last sync time
-    state.last_sync_time = Some(
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64,
-    );
+    // Persist whatever completed before returning (success, failure, or error).
+    state.last_sync_time = if failure.is_none() {
+        Some(
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64,
+        )
+    } else {
+        state.last_sync_time
+    };
 
-    // Save state
-    // #region debug-point C:save-state-start
-    report_debug_event(
-        "C",
-        "save_sync_state starting",
-        json!({
-            "statePath": state_path,
-            "syncedFileCount": state.synced_files.len(),
-        }),
-    );
-    // #endregion
     save_sync_state(state_path, &state).await?;
-    // #region debug-point C:save-state-finished
-    report_debug_event(
-        "C",
-        "save_sync_state finished",
-        json!({
-            "statePath": state_path,
-            "syncedFileCount": state.synced_files.len(),
-            "lastSyncTime": state.last_sync_time,
-        }),
-    );
-    // #endregion
+
+    if let Some(e) = failure {
+        return Err(e);
+    }
 
     Ok(state)
 }
@@ -513,6 +525,11 @@ mod tests {
 
         assert_eq!(actions.len(), 2);
         assert!(actions.iter().all(|a| a.action == Action::Download));
+        // Scan metadata must be carried into the actions so downloads do not
+        // need a second per-file SMB round-trip.
+        assert_eq!(actions[0].size, 1024);
+        assert_eq!(actions[0].last_modified, Some(1000));
+        assert_eq!(actions[1].size, 2048);
     }
 
     #[tokio::test]
@@ -533,5 +550,41 @@ mod tests {
         assert_eq!(deserialized.last_sync_time, Some(1234567890));
         assert_eq!(deserialized.synced_files.len(), 1);
         assert_eq!(deserialized.synced_files[0].remote_path, "music/song.mp3");
+    }
+
+    #[tokio::test]
+    async fn test_save_sync_state_is_atomic_and_loadable() {
+        let dir = std::env::temp_dir().join(format!(
+            "miyako_sync_test_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let state_path = dir.join("nested/sync_state.json");
+        let state = SyncState {
+            last_sync_time: Some(42),
+            synced_files: vec![SyncedFile {
+                remote_path: "a/b.flac".to_string(),
+                local_path: "/local/a/b.flac".to_string(),
+                size: 7,
+                last_modified: None,
+            }],
+        };
+
+        save_sync_state(state_path.to_str().unwrap(), &state)
+            .await
+            .unwrap();
+
+        // No temp file may survive the atomic write.
+        let leftover = dir.join("nested/sync_state.json.tmp");
+        assert!(!leftover.exists());
+
+        let loaded = load_sync_state(state_path.to_str().unwrap()).await.unwrap();
+        assert_eq!(loaded.last_sync_time, Some(42));
+        assert_eq!(loaded.synced_files.len(), 1);
+        assert_eq!(loaded.synced_files[0].size, 7);
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

@@ -16,7 +16,10 @@ fn read_tauri_identifier() -> Option<String> {
 
         let (_, value) = line.split_once(':')?;
         let value = value.trim().trim_end_matches(',').trim();
-        return value.strip_prefix('"')?.strip_suffix('"').map(str::to_owned);
+        return value
+            .strip_prefix('"')?
+            .strip_suffix('"')
+            .map(str::to_owned);
     }
     None
 }

@@ -5,6 +5,10 @@ import "./PlayerUI.css";
 function PlayerUI() {
   const player = getAudioPlayer();
   const [state, setState] = useState<AudioPlayerState>(player.getState());
+  const [progress, setProgress] = useState({
+    currentTime: player.getCurrentTime(),
+    duration: player.getDuration(),
+  });
   const [isExpanded, setIsExpanded] = useState(false);
   const pushStateRef = useRef(false);
 
@@ -38,36 +42,37 @@ function PlayerUI() {
     };
   }, [isExpanded]);
 
-  // 处理关闭播放器时的历史记录清理
-  const handleClosePlayer = useCallback(() => {
-    setIsExpanded(false);
-    // 如果有假的历史记录，需要清理
-    if (pushStateRef.current) {
-      // 先移除监听器，避免触发handlePopState
-      pushStateRef.current = false;
-      // 不需要手动调用history.back()，因为popstate已经处理了
-    }
-  }, []);
-
+  // 播放进度（timeupdate 高频）与结构性状态（曲目/播放列表）分离，
+  // 避免每秒多次触发整个播放列表 reconciliation
   useEffect(() => {
     const updateState = () => {
       setState(player.getState());
+    };
+    const updateProgress = () => {
+      setProgress({
+        currentTime: player.getCurrentTime(),
+        duration: player.getDuration(),
+      });
+    };
+    const updateMetadata = () => {
+      updateState();
+      updateProgress();
     };
 
     player.on("play", updateState);
     player.on("pause", updateState);
     player.on("stop", updateState);
     player.on("ended", updateState);
-    player.on("timeupdate", updateState);
-    player.on("loadedmetadata", updateState);
+    player.on("loadedmetadata", updateMetadata);
+    player.on("timeupdate", updateProgress);
 
     return () => {
       player.off("play", updateState);
       player.off("pause", updateState);
       player.off("stop", updateState);
       player.off("ended", updateState);
-      player.off("timeupdate", updateState);
-      player.off("loadedmetadata", updateState);
+      player.off("loadedmetadata", updateMetadata);
+      player.off("timeupdate", updateProgress);
     };
   }, [player]);
 
@@ -133,7 +138,7 @@ function PlayerUI() {
     : "未选择歌曲";
 
   const hasHistory = state.playlist.length > 0 && state.currentIndex >= 0;
-  const progress = state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0;
+  const progressPercent = progress.duration > 0 ? (progress.currentTime / progress.duration) * 100 : 0;
 
   // 迷你播放器
   if (!isExpanded) {
@@ -143,7 +148,7 @@ function PlayerUI() {
           <div
             className="mini-progress-fill"
             style={{
-              width: `${state.duration > 0 ? (state.currentTime / state.duration) * 100 : 0}%`,
+              width: `${progress.duration > 0 ? (progress.currentTime / progress.duration) * 100 : 0}%`,
             }}
           />
         </div>
@@ -200,7 +205,7 @@ function PlayerUI() {
             <h2 className="track-title">{currentTrackName}</h2>
             {hasHistory && (
               <p className="track-status">
-                {state.isPlaying ? "正在播放" : "已暂停"} · {formatTime(state.currentTime)}
+                {state.isPlaying ? "正在播放" : "已暂停"} · {formatTime(progress.currentTime)}
               </p>
             )}
           </div>
@@ -240,17 +245,17 @@ function PlayerUI() {
         <div className="expanded-controls">
           {/* 进度条 */}
           <div className="seek-section">
-            <span className="seek-time">{formatTime(state.currentTime)}</span>
+            <span className="seek-time">{formatTime(progress.currentTime)}</span>
             <input
               type="range"
               className="seek-bar"
-              style={{ "--seek-progress": `${progress}%` } as CSSProperties}
+              style={{ "--seek-progress": `${progressPercent}%` } as CSSProperties}
               min={0}
-              max={state.duration || 0}
-              value={state.currentTime}
+              max={progress.duration || 0}
+              value={progress.currentTime}
               onInput={handleSeek}
             />
-            <span className="seek-time">{formatTime(state.duration)}</span>
+            <span className="seek-time">{formatTime(progress.duration)}</span>
           </div>
 
           {/* 主控制 */}

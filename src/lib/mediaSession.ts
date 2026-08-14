@@ -3,7 +3,7 @@ import { getAudioPlayer } from "./audioPlayer";
 export class MediaSessionManager {
   private player = getAudioPlayer();
   private isInitialized = false;
-
+  private lastPositionUpdateMs = 0;
   initialize() {
     if (this.isInitialized) return;
     if (!("mediaSession" in navigator)) {
@@ -105,12 +105,24 @@ export class MediaSessionManager {
   }
 
   private updatePositionState() {
-    const state = this.player.getState();
-    if (state.duration > 0) {
+    // timeupdate 每秒触发多次；节流并校验 position 合法性，
+    // 避免高频 setPositionState 与无效值异常
+    const now = Date.now();
+    if (now - this.lastPositionUpdateMs < 500) return;
+
+    const currentTime = this.player.getCurrentTime();
+    const duration = this.player.getDuration();
+    if (
+      duration > 0 &&
+      Number.isFinite(currentTime) &&
+      currentTime >= 0 &&
+      currentTime <= duration
+    ) {
+      this.lastPositionUpdateMs = now;
       navigator.mediaSession.setPositionState({
-        duration: state.duration,
+        duration,
         playbackRate: 1,
-        position: state.currentTime,
+        position: currentTime,
       });
     }
   }

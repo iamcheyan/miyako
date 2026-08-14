@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import type { ConnectResult, SmbConfig, SyncState } from "../types/tauri-commands";
 import { getStorageManager } from "../lib/storage";
 import { DEFAULT_SMB_CONFIG, loadSmbConfig, saveSmbConfig } from "../lib/smbConfig";
-import "./Settings.css";
+import { ensureMediaRoot } from "../lib/mediaRoot";
 
 const STATE_PATH = "sync_state.json";
 
@@ -43,10 +43,11 @@ function Settings() {
     }
   };
 
-  // 保存配置
+  // 保存配置（localDir 变化后需重新注册 media:// 根目录）
   const saveConfig = (newConfig: SmbConfig) => {
     setConfig(newConfig);
     saveSmbConfig(newConfig);
+    void ensureMediaRoot(true);
   };
 
   // 处理输入变化

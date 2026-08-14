@@ -230,6 +230,9 @@ cd "$ROOT_DIR"
 kill_conflicting_processes
 sync_android_icons
 clean_generated_jni_symlinks
+
+step "Clearing stale APK outputs"
+rm -rf "$APK_OUTPUT_DIR"
 export GRADLE_OPTS="${GRADLE_OPTS:-} -Dorg.gradle.daemon=false"
 if [ "$BUILD_MODE" = "debug" ]; then
   npx tauri android build --debug --target "$TAURI_TARGET" --apk
@@ -238,6 +241,9 @@ else
 fi
 
 APK_PATH="$(find_built_apk "$DEVICE_ABI" "$ANDROID_ARCH" "$BUILD_MODE")"
+
+step "Verifying APK metadata and icons"
+bash "$ROOT_DIR/scripts/verify-android-apk.sh" "$APK_PATH" "$PACKAGE_NAME"
 printf 'APK: %s\n' "$APK_PATH"
 
 step "Installing APK"

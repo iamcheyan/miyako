@@ -1,3 +1,4 @@
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { savePlaybackState, loadPlaybackState } from "./playbackStorage";
 import { isDemoMode, getDemoPlaylist, getDemoCurrentIndex } from "./demoData";
 
@@ -30,7 +31,7 @@ export class AudioPlayer {
   private currentIndex: number = -1;
   private playMode: PlayMode = "sequential";
   private eventListeners: Map<PlayerEvent, Set<EventCallback>> = new Map();
-  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  private saveTimeout: number | null = null;
 
   constructor() {
     this.audio = new Audio();
@@ -39,21 +40,17 @@ export class AudioPlayer {
   }
 
   // 加载保存的状态
-  private async loadSavedState() {
+  private loadSavedState() {
     const saved = loadPlaybackState();
     if (saved) {
       this.playlist = saved.playlist;
       this.currentIndex = saved.currentIndex;
       this.playMode = saved.playMode;
 
-      // 恢复播放位置
+      // 恢复播放位置（通过 media:// 协议流式读取，不整文件加载进内存）
       if (saved.currentIndex >= 0 && saved.currentIndex < saved.playlist.length) {
-        try {
-          this.audio.src = await this.toBlobUrl(saved.playlist[saved.currentIndex]);
-          this.audio.currentTime = saved.currentTime;
-        } catch (e) {
-          console.error("Failed to restore saved state:", e);
-        }
+        this.audio.src = this.toPlayableUrl(saved.playlist[saved.currentIndex]);
+        this.audio.currentTime = saved.currentTime;
       }
     }
   }
@@ -78,17 +75,14 @@ export class AudioPlayer {
 
   private setupAudioEvents() {
     this.audio.addEventListener("play", () => {
-      console.log("Audio: play event");
       this.emit("play");
       this.saveState();
     });
     this.audio.addEventListener("pause", () => {
-      console.log("Audio: pause event");
       this.emit("pause");
       this.saveState();
     });
     this.audio.addEventListener("ended", () => {
-      console.log("Audio: ended event");
       this.handleEnded();
     });
     this.audio.addEventListener("timeupdate", () => {
@@ -98,7 +92,6 @@ export class AudioPlayer {
       }
     });
     this.audio.addEventListener("loadedmetadata", () => {
-      console.log("Audio: loadedmetadata, duration:", this.audio.duration);
       this.emit("loadedmetadata", this.audio.duration);
     });
     this.audio.addEventListener("error", (e) => {
@@ -145,57 +138,27 @@ export class AudioPlayer {
     }
   }
 
-  // 将本地文件路径转换为可播放的 blob URL
-  private async toBlobUrl(filePath: string): Promise<string> {
-    if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("blob:")) {
+  // 将本地文件路径转换为可流式播放的 media:// URL。
+  // 音频由 Rust 侧的 media 协议按 HTTP Range 分块提供，
+  // 不再把整首歌 base64 读进内存再复制成 Blob。
+  private toPlayableUrl(filePath: string): string {
+    if (
+      filePath.startsWith("http://") ||
+      filePath.startsWith("https://") ||
+      filePath.startsWith("blob:") ||
+      filePath.startsWith("media:")
+    ) {
       return filePath;
     }
-
-    try {
-      // 使用自定义 Rust 命令读取文件
-      const { invoke } = await import("@tauri-apps/api/core");
-      const base64Data = await invoke<string>("read_audio_file", { path: filePath });
-
-      // 将 base64 转换为 Blob
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-
-      const blob = new Blob([bytes], { type: this.getMimeType(filePath) });
-      const url = URL.createObjectURL(blob);
-
-      console.log("Created blob URL for:", filePath);
-      return url;
-    } catch (e) {
-      console.error("Failed to create blob URL:", e);
-      throw e;
-    }
-  }
-
-  // 根据文件扩展名获取 MIME 类型
-  private getMimeType(filePath: string): string {
-    const ext = filePath.toLowerCase().split('.').pop();
-    switch (ext) {
-      case 'mp3': return 'audio/mpeg';
-      case 'flac': return 'audio/flac';
-      case 'wav': return 'audio/wav';
-      case 'm4a': return 'audio/mp4';
-      case 'aac': return 'audio/aac';
-      case 'ogg': return 'audio/ogg';
-      default: return 'audio/mpeg';
-    }
+    return convertFileSrc(filePath, "media");
   }
 
   async play(src?: string) {
     if (src) {
-      this.audio.src = await this.toBlobUrl(src);
-      console.log("Audio src set to:", this.audio.src);
+      this.audio.src = this.toPlayableUrl(src);
     }
     try {
       await this.audio.play();
-      console.log("Audio play started");
     } catch (e) {
       console.error("Audio play failed:", e);
       throw e;
@@ -233,7 +196,7 @@ export class AudioPlayer {
     this.currentIndex = startIndex;
 
     if (tracks.length > 0 && startIndex >= 0 && startIndex < tracks.length) {
-      this.audio.src = await this.toBlobUrl(tracks[startIndex]);
+      this.audio.src = this.toPlayableUrl(tracks[startIndex]);
     }
     this.saveState();
   }
@@ -241,7 +204,7 @@ export class AudioPlayer {
   async playTrack(index: number) {
     if (index >= 0 && index < this.playlist.length) {
       this.currentIndex = index;
-      this.audio.src = await this.toBlobUrl(this.playlist[index]);
+      this.audio.src = this.toPlayableUrl(this.playlist[index]);
       await this.audio.play();
       this.saveState();
     }
@@ -351,12 +314,7 @@ let playerInstance: AudioPlayer | null = null;
 
 export function getAudioPlayer(): AudioPlayer {
   if (!playerInstance) {
-    playerInstance = newAudioPlayer();
+    playerInstance = new AudioPlayer();
   }
   return playerInstance;
-}
-
-// 创建新的播放器实例
-function newAudioPlayer(): AudioPlayer {
-  return new AudioPlayer();
 }

@@ -1,19 +1,19 @@
 use std::collections::HashMap;
-use std::io::Write;
-use std::net::TcpStream;
-use std::str::FromStr;
+use std::path::Path;
 use std::sync::Arc;
 
 use smb::{Client, ClientConfig, Directory, FileDirectoryInformation, GetLen, UncPath};
+use tokio::io::AsyncWriteExt;
 use tokio::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 use futures_util::StreamExt;
+use std::str::FromStr;
 
 /// Connection information stored for each active SMB connection
 pub struct SmbConnection {
+    #[allow(dead_code)] // retained for diagnostics/logging parity with older code
     pub id: String,
     pub server: String,
     pub share: String,
@@ -22,21 +22,19 @@ pub struct SmbConnection {
     pub client: Client,
 }
 
+/// Shared handle to a connection. The inner tokio Mutex serializes SMB I/O on
+/// a single connection (the smb client is not used concurrently), while the
+/// global map lock is only held to clone this handle. Network I/O never runs
+/// under the global map lock, so listing/downloading on one connection cannot
+/// block commands on other connections or disconnects.
+pub type SharedSmbConnection = Arc<Mutex<SmbConnection>>;
+
 /// Directory entry returned from listing
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DirEntry {
     pub name: String,
     pub is_directory: bool,
     pub size: u64,
-    pub last_modified: Option<i64>,
-}
-
-/// File information returned from smb_get_file_info
-#[derive(Debug, Serialize, Deserialize)]
-pub struct FileInfo {
-    pub name: String,
-    pub size: u64,
-    pub is_directory: bool,
     pub last_modified: Option<i64>,
 }
 
@@ -56,9 +54,13 @@ pub struct DownloadResult {
     pub bytes_written: u64,
 }
 
+/// Progress callback for downloads: `(bytes_done, total_bytes)`. Passed as
+/// `&mut (dyn FnMut + '_)` so it borrows the caller's closure instead of
+/// requiring `'static`.
+
 /// Global connection manager
 pub struct ConnectionManager {
-    connections: Mutex<HashMap<String, SmbConnection>>,
+    connections: Mutex<HashMap<String, SharedSmbConnection>>,
 }
 
 impl ConnectionManager {
@@ -68,84 +70,20 @@ impl ConnectionManager {
         }
     }
 
-    pub async fn add_connection(&self, conn: SmbConnection) {
-        let mut connections = self.connections.lock().await;
-        connections.insert(conn.id.clone(), conn);
+    /// Clone the shared handle out of the map. The map lock is released
+    /// immediately; per-connection I/O is serialized by the inner mutex.
+    pub async fn get_connection(&self, id: &str) -> Option<SharedSmbConnection> {
+        self.connections.lock().await.get(id).cloned()
     }
 
-    pub async fn get_connection(&self, id: &str) -> Option<String> {
-        // Return just the connection_id so we can use it with the client later
-        let connections = self.connections.lock().await;
-        connections.get(id).map(|_| id.to_string())
-    }
-
-    pub async fn remove_connection(&self, id: &str) -> Option<SmbConnection> {
-        let mut connections = self.connections.lock().await;
-        connections.remove(id)
+    pub async fn remove_connection(&self, id: &str) -> Option<SharedSmbConnection> {
+        self.connections.lock().await.remove(id)
     }
 }
 
 /// Global connection manager instance
 static CONNECTION_MANAGER: tokio::sync::OnceCell<ConnectionManager> =
     tokio::sync::OnceCell::const_new();
-
-// #region debug-point B:smb-download-debug-reporting
-fn report_debug_event(hypothesis_id: &str, msg: &str, data: serde_json::Value) {
-    let env_content = std::fs::read_to_string(".dbg/sync-download-stall.env").ok();
-    let url = env_content
-        .as_deref()
-        .and_then(|content| {
-            content
-                .lines()
-                .find_map(|line| line.strip_prefix("DEBUG_SERVER_URL="))
-        })
-        .unwrap_or("http://127.0.0.1:7778/event");
-    let session_id = env_content
-        .as_deref()
-        .and_then(|content| {
-            content
-                .lines()
-                .find_map(|line| line.strip_prefix("DEBUG_SESSION_ID="))
-        })
-        .unwrap_or("sync-download-stall");
-
-    let Some(address_and_path) = url.strip_prefix("http://") else {
-        return;
-    };
-    let Some((address, path)) = address_and_path.split_once('/') else {
-        return;
-    };
-
-    let payload = json!({
-        "sessionId": session_id,
-        "runId": "post-fix",
-        "hypothesisId": hypothesis_id,
-        "location": "src-tauri/src/smb_client.rs",
-        "msg": format!("[DEBUG] {}", msg),
-        "data": data,
-        "ts": std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_millis())
-            .unwrap_or(0),
-    });
-
-    let Ok(body) = serde_json::to_vec(&payload) else {
-        return;
-    };
-
-    if let Ok(mut stream) = TcpStream::connect(address) {
-        let request = format!(
-            "POST /{} HTTP/1.1\r\nHost: {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-            path,
-            address,
-            body.len()
-        );
-        let _ = stream.write_all(request.as_bytes());
-        let _ = stream.write_all(&body);
-        let _ = stream.flush();
-    }
-}
-// #endregion
 
 /// Get or initialize the global connection manager
 async fn get_manager() -> &'static ConnectionManager {
@@ -168,8 +106,8 @@ pub async fn connect(
 
     // Build UNC path: \\server\share
     let unc_path_str = format!("\\\\{}\\{}", server, share);
-    let unc_path = UncPath::from_str(&unc_path_str)
-        .map_err(|e| format!("Invalid UNC path: {}", e))?;
+    let unc_path =
+        UncPath::from_str(&unc_path_str).map_err(|e| format!("Invalid UNC path: {}", e))?;
 
     // Create client config - 匿名访问时启用 guest access
     let config = if username.is_empty() {
@@ -201,7 +139,8 @@ pub async fn connect(
         client,
     };
 
-    manager.add_connection(conn).await;
+    let mut connections = manager.connections.lock().await;
+    connections.insert(connection_id.clone(), Arc::new(Mutex::new(conn)));
 
     Ok(ConnectResult {
         success: true,
@@ -210,38 +149,29 @@ pub async fn connect(
     })
 }
 
+/// Build the full UNC path for a path inside the connection's share
+fn full_unc_path(conn: &SmbConnection, path: &str) -> String {
+    let path_trimmed = path.trim_start_matches('\\').trim_start_matches('/');
+    if path_trimmed.is_empty() {
+        format!("\\\\{}\\{}", conn.server, conn.share)
+    } else {
+        format!("\\\\{}\\{}\\{}", conn.server, conn.share, path_trimmed)
+    }
+}
+
 /// List directory contents
-pub async fn list_dir(
-    connection_id: String,
-    path: String,
-) -> Result<Vec<DirEntry>, String> {
+pub async fn list_dir(connection_id: String, path: String) -> Result<Vec<DirEntry>, String> {
     let manager = get_manager().await;
-    let conn = manager
+    let conn_handle = manager
         .get_connection(&connection_id)
         .await
         .ok_or_else(|| "Connection not found".to_string())?;
 
-    // Get the connection from the manager
-    let connections = manager.connections.lock().await;
-    let conn = connections
-        .get(&conn)
-        .ok_or_else(|| "Connection not found".to_string())?;
+    // Per-connection lock only; the global map lock is not held during I/O.
+    let conn = conn_handle.lock().await;
 
-    // Build the full UNC path for the directory
-    let path_trimmed = path.trim_start_matches('\\').trim_start_matches('/');
-    let full_unc_str = if path_trimmed.is_empty() {
-        format!("\\\\{}\\{}", conn.server, conn.share)
-    } else {
-        format!(
-            "\\\\{}\\{}\\{}",
-            conn.server,
-            conn.share,
-            path_trimmed
-        )
-    };
-
-    let unc = UncPath::from_str(&full_unc_str)
-        .map_err(|e| format!("Invalid path: {}", e))?;
+    let full_unc_str = full_unc_path(&conn, &path);
+    let unc = UncPath::from_str(&full_unc_str).map_err(|e| format!("Invalid path: {}", e))?;
 
     // Open the directory
     let access = smb::FileAccessMask::new().with_generic_read(true);
@@ -251,8 +181,7 @@ pub async fn list_dir(
         .await
         .map_err(|e| format!("Failed to open directory: {}", e))?;
 
-    let directory = resource
-        .unwrap_dir();
+    let directory = resource.unwrap_dir();
 
     // Wrap in Arc for the query method
     let dir_arc = Arc::new(directory);
@@ -276,7 +205,13 @@ pub async fn list_dir(
 
         let is_dir = entry.file_attributes.directory();
         let size = entry.end_of_file;
-        let last_modified = Some(entry.last_write_time.date_time().assume_utc().unix_timestamp());
+        let last_modified = Some(
+            entry
+                .last_write_time
+                .date_time()
+                .assume_utc()
+                .unix_timestamp(),
+        );
 
         result.push(DirEntry {
             name,
@@ -296,62 +231,37 @@ pub async fn list_dir(
     Ok(result)
 }
 
-/// Download a file from SMB share to local path
+/// Size of a single SMB read during streaming downloads
+const READ_CHUNK: usize = 1024 * 1024;
+
+/// Download a file from SMB share to local path, streaming to a `.part`
+/// temporary file that is renamed into place on success. `progress` is called
+/// with (bytes_done, total_bytes) as chunks arrive.
 pub async fn download_file(
     connection_id: String,
     remote_path: String,
     local_path: String,
+    progress: Option<&mut (dyn FnMut(u64, u64) + Send + Sync + '_)>,
 ) -> Result<DownloadResult, String> {
-    // #region debug-point B:download-file-enter
-    report_debug_event(
-        "B",
-        "smb download_file entered",
-        json!({
-            "connectionId": connection_id,
-            "remotePath": remote_path,
-            "localPath": local_path,
-        }),
-    );
-    // #endregion
     let manager = get_manager().await;
-    let conn_id = manager
+    let conn_handle = manager
         .get_connection(&connection_id)
         .await
         .ok_or_else(|| "Connection not found".to_string())?;
 
-    // Get the connection from the manager
-    let connections = manager.connections.lock().await;
-    let conn = connections
-        .get(&conn_id)
-        .ok_or_else(|| "Connection not found".to_string())?;
-
-    // Build the full remote UNC path
-    let remote_path_trimmed = remote_path.trim_start_matches('\\').trim_start_matches('/');
-    let full_remote_path = format!(
-        "\\\\{}\\{}\\{}",
-        conn.server,
-        conn.share,
-        remote_path_trimmed
-    );
-
-    let unc = UncPath::from_str(&full_remote_path)
-        .map_err(|e| format!("Invalid remote path: {}", e))?;
-
-    // Ensure parent directory exists
-    if let Some(parent) = std::path::Path::new(&local_path).parent() {
+    // Ensure parent directory exists before taking the connection lock
+    if let Some(parent) = Path::new(&local_path).parent() {
         std::fs::create_dir_all(parent)
             .map_err(|e| format!("Failed to create local directory: {}", e))?;
     }
-    // #region debug-point D:local-dir-ready
-    report_debug_event(
-        "D",
-        "local parent directory ensured",
-        json!({
-            "localPath": local_path,
-            "fullRemotePath": full_remote_path,
-        }),
-    );
-    // #endregion
+
+    let part_path = format!("{}.part", local_path);
+
+    let conn = conn_handle.lock().await;
+
+    let full_remote_path = full_unc_path(&conn, &remote_path);
+    let unc =
+        UncPath::from_str(&full_remote_path).map_err(|e| format!("Invalid remote path: {}", e))?;
 
     // Open the remote file with read access
     let access = smb::FileAccessMask::new().with_generic_read(true);
@@ -366,23 +276,53 @@ pub async fn download_file(
         .ok_or_else(|| "Remote path is not a file".to_string())?;
 
     // Get file size
-    let file_size = file.get_len().await.map_err(|e| format!("Failed to get file size: {}", e))?;
-    // #region debug-point B:remote-file-opened
-    report_debug_event(
-        "B",
-        "remote file opened",
-        json!({
-            "remotePath": remote_path,
-            "localPath": local_path,
-            "fileSize": file_size,
-        }),
-    );
-    // #endregion
+    let file_size = file
+        .get_len()
+        .await
+        .map_err(|e| format!("Failed to get file size: {}", e))?;
 
-    // Read file contents in chunks
-    let mut contents = Vec::with_capacity(file_size as usize);
-    let mut buf = vec![0u8; 64 * 1024]; // 64KB chunks
+    let result = stream_to_part_file(file, file_size, &part_path, progress).await;
+
+    // Close the remote file handle regardless of the download outcome
+    let close_result = file.handle().close().await;
+
+    let written = match result {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            // Remove the partial file so stale `.part` data is never mistaken
+            // for a completed download.
+            let _ = tokio::fs::remove_file(&part_path).await;
+            return Err(e);
+        }
+    };
+    close_result.map_err(|e| format!("Failed to close file: {}", e))?;
+
+    // Atomically move the completed file into place
+    tokio::fs::rename(&part_path, &local_path)
+        .await
+        .map_err(|e| format!("Failed to finalize local file: {}", e))?;
+
+    Ok(DownloadResult {
+        success: true,
+        message: format!("Successfully downloaded {} bytes", written),
+        bytes_written: written,
+    })
+}
+
+/// Read the remote file in chunks and stream them to `part_path`.
+async fn stream_to_part_file(
+    file: &smb::File,
+    file_size: u64,
+    part_path: &str,
+    mut progress: Option<&mut (dyn FnMut(u64, u64) + Send + Sync + '_)>,
+) -> Result<u64, String> {
+    let mut out = tokio::fs::File::create(part_path)
+        .await
+        .map_err(|e| format!("Failed to create local file: {}", e))?;
+
+    let mut buf = vec![0u8; READ_CHUNK];
     let mut offset = 0u64;
+    let mut written = 0u64;
 
     loop {
         let bytes_read = file
@@ -394,153 +334,36 @@ pub async fn download_file(
             break;
         }
 
-        contents.extend_from_slice(&buf[..bytes_read]);
+        out.write_all(&buf[..bytes_read])
+            .await
+            .map_err(|e| format!("Failed to write local file: {}", e))?;
         offset += bytes_read as u64;
-    }
-    // #region debug-point B:remote-read-finished
-    report_debug_event(
-        "B",
-        "remote file read finished",
-        json!({
-            "remotePath": remote_path,
-            "localPath": local_path,
-            "bytesRead": contents.len(),
-        }),
-    );
-    // #endregion
+        written += bytes_read as u64;
 
-    // Write to local file
-    std::fs::write(&local_path, &contents)
-        .map_err(|e| format!("Failed to write local file: {}", e))?;
-    // #region debug-point D:local-write-finished
-    report_debug_event(
-        "D",
-        "local file write finished",
-        json!({
-            "remotePath": remote_path,
-            "localPath": local_path,
-            "bytesWritten": contents.len(),
-        }),
-    );
-    // #endregion
-
-    // Close the file handle
-    file.handle()
-        .close()
-        .await
-        .map_err(|e| format!("Failed to close file: {}", e))?;
-    // #region debug-point B:download-file-exit
-    report_debug_event(
-        "B",
-        "smb download_file exited",
-        json!({
-            "remotePath": remote_path,
-            "localPath": local_path,
-            "bytesWritten": contents.len(),
-        }),
-    );
-    // #endregion
-
-    Ok(DownloadResult {
-        success: true,
-        message: format!("Successfully downloaded {} bytes", contents.len()),
-        bytes_written: contents.len() as u64,
-    })
-}
-
-/// Get file information
-pub async fn get_file_info(
-    connection_id: String,
-    path: String,
-) -> Result<FileInfo, String> {
-    let manager = get_manager().await;
-    let conn_id = manager
-        .get_connection(&connection_id)
-        .await
-        .ok_or_else(|| "Connection not found".to_string())?;
-
-    // Get the connection from the manager
-    let connections = manager.connections.lock().await;
-    let conn = connections
-        .get(&conn_id)
-        .ok_or_else(|| "Connection not found".to_string())?;
-
-    // Build the full path
-    let path_trimmed = path.trim_start_matches('\\').trim_start_matches('/');
-    let full_path = format!(
-        "\\\\{}\\{}\\{}",
-        conn.server,
-        conn.share,
-        path_trimmed
-    );
-
-    let unc = UncPath::from_str(&full_path)
-        .map_err(|e| format!("Invalid path: {}", e))?;
-
-    // Open the file with read access
-    let access = smb::FileAccessMask::new().with_generic_read(true);
-    let resource = conn
-        .client
-        .create_file(&unc, &smb::FileCreateArgs::make_open_existing(access))
-        .await
-        .map_err(|e| format!("Failed to open file: {}", e))?;
-
-    // Extract info based on resource type
-    let info = match &resource {
-        smb::Resource::File(f) => {
-            let size = f.get_len().await.map_err(|e| format!("Failed to get file size: {}", e))?;
-            let modified = f.handle().modified().assume_utc().unix_timestamp();
-            FileInfo {
-                name: f.handle().name().to_string(),
-                size,
-                is_directory: false,
-                last_modified: Some(modified),
-            }
+        if let Some(cb) = progress.as_deref_mut() {
+            cb(written, file_size);
         }
-        smb::Resource::Directory(d) => {
-            let modified = d.handle().modified().assume_utc().unix_timestamp();
-            FileInfo {
-                name: d.handle().name().to_string(),
-                size: 0,
-                is_directory: true,
-                last_modified: Some(modified),
-            }
-        }
-        _ => {
-            return Err("Unsupported resource type".to_string());
-        }
-    };
-
-    // Close the resource
-    match &resource {
-        smb::Resource::File(f) => {
-            f.handle()
-                .close()
-                .await
-                .map_err(|e| format!("Failed to close resource: {}", e))?;
-        }
-        smb::Resource::Directory(d) => {
-            d.handle()
-                .close()
-                .await
-                .map_err(|e| format!("Failed to close resource: {}", e))?;
-        }
-        _ => {}
     }
 
-    Ok(info)
+    out.flush()
+        .await
+        .map_err(|e| format!("Failed to flush local file: {}", e))?;
+    Ok(written)
 }
 
 /// Disconnect from SMB server
 pub async fn disconnect(connection_id: String) -> Result<DownloadResult, String> {
     let manager = get_manager().await;
 
-    let conn = manager
+    let conn_handle = manager
         .remove_connection(&connection_id)
         .await
         .ok_or_else(|| "Connection not found".to_string())?;
 
-    // Close the client connection
+    // Wait for any in-flight I/O on this connection, then close the client.
+    let conn = conn_handle.lock().await;
+    let server = conn.server.clone();
+    let share = conn.share.clone();
     conn.client
         .close()
         .await
@@ -548,7 +371,7 @@ pub async fn disconnect(connection_id: String) -> Result<DownloadResult, String>
 
     Ok(DownloadResult {
         success: true,
-        message: format!("Disconnected from {}\\{}", conn.server, conn.share),
+        message: format!("Disconnected from {}\\{}", server, share),
         bytes_written: 0,
     })
 }

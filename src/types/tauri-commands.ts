@@ -52,6 +52,9 @@ export interface SyncAction {
   local_path: string;
   action: SyncActionType;
   reason: string;
+  /** Remote file size from the scan; avoids a second SMB round-trip per file. */
+  size: number;
+  last_modified: number | null;
 }
 
 export interface SyncedFile {

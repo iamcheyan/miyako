@@ -9,7 +9,8 @@ import RemoteBrowser from "./components/RemoteBrowser";
 import SyncPage from "./components/SyncPage";
 import MusicLibrary from "./components/MusicLibrary";
 import PlayerUI from "./components/PlayerUI";
-import Toast, { useToast } from "./components/Toast";
+import Toast from "./components/Toast";
+import { useToast } from "./hooks/useToast";
 import { getMediaSessionManager } from "./lib/mediaSession";
 import { ensureMediaRoot } from "./lib/mediaRoot";
 

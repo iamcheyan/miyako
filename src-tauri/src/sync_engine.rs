@@ -1,7 +1,9 @@
+use parking_lot::Mutex as SyncMutex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, LazyLock};
 use std::time::{Duration, Instant};
 use tokio::fs;
 use tokio::sync::Mutex;
@@ -64,6 +66,61 @@ pub struct SyncProgress {
 /// Progress callback type
 pub type ProgressCallback = Box<dyn Fn(usize, usize, &str, bool) + Send + Sync>;
 
+/// Cooperative cancellation flag for a running sync. The download loop checks
+/// it between files and the transfer loop checks it between chunks; a cancel
+/// preserves `.part` files so the next run resumes from where it stopped.
+#[derive(Clone, Debug)]
+pub struct CancelToken(Arc<AtomicBool>);
+
+impl CancelToken {
+    pub(crate) fn new() -> Self {
+        Self(Arc::new(AtomicBool::new(false)))
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.0.load(Ordering::Relaxed)
+    }
+
+    pub(crate) fn cancel(&self) {
+        self.0.store(true, Ordering::Relaxed);
+    }
+}
+
+/// Cancel flags for in-flight syncs, keyed by resolved state path (the same
+/// key as `SYNC_LOCKS`) so the UI can cancel a running sync without holding
+/// a handle to it.
+static SYNC_CANCELS: LazyLock<SyncMutex<HashMap<PathBuf, CancelToken>>> =
+    LazyLock::new(|| SyncMutex::new(HashMap::new()));
+
+/// Register the cancel token for a starting sync run.
+fn register_cancel(path: PathBuf, token: CancelToken) {
+    SYNC_CANCELS.lock().insert(path, token);
+}
+
+/// Remove the registry entry when a sync run ends (RAII).
+struct CancelGuard {
+    path: PathBuf,
+}
+
+impl Drop for CancelGuard {
+    fn drop(&mut self) {
+        SYNC_CANCELS.lock().remove(&self.path);
+    }
+}
+
+/// Mark the sync identified by `state_path` as cancelled. Returns `false`
+/// when no sync is currently running for that path.
+pub fn request_cancel(state_path: &str) -> Result<bool, String> {
+    let resolved = resolve_state_path(state_path)?;
+    match SYNC_CANCELS.lock().get(&resolved) {
+        Some(token) => {
+            token.cancel();
+            Ok(true)
+        }
+        None => Ok(false),
+    }
+}
+
 const MUSIC_EXTENSIONS: &[&str] = &[".mp3", ".flac", ".aac", ".wav"];
 
 /// Maximum directory depth for the recursive remote scan
@@ -79,6 +136,10 @@ const PROGRESS_EMIT_INTERVAL: Duration = Duration::from_millis(200);
 /// whichever comes first.
 const STATE_CHECKPOINT_FILES: usize = 20;
 const STATE_CHECKPOINT_INTERVAL: Duration = Duration::from_secs(2);
+
+/// Abort the sync after this many consecutive download failures (e.g. the
+/// NAS went away mid-sync). Single-file failures (timeouts) are skipped.
+const MAX_CONSECUTIVE_FAILURES: usize = 3;
 
 /// Check if a file is a music file based on extension
 fn is_music_file(filename: &str) -> bool {
@@ -360,8 +421,15 @@ pub async fn sync_download(
         .try_lock()
         .map_err(|_| "同步已在进行中，请稍后再试".to_string())?;
 
-    let mut state = load_sync_state(state_path).await?;
+    // Register the cancel token for this run so `request_cancel` can find it.
+    let cancel = CancelToken::new();
+    let resolved_state = resolve_state_path(state_path)?;
+    register_cancel(resolved_state.clone(), cancel.clone());
+    let _cancel_guard = CancelGuard {
+        path: resolved_state,
+    };
 
+    let mut state = load_sync_state(state_path).await?;
     let downloads: Vec<&SyncAction> = actions
         .iter()
         .filter(|a| a.action == Action::Download)
@@ -371,6 +439,8 @@ pub async fn sync_download(
     let mut files_since_save = 0usize;
     let mut last_save = Instant::now();
     let mut failure: Option<String> = None;
+    let mut cancelled = false;
+    let mut consecutive_failures = 0usize;
     for (index, action) in downloads.iter().enumerate() {
         if let Some(cb) = callback {
             cb(
@@ -407,6 +477,7 @@ pub async fn sync_download(
             connection_id.to_string(),
             action.remote_path.clone(),
             action.local_path.clone(),
+            Some(&cancel),
             Some(&mut byte_progress),
         )
         .await;
@@ -437,6 +508,7 @@ pub async fn sync_download(
                     });
                 }
                 files_since_save += 1;
+                consecutive_failures = 0;
 
                 if let Some(cb) = callback {
                     cb(
@@ -448,8 +520,29 @@ pub async fn sync_download(
                 }
             }
             Err(e) => {
-                failure = Some(format!("下载 {} 失败: {}", action.remote_path, e));
-                break;
+                if e == smb_client::ERR_CANCELLED {
+                    // 用户取消：保留 .part 待续传，不标记为失败
+                    cancelled = true;
+                    break;
+                }
+
+                // 单文件失败（含读取超时）：记录并跳过，不让整个同步卡死。
+                if let Some(cb) = callback {
+                    cb(
+                        index + 1,
+                        total,
+                        &format!("跳过 {}: {}", action.remote_path, e),
+                        false,
+                    );
+                }
+                consecutive_failures += 1;
+                if consecutive_failures >= MAX_CONSECUTIVE_FAILURES {
+                    failure = Some(format!(
+                        "连续 {} 个文件下载失败，中止同步: {}",
+                        consecutive_failures, e
+                    ));
+                    break;
+                }
             }
         }
 
@@ -465,9 +558,9 @@ pub async fn sync_download(
             last_save = Instant::now();
         }
     }
-
     // Persist whatever completed before returning (success, failure, or error).
-    state.last_sync_time = if failure.is_none() {
+    // 取消不算失败，但也不盖「完成时间」戳：下次同步继续。
+    state.last_sync_time = if failure.is_none() && !cancelled {
         Some(
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -586,5 +679,31 @@ mod tests {
         assert_eq!(loaded.synced_files[0].size, 7);
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn request_cancel_matches_running_sync_lifecycle() {
+        let key = std::env::temp_dir().join(format!(
+            "miyako_cancel_test_{}.json",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let state_path = key.to_str().unwrap().to_string();
+
+        // 未运行中的同步：无同步可取消
+        assert!(!request_cancel(&state_path).unwrap());
+
+        // 注册（= 同步开始）后可取消；guard drop（= 同步结束）后不再可取消
+        let token = CancelToken::new();
+        register_cancel(key.clone(), token.clone());
+        let guard = CancelGuard { path: key.clone() };
+
+        assert!(request_cancel(&state_path).unwrap());
+        assert!(token.is_cancelled());
+
+        drop(guard);
+        assert!(!request_cancel(&state_path).unwrap());
     }
 }

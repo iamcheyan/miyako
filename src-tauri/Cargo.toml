@@ -22,4 +22,5 @@ smb = "0.11"
 tokio = { version = "1", features = ["full"] }
 futures-util = "0.3"
 uuid = { version = "1", features = ["v4"] }
+parking_lot = "0.12"
 dirs = "5"

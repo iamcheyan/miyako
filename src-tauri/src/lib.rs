@@ -387,6 +387,13 @@ async fn sync_download(
     .await
 }
 
+/// Cancel a running sync identified by its state path. Returns whether a
+/// sync was actually running and has been flagged for cancellation.
+#[tauri::command]
+fn sync_cancel(state_path: String) -> Result<bool, String> {
+    sync_engine::request_cancel(&state_path)
+}
+
 /// Load sync state
 #[tauri::command]
 async fn sync_load_state(state_path: String) -> Result<SyncState, String> {
@@ -447,6 +454,7 @@ pub fn run() {
             sync_scan_remote,
             sync_compare,
             sync_download,
+            sync_cancel,
             sync_load_state,
             storage_read,
             storage_write,
